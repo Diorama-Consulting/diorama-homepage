@@ -1,0 +1,156 @@
+---
+interface Props {
+  heading?: string;
+  imageSrc: string;
+  imageAlt?: string;
+  paragraphs: string[];
+  quote: string;
+  quoteAuthor?: string;
+}
+
+const {
+  heading = "About",
+  imageSrc,
+  imageAlt = "Profile photograph",
+  paragraphs,
+  quote,
+  quoteAuthor,
+} = Astro.props;
+---
+
+<section class="about-section">
+  <div class="container">
+    
+    <!-- Image Column -->
+    <div class="image-column">
+      <div class="image-wrapper">
+        <img src={imageSrc} alt={imageAlt} loading="lazy" />
+        <div class="image-decoration"></div>
+      </div>
+    </div>
+
+    <!-- Content Column -->
+    <div class="content-column">
+      <h2 class="heading">{heading}</h2>
+      
+      <div class="prose">
+        {paragraphs.map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+      </div>
+
+      <blockquote class="quote-block">
+        <p class="quote-text">"{quote}"</p>
+        {quoteAuthor && <cite class="quote-author">— {quoteAuthor}</cite>}
+      </blockquote>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .about-section {
+    padding: 5rem 1.5rem;
+    display: flex;
+    justify-content: center;
+    background-color: thistle; /* Subtle background to separate from other sections */
+    color: var(--amber);
+  }
+
+  .container {
+    max-width: 1100px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  /* Responsive Grid for Desktop */
+  @media (min-width: 768px) {
+    .container {
+      grid-template-columns: 5fr 7fr; /* Image takes slightly less space than text */
+      gap: 5rem;
+    }
+  }
+
+  /* --- Image Styling --- */
+  .image-column {
+    position: relative;
+  }
+
+  .image-wrapper {
+    position: relative;
+    z-index: 2;
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* A decorative offset square behind the image */
+  .image-decoration {
+    position: absolute;
+    top: 1.5rem;
+    left: -1.5rem;
+    width: 100%;
+    height: 100%;
+    background-color: var(--mist);
+    border-radius: 16px;
+    z-index: -1;
+  }
+
+  /* --- Content Styling --- */
+  .heading {
+    font-family: 'Cal Sans', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    line-height: 1.1;
+    color: var(--amber);
+    margin-bottom: 1.5rem;
+    margin-top: 0;
+  }
+
+  .prose {
+    font-family: 'Geom Variable', sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--canopy);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  /* --- Quote Styling --- */
+  .quote-block {
+    margin: 0;
+    padding-left: 1.5rem;
+    border-left: 4px solid canopy;
+  }
+
+  .quote-text {
+    font-family: 'Cal Sans', sans-serif var(--forest); /* Using Cal Sans for a punchy quote */
+    font-size: 1.25rem;
+    line-height: 1.4;
+    color: var(--forest);
+    margin-bottom: 0.75rem;
+  }
+
+  .quote-author {
+    font-family: 'Geom Variable', sans-serif;
+    font-size: 0.9rem;
+    color: var(--canopy);
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+</style>

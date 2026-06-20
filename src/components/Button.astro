@@ -1,0 +1,107 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'gradient';
+  size?: 'sm' | 'md';
+  href?: string;
+  disabled?: boolean;
+  class?: string;
+  [key: string]: any;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  disabled = false,
+  class: className = '',
+  ...rest
+} = Astro.props;
+
+const Tag = href && !disabled ? 'a' : 'button';
+---
+
+<Tag
+  class:list={['btn', `btn-${variant}`, size === 'sm' && 'btn-sm', className]}
+  href={Tag === 'a' ? href : undefined}
+  disabled={disabled || undefined}
+  aria-disabled={disabled ? 'true' : undefined}
+  {...rest}
+>
+  <slot />
+</Tag>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 7px;
+  }
+
+  .btn-primary {
+    background: var(--signal);
+    color: var(--canopy);
+  }
+  .btn-primary:hover {
+    background: var(--mint);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border-color: var(--pine);
+    color: var(--mist);
+  }
+  .btn-secondary:hover {
+    border-color: var(--mint);
+    background: rgba(64, 145, 108, 0.15);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--signal);
+    padding-inline: 4px;
+  }
+  .btn-ghost:hover {
+    color: var(--mint);
+  }
+
+  .btn-gradient {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.85), rgba(116, 198, 157, 0.55));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+  }
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.95), rgba(116, 198, 157, 0.7));
+  }
+
+  .btn:focus-visible {
+    outline: 3px solid rgba(116, 198, 157, 0.45);
+    outline-offset: 2px;
+  }
+
+  .btn[aria-disabled='true'] {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(216, 243, 220, 0.32);
+    border-color: transparent;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+</style>

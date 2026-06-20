@@ -1,0 +1,67 @@
+@import '@fontsource-variable/geom';
+@import '@fontsource/cal-sans';
+
+:root {
+  --canopy: #0F2818;
+  --forest: #1B4332;
+  --pine: #2D6A4F;
+  --moss: #40916C;
+  --signal: #2ECC71;
+  --mint: #74C69D;
+  --mist: #D8F3DC;
+  --amber: #F4A627;
+  --mist-muted: rgba(216, 243, 220, 0.6);
+  --hairline: rgba(255, 255, 255, 0.08);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --font-display: 'Geom Variable', sans-serif;
+  --font-body: 'Cal Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --max-width: 1120px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--canopy);
+  color: var(--mist);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  color: #ffffff;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}

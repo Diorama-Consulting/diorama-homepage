@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Section from '../components/Section.astro';
+import Profile from '../components/Profile.astro';
+import Footer from '../components/Footer.astro';
+import AboutSection from '../components/AboutSection.astro';
+---
+
+<Layout title="About — Diorama Consulting" description="The mission.">
+  <Header />
+
+  <AboutSection 
+      heading="Meet the Founder"
+      imageSrc="/Mal.png"
+      imageAlt="A portrait of the founder smiling in a studio"
+      paragraphs={[
+        "Mal Minhas founded Diorama Consulting in 2024 to help Boards, Founders and Investors turn product, technology and AI strategy into commercial outcomes through fractional CTO/CPTO leadership and AI enablement including platform modernisation and organisation design, with a particular focus on D2C marketplaces and consumer products.",
+        "Alongside advisory work, Mal serves as a Trustee for two UK charities: Helpforce, which supports NHS trusts and community organisations to build high-impact volunteering programmes across the health system, and Aston-Mansfield, which supports children, young people and families in Newham and east London.",
+        "Mal speaks and emcees talks regularly on AI strategy, modern platforms and technology leadership, notably with London Tech Leaders. He also builds products and tools that combine these interests.",
+        "Get in touch to discuss a consulting engagement, or a Non-Executive Director or Trustee appointment or to learn more about what we are working on.",
+        "The name Diorama Consulting is inspired by a quote from David Wallace-Wells and the reality that we’re not outside observers of climate change, AI disruption or technological change. We are all in the diorama, creating it and being shaped by it in turn."
+      ]}
+      quote="you believe that what is contained in the taxidermy scene has something to teach you—but only by the logic of metaphor, because you are not a stuffed animal and do not live in the scene but beyond it, outside it, observing rather than participating. The logic is twisted by global warming, because it collapses the perceived distance between humans and nature—between you and the diorama. One message of climate change is: you do not live outside the scene but within it, subject to all the same horrors you can see afflicting the lives of animals."
+      quoteAuthor="David Wallace-Wells, The Uninhabitable Earth"
+    />
+
+  <Section
+    eyebrow="About us"
+    heading="A small, small team"
+    subheading="For complete control"
+  >
+    <div class="profile-grid">
+      <Profile
+        name="Mal Minhas"
+        role="Founder & Everything Else"
+        bio="Likes substack"
+        socials={[{ label: 'LinkedIn', href: 'https://linkedin.com/malminhas' }]}
+      />
+      <Profile
+        name="Paolo Minhas"
+        role="Website Polishing"
+        bio="Trying to make this site better. This is just a demo I will change all this stuff."
+        socials={[
+          { label: 'GitHub', href: 'https://github.com/paolominhas' },
+          { label: 'LinkedIn', href: 'https://linkedin.com/in/paolo-m' },
+        ]}
+      />
+      <Profile
+        name="Rowan Caufield"
+        role="Logo Design"
+        bio="Makes logos."
+        socials={[{ label: 'LinkedIn', href: 'https://linkedin.com' }]}
+      />
+    </div>
+  </Section>
+
+  <Footer />
+</Layout>
+
+<style>
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  @media (max-width: 860px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

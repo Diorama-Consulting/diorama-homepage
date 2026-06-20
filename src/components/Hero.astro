@@ -1,0 +1,284 @@
+---
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Button from './Button.astro';
+import defaultHeroImage from '../assets/hero/dark-background.jpg';
+
+interface Props {
+  eyebrow?: string;
+  heading: string;
+  subheading: string;
+  ctaText?: string;
+  ctaHref?: string;
+  image?: ImageMetadata;
+  imageAlt?: string;
+  revealHeading: string;
+  revealSubheading: string;
+  face?: ImageMetadata;
+  faceAlt?: string;
+  scrollVh?: number; // total scroll distance (in vh) the whole sequence takes
+}
+
+const {
+  eyebrow = 'Now in beta',
+  heading,
+  subheading,
+  ctaText = 'Get started',
+  ctaHref = '/contact',
+  image = defaultHeroImage,
+  imageAlt = '',
+  revealHeading,
+  revealSubheading,
+  face,
+  faceAlt = '',
+  scrollVh = 240,
+} = Astro.props;
+---
+
+<section class="hero" style={`--scroll-vh: ${scrollVh}vh`}>
+  <div class="hero-pin">
+    <Picture
+      src={image}
+      alt={imageAlt}
+      formats={['avif', 'webp']}
+      widths={[640, 1024, 1600, 2400, 3200]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+      class="hero-bg"
+    />
+    <div class="hero-scrim" aria-hidden="true"></div>
+
+    <div class="container hero-stage">
+      <div class="hero-phase phase-one">
+        <p class="eyebrow">{eyebrow}</p>
+        <h1>{heading}</h1>
+        <p class="subheading">{subheading}</p>
+        <div class="hero-actions">
+          <Button href={ctaHref}>{ctaText}</Button>
+          <Button href="/#work" variant="ghost">See our work →</Button>
+        </div>
+      </div>
+
+      <div class="hero-phase phase-two">
+        <h2>{revealHeading}</h2>
+        <p>{revealSubheading}</p>
+      </div>
+    </div>
+
+    {face && (
+      <Picture
+        src={face}
+        alt={faceAlt}
+        formats={['avif', 'webp']}
+        widths={[200, 320, 480]}
+        sizes="(max-width: 700px) 140px, 280px"
+        loading="lazy"
+        class="hero-face"
+      />
+    )}
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    height: var(--scroll-vh, 240vh);
+    --p1: 1;
+    --p2: 0;
+    --face: 0;
+  }
+
+  .hero-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 35%; /* desktop focal point — adjust to your photo */
+    z-index: 0;
+  }
+
+  @media (max-width: 700px) {
+    .hero-bg {
+      /* mobile shows a vertical strip cropped from the sides — pick which one */
+      object-position: 30% center;
+    }
+  }
+
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      180deg,
+      rgba(6, 10, 8, 0.1) 0%,
+      rgba(6, 10, 8, 0.55) 65%,
+      rgba(6, 10, 8, 0.78) 100%
+    );
+    pointer-events: none;
+  }
+
+  .hero-stage {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+  }
+
+  .hero-phase {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 640px;
+    will-change: opacity, transform;
+  }
+
+  .phase-one {
+    opacity: var(--p1);
+    transform: translateY(calc((1 - var(--p1)) * -32px));
+  }
+
+  .phase-two {
+    opacity: var(--p2);
+    transform: translateY(calc((1 - var(--p2)) * 100%));
+    pointer-events: none;
+  }
+
+  .hero.show-phase-two .phase-one { pointer-events: none; }
+  .hero.show-phase-two .phase-two { pointer-events: auto; }
+
+  .hero .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin: 0 0 18px;
+  }
+
+  .hero h1,
+  .hero h2 {
+    font-size: 48px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+    color: #fff;
+  }
+
+  .hero .subheading,
+  .phase-two p {
+    font-size: 17px;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0 0 32px;
+    max-width: 480px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .hero-face {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    width: clamp(240px, 44vw, 520px);
+    height: auto;
+    z-index: 3;
+    opacity: var(--face);
+    transform: translateY(calc((1 - var(--face)) * 40px));
+    pointer-events: none;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.35));
+    will-change: opacity, transform;
+  }
+
+  /* Reduced-motion fallback: skip the scroll sequence, show phase one only */
+  .hero--static {
+    height: 100vh;
+  }
+  .hero--static .hero-pin {
+    position: relative;
+  }
+  .hero--static .phase-two,
+  .hero--static .hero-face {
+    display: none;
+  }
+  .hero--static .phase-one {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 860px) {
+    .hero h1,
+    .hero h2 {
+      font-size: 36px;
+    }
+  }
+</style>
+
+<script>
+  function initHero() {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      hero.classList.add('hero--static');
+      return;
+    }
+
+    // [start, end] progress windows for each phase 
+    // can be changed slightly for different feel
+    const PHASE_ONE_OUT = [0.18, 0.34];
+    const PHASE_TWO_IN = [0.26, 0.42];
+    const FACE_IN = [0.38, 0.54];
+
+    const mapRange = (value, [min, max]) => {
+      if (max === min) return value < min ? 0 : 1;
+      return Math.min(1, Math.max(0, (value - min) / (max - min)));
+    };
+
+    const ease = (t) => t * t * (3 - 2 * t); // smoothstep
+
+    let ticking = false;
+
+    const update = () => {
+      const rect = hero.getBoundingClientRect();
+      const scrollable = hero.offsetHeight - window.innerHeight;
+      const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
+      const progress = scrollable > 0 ? scrolled / scrollable : 0;
+
+      const p1 = 1 - ease(mapRange(progress, PHASE_ONE_OUT));
+      const p2 = ease(mapRange(progress, PHASE_TWO_IN));
+      const face = ease(mapRange(progress, FACE_IN));
+
+      hero.style.setProperty('--p1', p1.toFixed(3));
+      hero.style.setProperty('--p2', p2.toFixed(3));
+      hero.style.setProperty('--face', face.toFixed(3));
+      hero.classList.toggle('show-phase-two', progress > 0.32);
+
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+  }
+
+  initHero();
+</script>

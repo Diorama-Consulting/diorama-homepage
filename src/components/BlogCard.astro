@@ -1,0 +1,90 @@
+---
+interface Props {
+  title: string;
+  excerpt: string;
+  href: string;
+  date: string;
+  source?: string;
+  image?: string;
+  external?: boolean;
+}
+
+const { title, excerpt, href, date, source = 'Blog', image, external = false } = Astro.props;
+
+const formattedDate = new Date(date).toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+---
+
+<a
+  href={href}
+  class="blog-card"
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener noreferrer' : undefined}
+>
+  {image && (
+    <img
+      src={image}
+      alt=""
+      class="blog-image"
+      width="640"
+      height="360"
+      loading="lazy"
+      decoding="async"
+    />
+  )}
+  <div class="blog-body">
+    <p class="blog-meta">{source} · {formattedDate}</p>
+    <h3>{title}</h3>
+    <p class="blog-excerpt">{excerpt}</p>
+    <span class="blog-link">{external ? `Read on ${source} ↗` : 'Read more →'}</span>
+  </div>
+</a>
+
+<style>
+  .blog-card {
+    display: block;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+  }
+  .blog-card:hover {
+    border-color: var(--moss);
+  }
+  .blog-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  .blog-body {
+    padding: 22px;
+  }
+  .blog-meta {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--mint);
+    margin: 0 0 10px;
+  }
+  .blog-card h3 {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .blog-excerpt {
+    font-size: 14px;
+    color: var(--mist-muted);
+    margin: 0 0 14px;
+  }
+  .blog-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--signal);
+  }
+  .blog-card:hover .blog-link {
+    color: var(--mint);
+  }
+</style>

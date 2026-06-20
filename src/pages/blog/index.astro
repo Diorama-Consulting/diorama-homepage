@@ -1,0 +1,101 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const [featured, ...rest] = posts;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <Header transparentOverHero={false} />
+    <main class="container">
+      <section class="blog-grid">
+        {featured && (
+          <div class="featured">
+            <BlogCard
+              title={featured.data.title}
+              excerpt={featured.data.description ?? ''}
+              href={`/blog/${featured.id}/`}
+              date={featured.data.pubDate.toISOString()}
+              image={featured.data.heroImage}
+            />
+          </div>
+        )}
+        {rest.map((post) => (
+          <BlogCard
+            title={post.data.title}
+            excerpt={post.data.description ?? ''}
+            href={`/blog/${post.id}/`}
+            date={post.data.pubDate.toISOString()}
+            image={post.data.heroImage}
+          />
+        ))}
+      </section>
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  main.container {
+    padding-top: 56px;
+    padding-bottom: 80px;
+  }
+
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 32px;
+  }
+
+  .featured {
+    grid-column: 1 / -1;
+  }
+
+  .featured :global(.blog-card) {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+  }
+
+  .featured :global(.blog-image) {
+    height: 100%;
+    min-height: 320px;
+  }
+
+  .featured :global(.blog-body) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .featured :global(h3) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 720px) {
+    .blog-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .featured :global(.blog-card) {
+      grid-template-columns: 1fr;
+    }
+
+    .featured :global(.blog-image) {
+      min-height: 220px;
+    }
+  }
+</style>

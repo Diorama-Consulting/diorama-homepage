@@ -1,0 +1,254 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+
+type Props = CollectionEntry<'blog'>['data'];
+
+const { title, description, pubDate, updatedDate, heroImage, link } = Astro.props;
+
+let subscribeUrl = link;
+try {
+    subscribeUrl = `${new URL(link).origin}/subscribe`;
+} catch {
+    // link wasn't a valid absolute URL — fall back to linking the post itself
+}
+---
+
+<html lang="en">
+    <head>
+        <BaseHead title={title} description={description} />
+        <style>
+            main {
+                width: 100%;
+                margin: 0;
+            }
+
+            .hero-container {
+                position: relative;
+                width: 100%;
+                height: 55vh;
+                min-height: 400px;
+                background-color: var(--forest);
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                display: flex;
+                align-items: flex-end;
+                overflow: hidden;
+            }
+
+            .hero-scrim {
+                position: absolute;
+                inset: 0;
+                z-index: 2;
+                background: linear-gradient(
+                    to top,
+                    rgba(15, 40, 24, 1) 0%,
+                    rgba(15, 40, 24, 0.6) 40%,
+                    transparent 100%
+                );
+            }
+
+            .hero-content {
+                position: relative;
+                z-index: 3;
+                width: 960px;
+                max-width: calc(100% - 2em);
+                margin: 0 auto;
+                padding-bottom: 3rem;
+                color: #ffffff;
+            }
+
+            .hero-content h1 {
+                font-size: 3rem;
+                margin: 0.2em 0;
+                line-height: 1.1;
+                color: #ffffff;
+            }
+
+            .date {
+                font-family: var(--font-mono, monospace);
+                font-size: 0.9rem;
+                color: var(--mint);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .last-updated-on {
+                font-style: italic;
+                color: var(--mist-muted);
+                margin-top: 0.25rem;
+            }
+
+            .prose {
+                width: 960px;
+                max-width: calc(100% - 2em);
+                margin: 3rem auto;
+                color: var(--mist);
+            }
+
+            /* --- Read-on-Substack banner --- */
+            .source-banner {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                margin-bottom: 2rem;
+                padding: 12px 18px;
+                border: 1px solid var(--hairline);
+                border-radius: var(--radius-sm, 8px);
+                background: rgba(255, 255, 255, 0.03);
+                font-family: var(--font-mono, monospace);
+                font-size: 0.85rem;
+                color: var(--mist-muted);
+            }
+            .source-banner-icon {
+                color: var(--mint);
+                font-size: 1rem;
+            }
+            .source-banner a {
+                color: var(--signal);
+                text-decoration: underline;
+                text-decoration-color: rgba(46, 204, 113, 0.4);
+            }
+            .source-banner a:hover {
+                color: var(--mint);
+            }
+
+            /* --- Floating action bar: tracks scroll via position: fixed --- */
+            .floating-actions {
+                position: fixed;
+                top: 100px;
+                left: 0;
+                right: 0;
+                z-index: 40;
+                display: flex;
+                justify-content: space-between;
+                padding-inline: 24px;
+                pointer-events: none; /* lets clicks pass through the empty middle */
+            }
+
+            .floating-btn {
+                pointer-events: auto;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                border-radius: var(--radius-sm, 8px);
+                padding: 8px 16px;
+                font-size: 0.9rem;
+                text-decoration: none;
+                cursor: pointer;
+                backdrop-filter: blur(8px);
+                transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+            }
+
+            .back-btn {
+                background: rgba(15, 40, 24, 0.8);
+                color: var(--mist);
+                border: 1px solid var(--hairline);
+            }
+            .back-btn:hover {
+                color: var(--signal);
+                border-color: var(--signal);
+            }
+
+            .subscribe-btn {
+                background: var(--signal);
+                color: var(--canopy);
+                font-weight: 600;
+                border: 1px solid var(--signal);
+            }
+            .subscribe-btn:hover {
+                background: var(--mint);
+                border-color: var(--mint);
+            }
+
+            @media (max-width: 720px) {
+                .hero-content h1 {
+                    font-size: 2rem;
+                }
+                .hero-container {
+                    height: 45vh;
+                }
+                .floating-actions {
+                    top: 84px;
+                    padding-inline: 16px;
+                }
+                .floating-btn {
+                    padding: 7px 12px;
+                    font-size: 0.82rem;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <Header transparentOverHero={true} />
+
+        <div class="floating-actions">
+            <button id="back-btn" class="floating-btn back-btn" style="display: none;">
+                &larr; Go back
+            </button>
+            <a
+                class="floating-btn subscribe-btn"
+                href={subscribeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Subscribe on Substack
+            </a>
+        </div>
+
+        <main>
+            <article>
+                <div
+                    class="hero-container"
+                    style={heroImage ? `background-image: url('${heroImage}');` : ''}
+                >
+                    <div class="hero-scrim"></div>
+
+                    <div class="hero-content">
+                        <div class="date">
+                            <FormattedDate date={pubDate} />
+                            {updatedDate && (
+                                <div class="last-updated-on">
+                                    Updated <FormattedDate date={updatedDate} />
+                                </div>
+                            )}
+                        </div>
+                        <h1>{title}</h1>
+                    </div>
+                </div>
+
+                <div class="prose">
+                    <div class="source-banner">
+                        <span class="source-banner-icon" aria-hidden="true">↗</span>
+                        <span>
+                            Originally published on Substack ·
+                            {' '}
+                            <a href={link} target="_blank" rel="noopener noreferrer">
+                                Read the original article
+                            </a>
+                        </span>
+                    </div>
+
+                    <slot />
+                </div>
+            </article>
+        </main>
+
+        <Footer />
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const backBtn = document.getElementById('back-btn');
+                if (backBtn && history.length > 1) {
+                    backBtn.style.display = 'flex';
+                    backBtn.addEventListener('click', () => history.back());
+                }
+            });
+        </script>
+    </body>
+</html>

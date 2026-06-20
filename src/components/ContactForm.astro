@@ -1,0 +1,105 @@
+---
+import Button from './Button.astro';
+---
+
+<form class="contact-form" id="contact-form" method="POST" action="/api/contact" novalidate>
+  <div class="field hp" aria-hidden="true">
+    <label for="company">Company</label>
+    <input type="text" id="company" name="company" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <div class="field">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" placeholder="Smith Jones" required />
+  </div>
+  <div class="field">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" placeholder="you@example.com" required />
+  </div>
+  <div class="field">
+    <label for="message">Message</label>
+    <textarea id="message" name="message" placeholder="Tell us about your project..." required></textarea>
+  </div>
+
+  <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+  <Button type="submit">Send message</Button>
+</form>
+
+<style>
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 480px;
+  }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mist-muted);
+    margin-bottom: 7px;
+  }
+  .field input,
+  .field textarea {
+    width: 100%;
+    background: var(--canopy);
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--mist);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 110px;
+  }
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: rgba(216, 243, 220, 0.32);
+  }
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--signal);
+  }
+  .form-status { font-size: 14px; margin: 0; min-height: 1.2em; }
+  .form-status[data-state='ok'] { color: var(--signal); }
+  .form-status[data-state='error'] { color: #e5484d; }
+</style>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  const status = document.getElementById('form-status')!;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    status.textContent = '';
+    const submitBtn = form.querySelector('button');
+    submitBtn?.setAttribute('disabled', 'true');
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      });
+      const result = await res.json();
+
+      if (result.ok) {
+        status.dataset.state = 'ok';
+        status.textContent = "Thanks — we'll be in touch shortly.";
+        form.reset();
+      } else {
+        status.dataset.state = 'error';
+        status.textContent = result.error ?? 'Something went wrong. Please try again.';
+      }
+    } catch {
+      status.dataset.state = 'error';
+      status.textContent = 'Network error — please try again.';
+    } finally {
+      submitBtn?.removeAttribute('disabled');
+    }
+  });
+</script>

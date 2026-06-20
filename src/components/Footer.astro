@@ -1,0 +1,146 @@
+---
+interface LinkGroup {
+  heading: string;
+  links: { label: string; href: string }[];
+}
+
+interface Props {
+  groups?: LinkGroup[];
+}
+
+const {
+  groups = [
+    {
+      heading: 'Product',
+      links: [
+        { label: 'AI Projects', href: '#' },
+        { label: 'Pricing', href: '#pricing' },
+        { label: 'Changelog', href: '#' },
+      ],
+    },
+    {
+      heading: 'Company',
+      links: [
+        { label: 'About', href: '/about' },
+        { label: 'Blog', href: '/blog' },
+        { label: 'Careers', href: '#' },
+      ],
+    },
+    {
+      heading: 'Legal',
+      links: [
+        { label: 'Privacy', href: '#' },
+        { label: 'Terms', href: '#' },
+        { label: 'Cookies', href: '#' },
+        { label: 'Accessibility', href: '#' },
+      ],
+    },
+  ],
+} = Astro.props;
+---
+
+<footer class="site-footer">
+  <div class="container footer-top">
+    <div class="footer-brand">
+      <a href="/" class="logo">
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <path d="M12 3C9 7 7 10 7 13a5 5 0 0010 0c0-3-2-6-5-10z" style="fill: var(--signal);" />
+        </svg>
+        Diorama Consulting Ltd
+      </a>
+      <p>AI Technology Advice led by Mal Minhas with a focus on D2C marketplaces and products.</p>
+    </div>
+    {groups.map((group) => (
+      <div class="footer-group">
+        <h4>{group.heading}</h4>
+        <ul>
+          {group.links.map((link) => (
+            <li><a href={link.href}>{link.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+  <div class="container footer-bottom">
+    <p>© {new Date().getFullYear()} Diorama Consulting Ltd. All rights reserved.   Registered at 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ in England No.   16137029 with VAT Registration No. 483184277</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--canopy);
+    border-top: 1px solid var(--hairline);
+    margin-top: 80px;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+    padding-block: 56px 40px;
+  }
+
+  .footer-brand .logo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .footer-brand p {
+    font-size: 13.5px;
+    color: var(--mist-muted);
+    max-width: 260px;
+    margin: 0;
+  }
+
+  .footer-group h4 {
+    font-size: 13px;
+    color: var(--mist);
+    margin-bottom: 16px;
+  }
+
+  .footer-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-group a {
+    font-size: 13.5px;
+    color: var(--mist-muted);
+    text-decoration: none;
+  }
+  .footer-group a:hover {
+    color: var(--signal);
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--hairline);
+    padding-block: 20px;
+  }
+
+  .footer-bottom p {
+    font-size: 12.5px;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+
+  @media (max-width: 760px) {
+    .footer-top {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer-brand {
+      grid-column: 1 / -1;
+      margin-bottom: 12px;
+    }
+  }
+</style>

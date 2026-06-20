@@ -1,0 +1,80 @@
+---
+interface Props {
+  quote: string;
+  name: string;
+  role: string;
+}
+
+const { quote, name, role } = Astro.props;
+const initials = name
+  .split(' ')
+  .map((part) => part[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase();
+---
+
+<figure class="testimonial">
+  <blockquote>“{quote}”</blockquote>
+  <figcaption>
+    <span class="avatar">{initials}</span>
+    <span class="who">
+      <span class="name">{name}</span>
+      <span class="role">{role}</span>
+    </span>
+  </figcaption>
+</figure>
+
+<style>
+  .testimonial {
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    margin: 0;
+  }
+
+  blockquote {
+    margin: 0 0 22px;
+    font-size: 15.5px;
+    color: var(--mist);
+    line-height: 1.65;
+  }
+
+  figcaption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--signal);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .who {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .role {
+    font-size: 12.5px;
+    color: var(--mist-muted);
+  }
+</style>

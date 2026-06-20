@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Section from '../components/Section.astro';
+import ContactForm from '../components/ContactForm.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Contact — Diorama" description="Get in touch with the Diorama team.">
+  <Header />
+
+  <Section
+    eyebrow="Contact"
+    heading="Tell us about your project"
+    subheading="Talk to us directly and find the solution you need."
+  >
+    <ContactForm />
+  </Section>
+
+  <Footer />
+</Layout>
