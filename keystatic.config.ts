@@ -20,7 +20,7 @@ export default config({
     blog: collection({
       label: 'Blog Posts',
       slugField: 'title', // auto-generates slug from title; you can customize
-      path: 'src/content/blog/*',
+      path: 'src/content/blog/*/',
       entryLayout: 'content', // rich markdown editor
       schema: {
         title: fields.text({ label: 'Title', validation: { isRequired: true } }),
