@@ -7,10 +7,14 @@ import node from '@astrojs/node';
 
 import vercel from '@astrojs/vercel';
 
+import react from '@astrojs/react';
+import markdoc from '@astrojs/markdoc';
+import keystatic from '@keystatic/astro'
+
 // https://astro.build/config
 export default defineConfig({
     site: 'https://dioramaconsulting.co.uk',
-    integrations: [mdx(), sitemap()],
+    integrations: [mdx(), sitemap(), react(), markdoc(), keystatic()],
     output: 'static',
     adapter: vercel(),
 });

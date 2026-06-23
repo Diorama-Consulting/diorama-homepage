@@ -1,14 +1,14 @@
+// src/content.config.ts
 import { defineCollection, z } from 'astro:content';
-import { substackLoader } from './loaders/substack';
 
 const blog = defineCollection({
-  loader: substackLoader('https://malm.substack.com/feed'),
+  // Remove the substackLoader — no more RSS, just files
   schema: z.object({
     title: z.string(),
-    link: z.string(),
-    pubDate: z.coerce.date(),
     description: z.string().optional(),
+    pubDate: z.coerce.date(),
     heroImage: z.string().optional(),
+    // content is handled automatically by Astro from the .mdx file
   }),
 });
 
