@@ -22,6 +22,7 @@ export default config({
       slugField: 'title', // auto-generates slug from title; you can customize
       path: 'src/content/blog/*/',
       entryLayout: 'content', // rich markdown editor
+      format: { contentField: 'content' },
       schema: {
         title: fields.text({ label: 'Title', validation: { isRequired: true } }),
         description: fields.text({
