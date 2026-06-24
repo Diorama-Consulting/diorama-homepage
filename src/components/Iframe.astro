@@ -1,0 +1,37 @@
+---
+interface Props {
+  src: string;
+  width?: string;
+  height?: string;
+  title?: string;
+}
+
+const { src, width = '728', height = '409', title = '' } = Astro.props;
+---
+
+<div class="iframe-embed">
+  <iframe
+    {src}
+    {width}
+    {height}
+    {title}
+    frameborder="0"
+    loading="lazy"
+    allow="autoplay; fullscreen"
+    allowfullscreen
+  ></iframe>
+</div>
+
+<style>
+  .iframe-embed {
+    margin: 1.5rem 0;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+
+  .iframe-embed iframe {
+    display: block;
+    max-width: 100%;
+  }
+</style>

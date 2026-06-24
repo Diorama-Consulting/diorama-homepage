@@ -1,6 +1,7 @@
 ---
 import { type CollectionEntry, getCollection, render } from 'astro:content';
 import ProjectPage from '../../layouts/ProjectPage.astro';
+import Iframe from '../../components/Iframe.astro';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects', ({ data }) => !data.draft);
@@ -16,5 +17,5 @@ const { Content } = await render(project);
 ---
 
 <ProjectPage {...project.data}>
-  <Content />
+  <Content components={{ Iframe }} />
 </ProjectPage>
