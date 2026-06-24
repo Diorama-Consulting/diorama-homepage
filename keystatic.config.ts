@@ -86,6 +86,17 @@ export default config({
       },
     }),
 
+    homeBlogWidget: singleton({
+      label: 'Homepage Widget — Blog',
+      path: 'src/content/pages/home-blog-widget',
+      schema: {
+        heading: fields.text({ label: 'Heading', defaultValue: 'From the Blog' }),
+        body: fields.text({ label: 'Body copy', multiline: true }),
+        ctaText: fields.text({ label: 'Button text', defaultValue: 'Read the blog' }),
+        ctaHref: fields.text({ label: 'Button link', defaultValue: '/blog' }),
+      },
+    }),
+
     // Standalone homepage widget for CxAI — independent content, not pulled
     // automatically from the CxAI Substack or site.
     homeCxaiWidget: singleton({
