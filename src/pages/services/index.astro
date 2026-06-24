@@ -2,47 +2,64 @@
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
-import Card from '../../components/Card.astro';
 import Footer from '../../components/Footer.astro';
+import { reader, imageUrl } from '../../lib/keystatic';
+
+const page = await reader.singletons.servicesIndex.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const pageTitle = page?.seoTitle || `Services — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription =
+  page?.seoDescription ||
+  page?.subheading ||
+  'Fractional CTO/CPTO leadership and AI advisory for D2C marketplaces, plus pro-bono Digital and AI strategy support for UK charities.';
+const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+
+const tiles = page?.tiles?.length
+  ? page.tiles
+  : [
+      {
+        eyebrow: 'For Boards, Founders & Investors',
+        title: 'Consulting',
+        description:
+          'Fractional and interim CTO/CPTO leadership, AI and data strategy aligned to P&L, platform modernisation, and product engineering organisation design — with a particular focus on D2C marketplaces and consumer products.',
+        href: '/services/consulting',
+        linkText: 'Explore Consulting',
+      },
+      {
+        eyebrow: 'For UK Charities',
+        title: 'Charities',
+        description:
+          'Practical Digital and AI strategy support for the charity sector — helping trustees and leadership teams adopt technology responsibly, on a realistic budget, without disrupting frontline delivery.',
+        href: '/services/charities',
+        linkText: 'Explore Charity Support',
+      },
+    ];
 ---
 
-<Layout
-  title="Services — Diorama Consulting"
-  description="Fractional CTO/CPTO leadership and AI advisory for D2C marketplaces, plus pro-bono Digital and AI strategy support for UK charities."
->
-  <Header />
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <Section
-    eyebrow="What we do"
-    heading="Two practices, one disciplined approach"
-    subheading="Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact."
+    eyebrow={page?.eyebrow || 'What we do'}
+    heading={page?.heading || 'Two practices, one disciplined approach'}
+    subheading={page?.subheading || 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'}
   >
     <div class="service-grid">
-      <a class="service-tile" href="/services/consulting">
-        <span class="service-eyebrow">For Boards, Founders &amp; Investors</span>
-        <h3>Consulting</h3>
-        <p>
-          Fractional and interim CTO/CPTO leadership, AI and data strategy aligned to
-          P&amp;L, platform modernisation, and product engineering organisation design —
-          with a particular focus on D2C marketplaces and consumer products.
-        </p>
-        <span class="service-link">Explore Consulting →</span>
-      </a>
-
-      <a class="service-tile" href="/services/charities">
-        <span class="service-eyebrow">For UK Charities</span>
-        <h3>Charities</h3>
-        <p>
-          Practical Digital and AI strategy support for the charity sector — helping
-          trustees and leadership teams adopt technology responsibly, on a realistic
-          budget, without disrupting frontline delivery.
-        </p>
-        <span class="service-link">Explore Charity Support →</span>
-      </a>
+      {tiles.map((tile) => (
+        <a class="service-tile" href={tile.href}>
+          <span class="service-eyebrow">{tile.eyebrow}</span>
+          <h3>{tile.title}</h3>
+          <p>{tile.description}</p>
+          <span class="service-link">{tile.linkText} →</span>
+        </a>
+      ))}
     </div>
   </Section>
 
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>

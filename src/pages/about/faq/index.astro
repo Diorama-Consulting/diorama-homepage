@@ -4,6 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import { render } from 'astro:content';
+import { reader, imageUrl } from '../../../lib/keystatic';
 
 const allFaqs = (await getCollection('faq')).sort((a, b) => a.data.order - b.data.order);
 
@@ -23,13 +24,46 @@ const rendered = await Promise.all(
   allFaqs.map(async (entry) => ({ id: entry.id, ...(await render(entry)) })),
 );
 const contentById = new Map(rendered.map((r) => [r.id, r.Content]));
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+const pageImage = imageUrl(siteSettings?.defaultSeoImage);
+
+// FAQPage structured data — specifically favoured by AI answer engines for
+// extracting Q&A pairs directly. JSON-LD values must be plain text, so the
+// raw MDX source (entry.body) has its lightweight markdown syntax stripped
+// rather than using the rendered HTML <Content /> output.
+function stripMarkdown(source: string): string {
+  return source
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '') // images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // links -> link text
+    .replace(/[#*_`>]/g, '') // heading/emphasis/code/quote markers
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: allFaqs.map((entry) => ({
+    '@type': 'Question',
+    name: entry.data.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: stripMarkdown(entry.body ?? ''),
+    },
+  })),
+};
 ---
 
 <Layout
-  title="FAQ — Diorama Consulting"
+  title={`FAQ — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
   description="Frequently asked questions about how Diorama Consulting engages with clients."
+  image={pageImage}
+  jsonLd={allFaqs.length > 0 ? faqJsonLd : undefined}
 >
-  <Header />
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <main class="container">
     <section class="page-intro">
@@ -61,7 +95,7 @@ const contentById = new Map(rendered.map((r) => [r.id, r.Content]));
     ))}
   </main>
 
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>

@@ -5,17 +5,50 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Badge from '../components/Badge.astro';
+import { reader, imageSrc, imageUrl } from '../lib/keystatic';
 
-type Props = CollectionEntry<'projects'>['data'];
+type Props = CollectionEntry<'projects'>['data'] & { slug: string };
 
-const { title, summary, heroImage, status, externalUrl, repoUrl } = Astro.props;
+const {
+  title,
+  summary,
+  heroImage,
+  status,
+  externalUrl,
+  repoUrl,
+  seoTitle,
+  seoDescription,
+  slug,
+} = Astro.props;
 
 const statusVariant = status === 'live' ? 'accent' : status === 'in-progress' ? 'outline' : 'default';
+
+const resolvedHeroImage = imageSrc(heroImage);
+const heroImageUrl = imageUrl(heroImage);
+
+const siteSettings = await reader.singletons.siteSettings.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+
+const pageTitle = seoTitle || `${title} — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription = seoDescription || summary;
+
+const projectJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: title,
+  description: pageDescription,
+  image: heroImageUrl ? [heroImageUrl] : undefined,
+  url: new URL(`/projects/${slug}/`, Astro.site).toString(),
+  creator: siteSettings?.founderName
+    ? { '@type': 'Person', name: siteSettings.founderName }
+    : undefined,
+};
 ---
 
 <html lang="en">
   <head>
-    <BaseHead title={`${title} — Diorama Consulting`} description={summary} />
+    <BaseHead title={pageTitle} description={pageDescription} image={heroImageUrl} jsonLd={projectJsonLd} />
     <style>
       .hero-container {
         position: relative;
@@ -93,16 +126,16 @@ const statusVariant = status === 'live' ? 'accent' : status === 'in-progress' ? 
   </head>
 
   <body>
-    <Header transparentOverHero={false} />
+    <Header transparentOverHero={false} logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
     <main>
       <article>
-        {heroImage && (
+        {resolvedHeroImage && (
           <div class="hero-container">
-            {typeof heroImage === 'string' ? (
-              <img src={heroImage} alt="" class="hero-image" />
+            {typeof resolvedHeroImage === 'string' ? (
+              <img src={resolvedHeroImage} alt="" class="hero-image" />
             ) : (
-              <Image src={heroImage} alt="" class="hero-image" width={1600} height={720} />
+              <Image src={resolvedHeroImage} alt="" class="hero-image" width={1600} height={720} />
             )}
           </div>
         )}
@@ -128,6 +161,6 @@ const statusVariant = status === 'live' ? 'accent' : status === 'in-progress' ? 
       </article>
     </main>
 
-    <Footer />
+    <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
   </body>
 </html>

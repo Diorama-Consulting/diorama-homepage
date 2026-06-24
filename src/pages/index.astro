@@ -5,71 +5,71 @@ import Hero from '../components/Hero.astro';
 import Section from '../components/Section.astro';
 import Card from '../components/Card.astro';
 import Footer from '../components/Footer.astro';
-import heroPhoto from '../assets/hero/dark-background.jpg';
-import founderPortrait from '../assets/hero/MalmCol.png';
+import { reader, imageSrc, imageUrl } from '../lib/keystatic';
+import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
+import defaultFounderPortrait from '../assets/hero/MalmCol.png';
 
-// Homepage widgets are deliberately standalone content (edited in their own
-// Keystatic singletons: homeCxaiWidget, homeCharityWidget) rather than
-// teasers pulled live from /services/charities or the CxAI Substack — see
-// README for the reasoning. For now these are placeholder values; once
-// Keystatic is wired up, replace this block with a read from those
-// singletons via the Keystatic Reader API.
-const cxaiWidget = {
-  heading: 'CxAI',
-  body: 'A Substack for C-Suite leaders on Consumer AI, technology strategy, and the occasional side project.',
-  ctaText: 'Read CxAI',
-  ctaHref: 'https://cxai100.substack.com',
-};
+const page = await reader.singletons.home.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
 
-const charityWidget = {
-  heading: 'Supporting UK Charities',
-  body: 'Beyond commercial advisory, Diorama supports the charity sector directly through Trustee roles at Helpforce and Aston-Mansfield.',
-  ctaText: 'Learn more',
-  ctaHref: '/services/charities',
-};
+const pageTitle = page?.seoTitle || siteSettings?.defaultSeoTitle || 'Diorama Consulting';
+const pageDescription =
+  page?.seoDescription ||
+  siteSettings?.defaultSeoDescription ||
+  'AI Technology Advisory for Boards, Founders and Investors, with a focus on D2C marketplaces and consumer products.';
+const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+
+// Hero image/face fall back to the original shipped defaults if nothing has
+// been set in Keystatic yet, so the homepage never renders with a missing
+// background.
+const heroImage = imageSrc(page?.heroImage) ?? defaultHeroPhoto;
+const heroFace = imageSrc(page?.heroFace) ?? defaultFounderPortrait;
+
+const exploreCards = page?.exploreCards?.length
+  ? page.exploreCards
+  : [
+      { title: 'Services', description: 'Consulting and advisory services we offer, plus our charity work.', href: '/services', linkText: 'View Services' },
+      { title: 'Projects', description: 'Side projects and tools built with AI coding assistants.', href: '/projects', linkText: 'View Projects' },
+      { title: 'Teaching', description: 'Interactive tools for demystifying AI, plus our blog.', href: '/teaching', linkText: 'View Teaching' },
+    ];
+
+// Homepage widgets are deliberately standalone content (their own Keystatic
+// singletons) rather than teasers pulled live from /services/charities or
+// the CxAI Substack — see README for the reasoning.
+const charityWidget = await reader.singletons.homeCharityWidget.read();
+const cxaiWidget = await reader.singletons.homeCxaiWidget.read();
+const showCharityWidget = page?.showCharityWidget ?? true;
+const showCxaiWidget = page?.showCxaiWidget ?? true;
 ---
 
-<Layout
-  title="Diorama Consulting"
-  description="AI Technology Advisory for Boards, Founders and Investors, with a focus on D2C marketplaces and consumer products."
->
-  <Header />
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <Hero
-    heading="Ideas that make a difference."
-    subheading="We help ambitious teams ship AI products that actually work."
-    revealHeading="Unique Industry Experience."
-    revealSubheading="Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI."
-    image={heroPhoto}
-    face={founderPortrait}
-    faceAlt="Portrait of Mal Minhas."
+    eyebrow={page?.heroEyebrow || 'Now in beta'}
+    heading={page?.heroHeading || 'Ideas that make a difference.'}
+    subheading={page?.heroSubheading || 'We help ambitious teams ship AI products that actually work.'}
+    ctaText={page?.heroCtaText || 'Get started'}
+    ctaHref={page?.heroCtaHref || '/contact'}
+    revealHeading={page?.revealHeading || 'Unique Industry Experience.'}
+    revealSubheading={page?.revealSubheading || 'Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.'}
+    image={heroImage}
+    face={heroFace}
+    faceAlt={page?.heroFaceAlt || 'Portrait of the founder.'}
   />
 
   <Section
     id="explore"
-    eyebrow="Explore"
-    heading="Where to start"
-    subheading="A quick map of what's on this site."
+    eyebrow={page?.exploreEyebrow || 'Explore'}
+    heading={page?.exploreHeading || 'Where to start'}
+    subheading={page?.exploreSubheading || "A quick map of what's on this site."}
   >
     <div class="explore-grid">
-      <Card
-        title="Services"
-        description="Consulting and advisory services we offer, plus our charity work."
-        href="/services"
-        linkText="View Services"
-      />
-      <Card
-        title="Projects"
-        description="Side projects and tools built with AI coding assistants."
-        href="/projects"
-        linkText="View Projects"
-      />
-      <Card
-        title="Teaching"
-        description="Interactive tools for demystifying AI, plus our blog."
-        href="/teaching"
-        linkText="View Teaching"
-      />
+      {exploreCards.map((card) => (
+        <Card title={card.title} description={card.description} href={card.href} linkText={card.linkText} />
+      ))}
     </div>
   </Section>
 
@@ -78,25 +78,31 @@ const charityWidget = {
        Standalone content widgets, independently editable in Keystatic.
        Add further widgets here following the same card pattern.
   ==================================================================== -->
-  <Section id="widgets" eyebrow="From the network" heading="More from Diorama">
-    <div class="widget-grid">
-      <a class="widget-card" href={charityWidget.ctaHref} target={charityWidget.ctaHref.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
-        <span class="widget-eyebrow">Charities</span>
-        <h3>{charityWidget.heading}</h3>
-        <p>{charityWidget.body}</p>
-        <span class="widget-cta">{charityWidget.ctaText} →</span>
-      </a>
+  {(showCharityWidget || showCxaiWidget) && (
+    <Section id="widgets" eyebrow={page?.widgetsEyebrow || 'From the network'} heading={page?.widgetsHeading || 'More from Diorama'}>
+      <div class="widget-grid">
+        {showCharityWidget && charityWidget && (
+          <a class="widget-card" href={charityWidget.ctaHref} target={charityWidget.ctaHref?.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
+            <span class="widget-eyebrow">Charities</span>
+            <h3>{charityWidget.heading}</h3>
+            <p>{charityWidget.body}</p>
+            <span class="widget-cta">{charityWidget.ctaText} →</span>
+          </a>
+        )}
 
-      <a class="widget-card" href={cxaiWidget.ctaHref} target={cxaiWidget.ctaHref.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
-        <span class="widget-eyebrow">Newsletter</span>
-        <h3>{cxaiWidget.heading}</h3>
-        <p>{cxaiWidget.body}</p>
-        <span class="widget-cta">{cxaiWidget.ctaText} →</span>
-      </a>
-    </div>
-  </Section>
+        {showCxaiWidget && cxaiWidget && (
+          <a class="widget-card" href={cxaiWidget.ctaHref} target={cxaiWidget.ctaHref?.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
+            <span class="widget-eyebrow">Newsletter</span>
+            <h3>{cxaiWidget.heading}</h3>
+            <p>{cxaiWidget.body}</p>
+            <span class="widget-cta">{cxaiWidget.ctaText} →</span>
+          </a>
+        )}
+      </div>
+    </Section>
+  )}
 
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>

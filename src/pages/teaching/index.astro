@@ -5,63 +5,67 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import Card from '../../components/Card.astro';
 import BlogCard from '../../components/BlogCard.astro';
+import { reader, imageUrl } from '../../lib/keystatic';
 
-// Pedagogical tools — currently hand-authored below since each links to an
-// externally-hosted app rather than rendering its own MDX page. If these grow
-// into full write-ups, move them into a `teaching` content collection
-// (mirroring `projects`) and loop over `getCollection('teaching')` instead.
-const teachingTools = [
-  {
-    title: 'AI Foundations',
-    description:
-      'A compact, interactive introduction to AI concepts and terminology for smart generalists — no prior technical knowledge assumed.',
-    href: 'https://ai-pathfinder-one.lovable.app/',
-  },
-  {
-    title: 'MNIST Demystifier',
-    description:
-      'Explore the classic handwritten-digits dataset, train a model to recognise digits, then test its accuracy — the "hello world" of machine learning, made tangible.',
-    href: 'https://dioramaconsulting.co.uk/friendly-digits-explorer',
-  },
-  {
-    title: 'PageRank Playpen',
-    description:
-      "An interactive playground for Google's foundational PageRank algorithm — build link networks and watch authority converge in real time.",
-    href: 'https://pagerank-playpen.lovable.app',
-  },
-  {
-    title: 'Quantum Curious',
-    description:
-      "Explore qubits and run real quantum algorithms via IBM's Qiskit, on both simulator and real quantum hardware.",
-    href: 'https://dioramaconsulting.co.uk/quantum-curious',
-  },
-  {
-    title: 'AI Evolution',
-    description:
-      'A timeline of key events in AI history, from the Dartmouth Conference to the present day.',
-    href: 'https://ai-chronicle-view.lovable.app/',
-  },
-];
+const page = await reader.singletons.teachingPage.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const pageTitle = page?.seoTitle || `Teaching — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription =
+  page?.seoDescription ||
+  page?.subheading ||
+  'Teaching material developed in the course of providing executive AI coaching — interactive tools for demystifying AI, quantum computing, and more.';
+const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+
+// Pedagogical tools, editable in Keystatic (Teaching — Page singleton).
+// Falls back to the original shipped set if the array hasn't been
+// populated yet, so the page never renders empty.
+const teachingTools = page?.tools?.length
+  ? page.tools
+  : [
+      {
+        title: 'AI Foundations',
+        description: 'A compact, interactive introduction to AI concepts and terminology for smart generalists — no prior technical knowledge assumed.',
+        href: 'https://ai-pathfinder-one.lovable.app/',
+      },
+      {
+        title: 'MNIST Demystifier',
+        description: 'Explore the classic handwritten-digits dataset, train a model to recognise digits, then test its accuracy — the "hello world" of machine learning, made tangible.',
+        href: 'https://dioramaconsulting.co.uk/friendly-digits-explorer',
+      },
+      {
+        title: 'PageRank Playpen',
+        description: "An interactive playground for Google's foundational PageRank algorithm — build link networks and watch authority converge in real time.",
+        href: 'https://pagerank-playpen.lovable.app',
+      },
+      {
+        title: 'Quantum Curious',
+        description: "Explore qubits and run real quantum algorithms via IBM's Qiskit, on both simulator and real quantum hardware.",
+        href: 'https://dioramaconsulting.co.uk/quantum-curious',
+      },
+      {
+        title: 'AI Evolution',
+        description: 'A timeline of key events in AI history, from the Dartmouth Conference to the present day.',
+        href: 'https://ai-chronicle-view.lovable.app/',
+      },
+    ];
 
 const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
 ---
 
-<Layout
-  title="Teaching — Diorama Consulting"
-  description="Teaching material developed in the course of providing executive AI coaching — interactive tools for demystifying AI, quantum computing, and more."
->
-  <Header />
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <main class="container">
     <section class="page-intro">
-      <p class="eyebrow">Executive AI coaching</p>
-      <h1>Teaching</h1>
+      <p class="eyebrow">{page?.eyebrow || 'Executive AI coaching'}</p>
+      <h1>{page?.heading || 'Teaching'}</h1>
       <p class="subheading">
-        A collection of teaching content built to support the practical demystification
-        of AI, quantum computing, and search — developed for executive coaching
-        engagements and shared here for anyone curious.
+        {page?.subheading || 'A collection of teaching content built to support the practical demystification of AI, quantum computing, and search — developed for executive coaching engagements and shared here for anyone curious.'}
       </p>
     </section>
 
@@ -74,7 +78,7 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
     {recentPosts.length > 0 && (
       <section class="blog-teaser">
         <div class="blog-teaser-head">
-          <h2>From the blog</h2>
+          <h2>{page?.blogTeaserHeading || 'From the blog'}</h2>
           <a href="/blog" class="view-all">View all posts →</a>
         </div>
         <div class="blog-teaser-grid">
@@ -84,7 +88,7 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
               excerpt={post.data.description ?? ''}
               href={`/blog/${post.id}/`}
               date={post.data.pubDate.toISOString()}
-              image={typeof post.data.heroImage === 'string' ? post.data.heroImage : post.data.heroImage?.src}
+              image={imageUrl(post.data.heroImage)}
             />
           ))}
         </div>
@@ -92,7 +96,7 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
     )}
   </main>
 
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>

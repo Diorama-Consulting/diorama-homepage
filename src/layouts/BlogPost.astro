@@ -4,22 +4,71 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import { reader, imageUrl } from '../lib/keystatic';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & { slug: string };
 
-const { title, description, pubDate, updatedDate, heroImage, link } = Astro.props;
+const {
+    title,
+    description,
+    pubDate,
+    updatedDate,
+    heroImage,
+    link,
+    seoTitle,
+    seoDescription,
+    slug,
+} = Astro.props;
 
-let subscribeUrl = link;
-try {
-    subscribeUrl = `${new URL(link).origin}/subscribe`;
-} catch {
-    // link wasn't a valid absolute URL — fall back to linking the post itself
+// heroImage is stored by Keystatic's conditional field as
+// { discriminant: true, value: <url string> }   — external URL, or
+// { discriminant: false, value: <ImageMetadata> } — local upload.
+const heroImageUrl = imageUrl(heroImage);
+
+// `link` is genuinely optional — only posts cross-posted from Substack set
+// it. Everything below that depends on it is gated behind `hasSourceLink` so
+// natively-written posts don't show a "originally published on Substack"
+// banner that isn't true, and so we never call `new URL(undefined)`.
+const hasSourceLink = Boolean(link);
+
+let subscribeUrl: string | undefined;
+if (hasSourceLink) {
+    try {
+        subscribeUrl = `${new URL(link).origin}/subscribe`;
+    } catch {
+        // link wasn't a valid absolute URL — fall back to linking the post itself
+        subscribeUrl = link;
+    }
 }
+
+const siteSettings = await reader.singletons.siteSettings.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+
+const pageTitle = seoTitle || `${title} — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription = seoDescription || description || siteSettings?.defaultSeoDescription || '';
+
+const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: title,
+    description: pageDescription,
+    image: heroImageUrl ? [heroImageUrl] : undefined,
+    datePublished: pubDate?.toISOString?.() ?? pubDate,
+    dateModified: (updatedDate ?? pubDate)?.toISOString?.() ?? updatedDate ?? pubDate,
+    author: siteSettings?.founderName
+        ? { '@type': 'Person', name: siteSettings.founderName }
+        : undefined,
+    publisher: siteSettings?.legalName
+        ? { '@type': 'Organization', name: siteSettings.legalName }
+        : undefined,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': new URL(`/blog/${slug}/`, Astro.site).toString() },
+};
 ---
 
 <html lang="en">
     <head>
-        <BaseHead title={title} description={description} />
+        <BaseHead title={pageTitle} description={pageDescription} image={heroImageUrl} jsonLd={articleJsonLd} />
         <style>
             main {
                 width: 100%;
@@ -185,27 +234,29 @@ try {
     </head>
 
     <body>
-        <Header transparentOverHero={true} />
+        <Header transparentOverHero={true} logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
         <div class="floating-actions">
             <button id="back-btn" class="floating-btn back-btn" style="display: none;">
                 &larr; Go back
             </button>
-            <a
-                class="floating-btn subscribe-btn"
-                href={subscribeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                Subscribe on Substack
-            </a>
+            {hasSourceLink && (
+                <a
+                    class="floating-btn subscribe-btn"
+                    href={subscribeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Subscribe on Substack
+                </a>
+            )}
         </div>
 
         <main>
             <article>
                 <div
                     class="hero-container"
-                    style={heroImage ? `background-image: url('${heroImage}');` : ''}
+                    style={heroImageUrl ? `background-image: url('${heroImageUrl}');` : ''}
                 >
                     <div class="hero-scrim"></div>
 
@@ -223,23 +274,25 @@ try {
                 </div>
 
                 <div class="prose">
-                    <div class="source-banner">
-                        <span class="source-banner-icon" aria-hidden="true">↗</span>
-                        <span>
-                            Originally published on Substack ·
-                            {' '}
-                            <a href={link} target="_blank" rel="noopener noreferrer">
-                                Read the original article
-                            </a>
-                        </span>
-                    </div>
+                    {hasSourceLink && (
+                        <div class="source-banner">
+                            <span class="source-banner-icon" aria-hidden="true">↗</span>
+                            <span>
+                                Originally published on Substack ·
+                                {' '}
+                                <a href={link} target="_blank" rel="noopener noreferrer">
+                                    Read the original article
+                                </a>
+                            </span>
+                        </div>
+                    )}
 
                     <slot />
                 </div>
             </article>
         </main>
 
-        <Footer />
+        <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 
         <script>
             document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,28 @@
+heroEyebrow: Now in beta
+heroHeading: Ideas that make a difference.
+heroSubheading: We help ambitious teams ship AI products that actually work.
+heroCtaText: Get started
+heroCtaHref: /contact
+heroFaceAlt: Portrait of the founder.
+revealHeading: Unique Industry Experience.
+revealSubheading: Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.
+exploreEyebrow: Explore
+exploreHeading: Where to start
+exploreSubheading: A quick map of what's on this site.
+exploreCards:
+  - title: Services
+    description: Consulting and advisory services we offer, plus our charity work.
+    href: /services
+    linkText: View Services
+  - title: Projects
+    description: Side projects and tools built with AI coding assistants.
+    href: /projects
+    linkText: View Projects
+  - title: Teaching
+    description: Interactive tools for demystifying AI, plus our blog.
+    href: /teaching
+    linkText: View Teaching
+widgetsEyebrow: From the network
+widgetsHeading: More from Diorama
+showCxaiWidget: true
+showCharityWidget: true

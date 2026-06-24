@@ -4,25 +4,34 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import BlogCard from '../../components/BlogCard.astro';
+import { reader, imageUrl } from '../../lib/keystatic';
 
 const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order,
 );
+
+const page = await reader.singletons.projectsIndex.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const pageTitle = page?.seoTitle || `Projects — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription =
+  page?.seoDescription ||
+  page?.subheading ||
+  'Side projects and tools built with AI coding assistants — Cursor, Lovable and Claude — to scratch an itch and learn in the process.';
+const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
 ---
 
-<Layout
-  title="Projects — Diorama Consulting"
-  description="Side projects and tools built with AI coding assistants — Cursor, Lovable and Claude — to scratch an itch and learn in the process."
->
-  <Header />
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <main class="container">
     <section class="page-intro">
-      <p class="eyebrow">Building</p>
-      <h1>Projects</h1>
+      <p class="eyebrow">{page?.eyebrow || 'Building'}</p>
+      <h1>{page?.heading || 'Projects'}</h1>
       <p class="subheading">
-        Fun and useful side projects built with AI coding tools. Each one started as an
-        itch to scratch — here's what came out of it.
+        {page?.subheading || "Fun and useful side projects built with AI coding tools. Each one started as an itch to scratch — here's what came out of it."}
       </p>
     </section>
 
@@ -34,13 +43,13 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).so
           href={`/projects/${project.id}/`}
           date={new Date().toISOString()}
           source={project.data.status === 'live' ? 'Live' : project.data.status}
-          image={typeof project.data.heroImage === 'string' ? project.data.heroImage : project.data.heroImage?.src}
+          image={imageUrl(project.data.heroImage)}
         />
       ))}
     </section>
   </main>
 
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>

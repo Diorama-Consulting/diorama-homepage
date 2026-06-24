@@ -1,0 +1,19 @@
+eyebrow: Consulting
+heading: Built on decades of experience
+subheading: 'We help create defensible growth, reduce risk and accelerate value creation through:'
+capabilities:
+  - title: High Level Experience
+    description: Fractional/Interim leadership (CTO, CPTO).
+  - title: Economics Driven
+    description: Pragmatic AI and Data Strategy aligned to P&L.
+  - title: E-commerce
+    description: D2C marketplace optimisation and innovation.
+  - title: Platform Modernisation
+    description: Architecture modernisation without rewrite.
+  - title: Engineering
+    description: Product Engineering team organisation design.
+  - title: Sustainability
+    description: Practical operationalisation of sustainability initiatives.
+testimonialsEyebrow: Testimonials
+testimonialsHeading: What people say
+testimonials: []

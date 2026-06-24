@@ -2,6 +2,27 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
+// Keystatic's fields.conditional() always stores its value as
+// { discriminant: boolean, value: ... } — discriminant: true means an
+// external URL was used, discriminant: false means a local upload. Every
+// image/logo field below must use this exact shape, not a plain string —
+// see src/lib/keystatic.ts for the corresponding unwrap helpers used by
+// every page that renders one of these fields.
+//
+// Both branches' `value` are nullable: Keystatic writes out the conditional
+// "shell" object even when nothing has been uploaded/typed yet — i.e.
+// { discriminant: false, value: null } — rather than omitting the field.
+// Every consumer (see imageUrl/imageSrc in lib/keystatic.ts) already treats
+// a null value the same as a missing field.
+function conditionalImage(imageSchema: z.ZodType) {
+  return z
+    .union([
+      z.object({ discriminant: z.literal(true), value: z.string().url().nullable() }),
+      z.object({ discriminant: z.literal(false), value: imageSchema.nullable() }),
+    ])
+    .optional();
+}
+
 // ---------------------------------------------------------------------------
 // BLOG  (src/content/blog/<slug>/index.mdx + co-located images)
 // ---------------------------------------------------------------------------
@@ -13,14 +34,15 @@ const blog = defineCollection({
       description: z.string().optional(),
       pubDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
-      // Local, co-located image (./cover.jpg next to index.mdx) — optimised by Astro.
-      // Falls back to a remote URL string if you paste an external link instead.
-      heroImage: z.union([image(), z.string().url()]).optional(),
+      heroImage: conditionalImage(image()),
       // Optional provenance link if a post originated on Substack — purely
       // informational, only renders the "Originally published on Substack"
       // banner in BlogPost.astro when present. Omit entirely for native posts.
       link: z.string().url().optional(),
       draft: z.boolean().default(false),
+      // SEO overrides — fall back to title/description when blank.
+      seoTitle: z.string().optional(),
+      seoDescription: z.string().optional(),
     }),
 });
 
@@ -33,7 +55,7 @@ const projects = defineCollection({
     z.object({
       title: z.string(),
       summary: z.string(),
-      heroImage: z.union([image(), z.string().url()]).optional(),
+      heroImage: conditionalImage(image()),
       status: z.enum(['live', 'in-progress', 'archived']).default('live'),
       externalUrl: z.string().url().optional(),
       repoUrl: z.string().url().optional(),
@@ -42,6 +64,8 @@ const projects = defineCollection({
       relatedBlogSlug: z.string().optional(),
       order: z.number().default(0),
       draft: z.boolean().default(false),
+      seoTitle: z.string().optional(),
+      seoDescription: z.string().optional(),
     }),
 });
 
@@ -69,7 +93,7 @@ const charities = defineCollection({
       name: z.string(),
       role: z.string(), // e.g. "Trustee"
       summary: z.string(),
-      logo: z.union([image(), z.string().url()]).optional(),
+      logo: conditionalImage(image()),
       externalUrl: z.string().url().optional(),
       order: z.number().default(0),
     }),

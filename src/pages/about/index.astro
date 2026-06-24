@@ -3,51 +3,54 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import Footer from '../../components/Footer.astro';
+import { reader, imageUrl } from '../../lib/keystatic';
+
+const page = await reader.singletons.about.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const pageTitle = page?.seoTitle || `About — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription = page?.seoDescription || page?.subheading || 'The mission behind Diorama Consulting.';
+const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+
+const bodyParagraphs = page?.bodyParagraphs?.length
+  ? page.bodyParagraphs
+  : [
+      'We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI — helping create defensible growth, reduce risk, and accelerate value creation through fractional leadership, pragmatic AI and data strategy, platform modernisation, and organisation design.',
+      "The name Diorama Consulting is inspired by a quote from David Wallace-Wells and the reality that we're not outside observers of climate change, AI disruption, or technological change. We are all in the diorama, creating it and being shaped by it in turn.",
+    ];
 ---
 
-<Layout
-  title="About — Diorama Consulting"
-  description="The mission behind Diorama Consulting."
->
-  <Header />
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <Section
-    eyebrow="About us"
-    heading="We are all in the diorama"
-    subheading="Diorama Consulting Ltd is an AI Technology Advisory practice with a focus on D2C marketplaces and consumer products."
+    eyebrow={page?.eyebrow || 'About us'}
+    heading={page?.heading || 'We are all in the diorama'}
+    subheading={page?.subheading || 'Diorama Consulting Ltd is an AI Technology Advisory practice with a focus on D2C marketplaces and consumer products.'}
   >
     <div class="about-prose">
-      <p>
-        We partner with C-Suite, Boards, Founders and Investors to bridge product
-        strategy, engineering and AI — helping create defensible growth, reduce risk,
-        and accelerate value creation through fractional leadership, pragmatic AI and
-        data strategy, platform modernisation, and organisation design.
-      </p>
-      <p>
-        The name <em>Diorama Consulting</em> is inspired by a quote from David
-        Wallace-Wells and the reality that we're not outside observers of climate
-        change, AI disruption, or technological change. We are all in the diorama,
-        creating it and being shaped by it in turn.
-      </p>
+      {bodyParagraphs.map((paragraph) => <p>{paragraph}</p>)}
     </div>
 
     <div class="about-links">
       <a class="about-link-card" href="/about/founder">
         <span class="about-link-eyebrow">Meet the team</span>
-        <h3>The Founder</h3>
-        <p>The story behind Diorama and the person leading it.</p>
+        <h3>{page?.founderLinkTitle || 'The Founder'}</h3>
+        <p>{page?.founderLinkDescription || 'The story behind Diorama and the person leading it.'}</p>
         <span class="about-link-cta">Read more →</span>
       </a>
       <a class="about-link-card" href="/about/faq">
         <span class="about-link-eyebrow">Questions</span>
-        <h3>FAQ</h3>
-        <p>How we engage with clients, pricing structure, and what to expect.</p>
+        <h3>{page?.faqLinkTitle || 'FAQ'}</h3>
+        <p>{page?.faqLinkDescription || 'How we engage with clients and what to expect.'}</p>
         <span class="about-link-cta">View FAQ →</span>
       </a>
     </div>
   </Section>
 
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>

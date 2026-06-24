@@ -1,0 +1,33 @@
+brandBlurb: AI Technology Advice led by Mal Minhas with a focus on D2C marketplaces and products.
+groups:
+  - heading: Site
+    links:
+      - label: Services
+        href: /services
+      - label: Projects
+        href: /projects
+      - label: Teaching
+        href: /teaching
+      - label: Blog
+        href: /blog
+  - heading: Company
+    links:
+      - label: About
+        href: /about
+      - label: The Founder
+        href: /about/founder
+      - label: FAQ
+        href: /about/faq
+      - label: Contact
+        href: /contact
+  - heading: Legal
+    links:
+      - label: Privacy
+        href: '#'
+      - label: Terms
+        href: '#'
+      - label: Cookies
+        href: '#'
+      - label: Accessibility
+        href: '#'
+legalLine: '© 2026 Diorama Consulting Ltd. All rights reserved. Registered at 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ in England No. 16137029 with VAT Registration No. 483184277'

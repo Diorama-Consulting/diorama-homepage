@@ -1,0 +1,14 @@
+eyebrow: What we do
+heading: Two practices, one disciplined approach
+subheading: 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'
+tiles:
+  - eyebrow: For Boards, Founders & Investors
+    title: Consulting
+    description: Fractional and interim CTO/CPTO leadership, AI and data strategy aligned to P&L, platform modernisation, and product engineering organisation design — with a particular focus on D2C marketplaces and consumer products.
+    href: /services/consulting
+    linkText: Explore Consulting
+  - eyebrow: For UK Charities
+    title: Charities
+    description: Practical Digital and AI strategy support for the charity sector — helping trustees and leadership teams adopt technology responsibly, on a realistic budget, without disrupting frontline delivery.
+    href: /services/charities
+    linkText: Explore Charity Support

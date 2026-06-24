@@ -1,0 +1,20 @@
+eyebrow: Executive AI coaching
+heading: Teaching
+subheading: A collection of teaching content built to support the practical demystification of AI, quantum computing, and search — developed for executive coaching engagements and shared here for anyone curious.
+tools:
+  - title: AI Foundations
+    description: A compact, interactive introduction to AI concepts and terminology for smart generalists — no prior technical knowledge assumed.
+    href: https://ai-pathfinder-one.lovable.app/
+  - title: MNIST Demystifier
+    description: Explore the classic handwritten-digits dataset, train a model to recognise digits, then test its accuracy — the "hello world" of machine learning, made tangible.
+    href: https://dioramaconsulting.co.uk/friendly-digits-explorer
+  - title: PageRank Playpen
+    description: An interactive playground for Google's foundational PageRank algorithm — build link networks and watch authority converge in real time.
+    href: https://pagerank-playpen.lovable.app
+  - title: Quantum Curious
+    description: Explore qubits and run real quantum algorithms via IBM's Qiskit, on both simulator and real quantum hardware.
+    href: https://dioramaconsulting.co.uk/quantum-curious
+  - title: AI Evolution
+    description: A timeline of key events in AI history, from the Dartmouth Conference to the present day.
+    href: https://ai-chronicle-view.lovable.app/
+blogTeaserHeading: From the blog

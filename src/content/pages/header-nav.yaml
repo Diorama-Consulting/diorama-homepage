@@ -1,0 +1,12 @@
+logoText: Diorama
+links:
+  - label: Services
+    href: /services
+  - label: Projects
+    href: /projects
+  - label: Teaching
+    href: /teaching
+  - label: About
+    href: /about
+ctaText: Contact
+ctaHref: /contact

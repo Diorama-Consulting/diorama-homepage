@@ -2,19 +2,50 @@
 // Import the global.css file here so that it is included on
 // all pages through the use of the <BaseHead /> component.
 import '../styles/global.css';
-import type { ImageMetadata } from 'astro';
-import FallbackImage from '../assets/blog-placeholder-1.jpg';
-import { SITE_TITLE } from '../consts';
+import { reader, imageUrl } from '../lib/keystatic';
 
 interface Props {
-	title: string;
-	description: string;
-	image?: ImageMetadata;
+  title: string;
+  description: string;
+  /** Plain URL string for the social-share image. Already-unwrapped — pass
+      the result of imageUrl(), not a raw conditional-field object. */
+  image?: string;
+  /**
+   * Optional page-specific structured data (JSON-LD) — e.g. BlogPosting for
+   * a blog post, FAQPage for the FAQ listing. Passed as a plain object;
+   * this component always also emits the sitewide Organization block from
+   * Site Settings, so callers only need to add what's specific to this page.
+   */
+  jsonLd?: Record<string, unknown>;
 }
+
+const siteSettings = await reader.singletons.siteSettings.read();
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image = FallbackImage } = Astro.props;
+const {
+  title,
+  description,
+  image = imageUrl(siteSettings?.defaultSeoImage),
+  jsonLd,
+} = Astro.props;
+
+const resolvedImage = image ? new URL(image, Astro.url).toString() : undefined;
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: siteSettings?.legalName || siteSettings?.siteName,
+  url: Astro.site?.toString(),
+  foundingDate: siteSettings?.foundingDate || undefined,
+  founder: siteSettings?.founderName
+    ? { '@type': 'Person', name: siteSettings.founderName }
+    : undefined,
+  address: siteSettings?.registeredAddress
+    ? { '@type': 'PostalAddress', streetAddress: siteSettings.registeredAddress }
+    : undefined,
+  sameAs: siteSettings?.sameAs?.length ? siteSettings.sameAs : undefined,
+};
 ---
 
 <!-- Global Metadata -->
@@ -26,7 +57,7 @@ const { title, description, image = FallbackImage } = Astro.props;
 <link
 	rel="alternate"
 	type="application/rss+xml"
-	title={SITE_TITLE}
+	title={siteSettings?.siteName}
 	href={new URL('rss.xml', Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
@@ -44,11 +75,22 @@ const { title, description, image = FallbackImage } = Astro.props;
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image.src, Astro.url)} />
+{resolvedImage && <meta property="og:image" content={resolvedImage} />}
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:url" content={Astro.url} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image.src, Astro.url)} />
+{resolvedImage && <meta property="twitter:image" content={resolvedImage} />}
+
+<!--
+  Structured data (JSON-LD) — read by both classic search engines and AI
+  answer engines (GEO). The Organization block is sitewide and always
+  present; page-specific schema (Article, FAQPage, etc.) is added via the
+  `jsonLd` prop on a per-page basis. JSON.stringify with no extra escaping
+  is safe here because this content originates from Keystatic-managed
+  frontmatter, not raw user input.
+-->
+<script type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

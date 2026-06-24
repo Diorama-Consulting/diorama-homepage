@@ -3,79 +3,65 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import Card from '../../components/Card.astro';
-import PricingTable from '../../components/PricingTable.astro';
 import TestimonialCard from '../../components/TestimonialCard.astro';
 import Footer from '../../components/Footer.astro';
+import { reader, imageUrl } from '../../lib/keystatic';
+
+const page = await reader.singletons.servicesConsulting.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const pageTitle = page?.seoTitle || `Consulting — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription =
+  page?.seoDescription ||
+  page?.subheading ||
+  'Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors, with a focus on D2C marketplaces.';
+const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+
+const capabilities = page?.capabilities?.length
+  ? page.capabilities
+  : [
+      { title: 'High Level Experience', description: 'Fractional/Interim leadership (CTO, CPTO).' },
+      { title: 'Economics Driven', description: 'Pragmatic AI and Data Strategy aligned to P&L.' },
+      { title: 'E-commerce', description: 'D2C marketplace optimisation and innovation.' },
+      { title: 'Platform Modernisation', description: 'Architecture modernisation without rewrite.' },
+      { title: 'Engineering', description: 'Product Engineering team organisation design.' },
+      { title: 'Sustainability', description: 'Practical operationalisation of sustainability initiatives.' },
+    ];
+
+// Testimonials are entirely optional now — leave the array empty in
+// Keystatic until there are real client quotes to show. No placeholder
+// content is shown in the meantime.
+const testimonials = page?.testimonials ?? [];
 ---
 
-<Layout
-  title="Consulting — Diorama Consulting"
-  description="Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors, with a focus on D2C marketplaces."
->
-  <Header />
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   <Section
-    eyebrow="Consulting"
-    heading="Built on decades of experience"
-    subheading="We help create defensible growth, reduce risk and accelerate value creation through:"
+    eyebrow={page?.eyebrow || 'Consulting'}
+    heading={page?.heading || 'Built on decades of experience'}
+    subheading={page?.subheading || 'We help create defensible growth, reduce risk and accelerate value creation through:'}
   >
     <div class="card-grid">
-      <Card
-        title="High Level Experience"
-        description="Fractional/Interim leadership (CTO, CPTO)."
-      />
-      <Card
-        title="Economics Driven"
-        description="Pragmatic AI and Data Strategy aligned to P&L."
-      />
-      <Card
-        title="E-commerce"
-        description="D2C marketplace optimisation and innovation."
-      />
-      <Card
-        title="Platform Modernisation"
-        description="Architecture modernisation without rewrite."
-      />
-      <Card
-        title="Engineering"
-        description="Product Engineering team organisation design."
-      />
-      <Card
-        title="Sustainability"
-        description="Practical operationalisation of sustainability initiatives."
-      />
+      {capabilities.map((capability) => (
+        <Card title={capability.title} description={capability.description} />
+      ))}
     </div>
   </Section>
 
-  <Section
-    eyebrow="Pricing"
-    heading="Simple, honest pricing"
-    subheading="Start with a conversation — we'll scope an engagement that fits."
-  >
-    <PricingTable />
-  </Section>
+  {testimonials.length > 0 && (
+    <Section eyebrow={page?.testimonialsEyebrow || 'Testimonials'} heading={page?.testimonialsHeading || 'What people say'}>
+      <div class="testimonial-grid">
+        {testimonials.map((testimonial) => (
+          <TestimonialCard quote={testimonial.quote} name={testimonial.name} role={testimonial.role} />
+        ))}
+      </div>
+    </Section>
+  )}
 
-  <Section eyebrow="Testimonials" heading="What people say">
-    <div class="testimonial-grid">
-      <TestimonialCard
-        quote="The whole site finally feels like one product instead of five different pages."
-        name="Sonia Lad"
-        role="Head of Food, Kitchen"
-      />
-      <TestimonialCard
-        quote="We shipped a full rebrand in a week because the components already existed."
-        name="Ada Topçu"
-        role="Neuroscientist, UK DRI"
-      />
-      <TestimonialCard
-        quote="It's rare to find a design system this opinionated and this easy to extend."
-        name="Stef Abrar"
-        role="Public Health, Tower Hamlets"
-      />
-    </div>
-  </Section>
-
-  <Footer />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
 <style>
