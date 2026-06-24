@@ -1,0 +1,146 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { render } from 'astro:content';
+
+const allFaqs = (await getCollection('faq')).sort((a, b) => a.data.order - b.data.order);
+
+// Group by category, preserving first-seen order
+const categories: string[] = [];
+const grouped = new Map<string, typeof allFaqs>();
+for (const entry of allFaqs) {
+  const cat = entry.data.category;
+  if (!grouped.has(cat)) {
+    grouped.set(cat, []);
+    categories.push(cat);
+  }
+  grouped.get(cat)!.push(entry);
+}
+
+const rendered = await Promise.all(
+  allFaqs.map(async (entry) => ({ id: entry.id, ...(await render(entry)) })),
+);
+const contentById = new Map(rendered.map((r) => [r.id, r.Content]));
+---
+
+<Layout
+  title="FAQ — Diorama Consulting"
+  description="Frequently asked questions about how Diorama Consulting engages with clients."
+>
+  <Header />
+
+  <main class="container">
+    <section class="page-intro">
+      <p class="eyebrow">About</p>
+      <h1>Frequently Asked Questions</h1>
+      <p class="subheading">
+        Common questions about how we engage with clients. Can't find what you need?
+        <a href="/contact">Get in touch</a>.
+      </p>
+    </section>
+
+    {categories.map((category) => (
+      <section class="faq-category">
+        <h2>{category}</h2>
+        <div class="faq-list">
+          {grouped.get(category)!.map((entry) => {
+            const Content = contentById.get(entry.id);
+            return (
+              <details class="faq-item">
+                <summary>{entry.data.question}</summary>
+                <div class="faq-answer">
+                  {Content && <Content />}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  main.container {
+    padding-top: 56px;
+    padding-bottom: 80px;
+    max-width: 760px;
+  }
+
+  .page-intro {
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-bottom: 8px;
+  }
+
+  .subheading {
+    color: var(--mist-muted);
+  }
+
+  .subheading a {
+    color: var(--signal);
+  }
+
+  .faq-category {
+    margin-bottom: 40px;
+  }
+
+  .faq-category h2 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--mint);
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .faq-item {
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+  }
+
+  .faq-item summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #fff;
+    list-style: none;
+  }
+
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-item summary::before {
+    content: '+';
+    display: inline-block;
+    width: 1.2em;
+    color: var(--signal);
+  }
+
+  .faq-item[open] summary::before {
+    content: '−';
+  }
+
+  .faq-answer {
+    margin-top: 12px;
+    padding-left: 1.2em;
+    color: var(--mist-muted);
+    line-height: 1.6;
+  }
+</style>

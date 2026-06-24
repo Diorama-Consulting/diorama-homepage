@@ -1,0 +1,159 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Card from '../../components/Card.astro';
+import BlogCard from '../../components/BlogCard.astro';
+
+// Pedagogical tools — currently hand-authored below since each links to an
+// externally-hosted app rather than rendering its own MDX page. If these grow
+// into full write-ups, move them into a `teaching` content collection
+// (mirroring `projects`) and loop over `getCollection('teaching')` instead.
+const teachingTools = [
+  {
+    title: 'AI Foundations',
+    description:
+      'A compact, interactive introduction to AI concepts and terminology for smart generalists — no prior technical knowledge assumed.',
+    href: 'https://ai-pathfinder-one.lovable.app/',
+  },
+  {
+    title: 'MNIST Demystifier',
+    description:
+      'Explore the classic handwritten-digits dataset, train a model to recognise digits, then test its accuracy — the "hello world" of machine learning, made tangible.',
+    href: 'https://dioramaconsulting.co.uk/friendly-digits-explorer',
+  },
+  {
+    title: 'PageRank Playpen',
+    description:
+      "An interactive playground for Google's foundational PageRank algorithm — build link networks and watch authority converge in real time.",
+    href: 'https://pagerank-playpen.lovable.app',
+  },
+  {
+    title: 'Quantum Curious',
+    description:
+      "Explore qubits and run real quantum algorithms via IBM's Qiskit, on both simulator and real quantum hardware.",
+    href: 'https://dioramaconsulting.co.uk/quantum-curious',
+  },
+  {
+    title: 'AI Evolution',
+    description:
+      'A timeline of key events in AI history, from the Dartmouth Conference to the present day.',
+    href: 'https://ai-chronicle-view.lovable.app/',
+  },
+];
+
+const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+---
+
+<Layout
+  title="Teaching — Diorama Consulting"
+  description="Teaching material developed in the course of providing executive AI coaching — interactive tools for demystifying AI, quantum computing, and more."
+>
+  <Header />
+
+  <main class="container">
+    <section class="page-intro">
+      <p class="eyebrow">Executive AI coaching</p>
+      <h1>Teaching</h1>
+      <p class="subheading">
+        A collection of teaching content built to support the practical demystification
+        of AI, quantum computing, and search — developed for executive coaching
+        engagements and shared here for anyone curious.
+      </p>
+    </section>
+
+    <section class="card-grid">
+      {teachingTools.map((tool) => (
+        <Card title={tool.title} description={tool.description} href={tool.href} linkText="Try it" />
+      ))}
+    </section>
+
+    {recentPosts.length > 0 && (
+      <section class="blog-teaser">
+        <div class="blog-teaser-head">
+          <h2>From the blog</h2>
+          <a href="/blog" class="view-all">View all posts →</a>
+        </div>
+        <div class="blog-teaser-grid">
+          {recentPosts.map((post) => (
+            <BlogCard
+              title={post.data.title}
+              excerpt={post.data.description ?? ''}
+              href={`/blog/${post.id}/`}
+              date={post.data.pubDate.toISOString()}
+              image={typeof post.data.heroImage === 'string' ? post.data.heroImage : post.data.heroImage?.src}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  main.container {
+    padding-top: 56px;
+    padding-bottom: 80px;
+  }
+
+  .page-intro {
+    max-width: 640px;
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-bottom: 8px;
+  }
+
+  .subheading {
+    color: var(--mist-muted);
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 72px;
+  }
+
+  .blog-teaser-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .view-all {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--signal);
+    text-decoration: none;
+  }
+
+  .view-all:hover {
+    color: var(--mint);
+  }
+
+  .blog-teaser-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 860px) {
+    .card-grid,
+    .blog-teaser-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

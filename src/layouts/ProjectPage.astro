@@ -1,0 +1,133 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Badge from '../components/Badge.astro';
+
+type Props = CollectionEntry<'projects'>['data'];
+
+const { title, summary, heroImage, status, externalUrl, repoUrl } = Astro.props;
+
+const statusVariant = status === 'live' ? 'accent' : status === 'in-progress' ? 'outline' : 'default';
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={`${title} — Diorama Consulting`} description={summary} />
+    <style>
+      .hero-container {
+        position: relative;
+        width: 100%;
+        height: 45vh;
+        min-height: 320px;
+        background-color: var(--forest);
+        background-size: cover;
+        background-position: center;
+        overflow: hidden;
+      }
+
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .prose {
+        width: 860px;
+        max-width: calc(100% - 2em);
+        margin: 0 auto;
+        padding: 3rem 0;
+        color: var(--mist);
+      }
+
+      .project-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 1.2rem;
+      }
+
+      .project-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .project-actions a {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--signal);
+        text-decoration: none;
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius-sm);
+        padding: 10px 18px;
+      }
+
+      .project-actions a:hover {
+        border-color: var(--signal);
+        color: var(--mint);
+      }
+
+      .prose h1 {
+        font-size: 2.4rem;
+        margin-bottom: 0.6rem;
+      }
+
+      .prose :global(h2) {
+        margin-top: 2rem;
+      }
+
+      .prose :global(p) {
+        color: var(--mist);
+        line-height: 1.7;
+      }
+
+      .prose :global(img) {
+        border-radius: var(--radius-md);
+        margin: 1.5rem 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <Header transparentOverHero={false} />
+
+    <main>
+      <article>
+        {heroImage && (
+          <div class="hero-container">
+            {typeof heroImage === 'string' ? (
+              <img src={heroImage} alt="" class="hero-image" />
+            ) : (
+              <Image src={heroImage} alt="" class="hero-image" width={1600} height={720} />
+            )}
+          </div>
+        )}
+
+        <div class="prose">
+          <div class="project-meta">
+            <Badge variant={statusVariant}>{status}</Badge>
+          </div>
+          <h1>{title}</h1>
+          <p>{summary}</p>
+
+          <slot />
+
+          <div class="project-actions">
+            {externalUrl && (
+              <a href={externalUrl} target="_blank" rel="noopener noreferrer">Try it ↗</a>
+            )}
+            {repoUrl && (
+              <a href={repoUrl} target="_blank" rel="noopener noreferrer">Source code ↗</a>
+            )}
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <Footer />
+  </body>
+</html>

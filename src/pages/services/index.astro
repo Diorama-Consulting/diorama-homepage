@@ -1,0 +1,105 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Section from '../../components/Section.astro';
+import Card from '../../components/Card.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout
+  title="Services — Diorama Consulting"
+  description="Fractional CTO/CPTO leadership and AI advisory for D2C marketplaces, plus pro-bono Digital and AI strategy support for UK charities."
+>
+  <Header />
+
+  <Section
+    eyebrow="What we do"
+    heading="Two practices, one disciplined approach"
+    subheading="Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact."
+  >
+    <div class="service-grid">
+      <a class="service-tile" href="/services/consulting">
+        <span class="service-eyebrow">For Boards, Founders &amp; Investors</span>
+        <h3>Consulting</h3>
+        <p>
+          Fractional and interim CTO/CPTO leadership, AI and data strategy aligned to
+          P&amp;L, platform modernisation, and product engineering organisation design —
+          with a particular focus on D2C marketplaces and consumer products.
+        </p>
+        <span class="service-link">Explore Consulting →</span>
+      </a>
+
+      <a class="service-tile" href="/services/charities">
+        <span class="service-eyebrow">For UK Charities</span>
+        <h3>Charities</h3>
+        <p>
+          Practical Digital and AI strategy support for the charity sector — helping
+          trustees and leadership teams adopt technology responsibly, on a realistic
+          budget, without disrupting frontline delivery.
+        </p>
+        <span class="service-link">Explore Charity Support →</span>
+      </a>
+    </div>
+  </Section>
+
+  <Footer />
+</Layout>
+
+<style>
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .service-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .service-tile:hover {
+    border-color: var(--moss);
+    transform: translateY(-2px);
+  }
+
+  .service-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mint);
+  }
+
+  .service-tile h3 {
+    font-size: 1.6rem;
+  }
+
+  .service-tile p {
+    color: var(--mist-muted);
+    font-size: 15px;
+    flex-grow: 1;
+  }
+
+  .service-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--signal);
+  }
+
+  .service-tile:hover .service-link {
+    color: var(--mint);
+  }
+
+  @media (max-width: 860px) {
+    .service-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,115 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Section from '../../components/Section.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout
+  title="About — Diorama Consulting"
+  description="The mission behind Diorama Consulting."
+>
+  <Header />
+
+  <Section
+    eyebrow="About us"
+    heading="We are all in the diorama"
+    subheading="Diorama Consulting Ltd is an AI Technology Advisory practice with a focus on D2C marketplaces and consumer products."
+  >
+    <div class="about-prose">
+      <p>
+        We partner with C-Suite, Boards, Founders and Investors to bridge product
+        strategy, engineering and AI — helping create defensible growth, reduce risk,
+        and accelerate value creation through fractional leadership, pragmatic AI and
+        data strategy, platform modernisation, and organisation design.
+      </p>
+      <p>
+        The name <em>Diorama Consulting</em> is inspired by a quote from David
+        Wallace-Wells and the reality that we're not outside observers of climate
+        change, AI disruption, or technological change. We are all in the diorama,
+        creating it and being shaped by it in turn.
+      </p>
+    </div>
+
+    <div class="about-links">
+      <a class="about-link-card" href="/about/founder">
+        <span class="about-link-eyebrow">Meet the team</span>
+        <h3>The Founder</h3>
+        <p>The story behind Diorama and the person leading it.</p>
+        <span class="about-link-cta">Read more →</span>
+      </a>
+      <a class="about-link-card" href="/about/faq">
+        <span class="about-link-eyebrow">Questions</span>
+        <h3>FAQ</h3>
+        <p>How we engage with clients, pricing structure, and what to expect.</p>
+        <span class="about-link-cta">View FAQ →</span>
+      </a>
+    </div>
+  </Section>
+
+  <Footer />
+</Layout>
+
+<style>
+  .about-prose {
+    max-width: 760px;
+    color: var(--mist);
+    line-height: 1.7;
+    margin-bottom: 56px;
+  }
+
+  .about-prose p {
+    margin-bottom: 1.2rem;
+  }
+
+  .about-links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .about-link-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .about-link-card:hover {
+    border-color: var(--moss);
+  }
+
+  .about-link-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mint);
+  }
+
+  .about-link-card p {
+    color: var(--mist-muted);
+    font-size: 14.5px;
+  }
+
+  .about-link-cta {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--signal);
+  }
+
+  .about-link-card:hover .about-link-cta {
+    color: var(--mint);
+  }
+
+  @media (max-width: 720px) {
+    .about-links {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

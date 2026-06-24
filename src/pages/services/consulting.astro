@@ -1,0 +1,95 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Section from '../../components/Section.astro';
+import Card from '../../components/Card.astro';
+import PricingTable from '../../components/PricingTable.astro';
+import TestimonialCard from '../../components/TestimonialCard.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout
+  title="Consulting — Diorama Consulting"
+  description="Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors, with a focus on D2C marketplaces."
+>
+  <Header />
+
+  <Section
+    eyebrow="Consulting"
+    heading="Built on decades of experience"
+    subheading="We help create defensible growth, reduce risk and accelerate value creation through:"
+  >
+    <div class="card-grid">
+      <Card
+        title="High Level Experience"
+        description="Fractional/Interim leadership (CTO, CPTO)."
+      />
+      <Card
+        title="Economics Driven"
+        description="Pragmatic AI and Data Strategy aligned to P&L."
+      />
+      <Card
+        title="E-commerce"
+        description="D2C marketplace optimisation and innovation."
+      />
+      <Card
+        title="Platform Modernisation"
+        description="Architecture modernisation without rewrite."
+      />
+      <Card
+        title="Engineering"
+        description="Product Engineering team organisation design."
+      />
+      <Card
+        title="Sustainability"
+        description="Practical operationalisation of sustainability initiatives."
+      />
+    </div>
+  </Section>
+
+  <Section
+    eyebrow="Pricing"
+    heading="Simple, honest pricing"
+    subheading="Start with a conversation — we'll scope an engagement that fits."
+  >
+    <PricingTable />
+  </Section>
+
+  <Section eyebrow="Testimonials" heading="What people say">
+    <div class="testimonial-grid">
+      <TestimonialCard
+        quote="The whole site finally feels like one product instead of five different pages."
+        name="Sonia Lad"
+        role="Head of Food, Kitchen"
+      />
+      <TestimonialCard
+        quote="We shipped a full rebrand in a week because the components already existed."
+        name="Ada Topçu"
+        role="Neuroscientist, UK DRI"
+      />
+      <TestimonialCard
+        quote="It's rare to find a design system this opinionated and this easy to extend."
+        name="Stef Abrar"
+        role="Public Health, Tower Hamlets"
+      />
+    </div>
+  </Section>
+
+  <Footer />
+</Layout>
+
+<style>
+  .card-grid,
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  @media (max-width: 860px) {
+    .card-grid,
+    .testimonial-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
