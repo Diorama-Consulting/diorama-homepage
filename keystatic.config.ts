@@ -10,7 +10,20 @@ import { block } from '@keystatic/core/content-components';
 // external URL. Every consumer of a field built with this helper must
 // destructure it as { discriminant, value } — never as a bare string — see
 // README "Image fields" section.
-const coLocatedImageField = (label = 'Image') =>
+//
+// IMPORTANT: fields.image() nested inside fields.conditional() does NOT
+// inherit the "co-locate next to this entry" default the way a top-level
+// field on a collection entry does — nesting changes how Keystatic computes
+// the default path, and without an explicit `directory` it instead nests
+// the file under a folder named after the FIELD key, using the CONDITIONAL
+// BRANCH key as the filename (e.g. `heroImage/value.webp`), not the entry's
+// own folder. Every caller below MUST pass the collection's own root path
+// (matching that collection's `path` option, without the trailing `*/`) as
+// `directory` — Keystatic appends the entry slug itself when resolving the
+// final on-disk location, so passing the collection root reproduces proper
+// co-location. See https://keystatic.com/docs/fields/image for the
+// underlying default-path mechanics this works around.
+const coLocatedImageField = (label: string, directory: string) =>
   fields.conditional(
     fields.checkbox({
       label: 'Use an external image URL?',
@@ -19,7 +32,12 @@ const coLocatedImageField = (label = 'Image') =>
     }),
     {
       true: fields.url({ label: `${label} URL` }),
-      false: fields.image({ label }),
+      // No publicPath: with only `directory` set, Keystatic stores the bare
+      // filename (e.g. "avatar.jpg") in frontmatter, which is exactly what
+      // Astro's image() schema helper expects to resolve itself. Adding a
+      // publicPath would make Keystatic store a constructed URL string
+      // instead, which Astro's image() validator does not accept.
+      false: fields.image({ label, directory }),
     },
   );
 
@@ -28,7 +46,7 @@ const coLocatedImageField = (label = 'Image') =>
 // something to work with even when the page-specific copy fields are left
 // at their defaults. All three are optional — when left blank, BaseHead.astro
 // falls back to the siteSettings singleton's sitewide defaults.
-const seoFields = {
+const seoFields = (directory: string) => ({
   seoTitle: fields.text({
     label: 'SEO — Page title override',
     description: 'Shown in browser tabs, search results, and link previews. Leave blank to auto-generate from the heading.',
@@ -38,8 +56,8 @@ const seoFields = {
     description: 'Shown in search results and link previews. Aim for 1–2 sentences, ~150 characters.',
     multiline: true,
   }),
-  seoImage: coLocatedImageField('SEO — Social share image'),
-};
+  seoImage: coLocatedImageField('SEO — Social share image', directory),
+});
 
 const iframeEmbedComponent = {
   Iframe: block({
@@ -74,7 +92,7 @@ export default config({
           multiline: true,
           defaultValue: 'AI Technology Advisory for Boards, Founders and Investors, with a focus on D2C marketplaces and consumer products.',
         }),
-        defaultSeoImage: coLocatedImageField('Default social share image'),
+        defaultSeoImage: coLocatedImageField('Default social share image', 'src/content/pages/site-settings'),
         // --- Organization JSON-LD (read by BaseHead.astro on every page) ---
         legalName: fields.text({ label: 'Legal company name', defaultValue: 'Diorama Consulting Ltd' }),
         foundingDate: fields.date({ label: 'Founding date' }),
@@ -157,7 +175,7 @@ export default config({
       label: 'Homepage',
       path: 'src/content/pages/home',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/home'),
         heroEyebrow: fields.text({ label: 'Hero eyebrow', defaultValue: 'Now in beta' }),
         heroHeading: fields.text({ label: 'Hero headline', defaultValue: 'Ideas that make a difference.' }),
         heroSubheading: fields.text({
@@ -167,8 +185,8 @@ export default config({
         }),
         heroCtaText: fields.text({ label: 'Hero button text', defaultValue: 'Get started' }),
         heroCtaHref: fields.text({ label: 'Hero button link', defaultValue: '/contact' }),
-        heroImage: coLocatedImageField('Hero background image'),
-        heroFace: coLocatedImageField('Hero portrait (reveal photo)'),
+        heroImage: coLocatedImageField('Hero background image', 'src/content/pages/home'),
+        heroFace: coLocatedImageField('Hero portrait (reveal photo)', 'src/content/pages/home'),
         heroFaceAlt: fields.text({ label: 'Hero portrait alt text', defaultValue: 'Portrait of the founder.' }),
         revealHeading: fields.text({ label: 'Reveal headline', defaultValue: 'Unique Industry Experience.' }),
         revealSubheading: fields.text({
@@ -230,7 +248,7 @@ export default config({
       label: 'Services — Hub',
       path: 'src/content/pages/services-index',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/services-index'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'What we do' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Two practices, one disciplined approach' }),
         subheading: fields.text({
@@ -259,7 +277,7 @@ export default config({
       label: 'Services — Consulting',
       path: 'src/content/pages/services-consulting',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/services-consulting'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Consulting' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Built on decades of experience' }),
         subheading: fields.text({ label: 'Subheading', multiline: true }),
@@ -294,7 +312,7 @@ export default config({
       label: 'Services — Charities',
       path: 'src/content/pages/services-charities',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/services-charities'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'For UK Charities' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Technology support for mission-led organisations' }),
         subheading: fields.text({
@@ -313,7 +331,7 @@ export default config({
       label: 'Projects — Page',
       path: 'src/content/pages/projects-index',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/projects-index'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Building' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Projects' }),
         subheading: fields.text({
@@ -331,7 +349,7 @@ export default config({
       label: 'Teaching — Page',
       path: 'src/content/pages/teaching',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/teaching'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Executive AI coaching' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Teaching' }),
         subheading: fields.text({
@@ -361,7 +379,7 @@ export default config({
       label: 'About',
       path: 'src/content/pages/about',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/about'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'About us' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'We are all in the diorama' }),
         subheading: fields.text({ label: 'Subheading', multiline: true }),
@@ -386,7 +404,7 @@ export default config({
       label: 'About — Founder',
       path: 'src/content/pages/about-founder',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/about-founder'),
         heading: fields.text({ label: 'Heading', defaultValue: 'Meet the Founder' }),
         // Singletons have no entry slug to nest under, so this gets an
         // explicit directory rather than relying on the per-entry default.
@@ -397,7 +415,6 @@ export default config({
             false: fields.image({
               label: 'Portrait',
               directory: 'src/content/pages/about-founder',
-              publicPath: './',
             }),
           },
         ),
@@ -436,7 +453,7 @@ export default config({
       label: 'Contact — Page',
       path: 'src/content/pages/contact',
       schema: {
-        ...seoFields,
+        ...seoFields('src/content/pages/contact'),
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Contact' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Tell us about your project' }),
         subheading: fields.text({
@@ -458,7 +475,7 @@ export default config({
       entryLayout: 'content',
       format: { contentField: 'content' },
       schema: {
-        title: fields.text({ label: 'Title', validation: { isRequired: true } }),
+        title: fields.slug({ name: { label: 'Title', validation: { isRequired: true } } }),
         description: fields.text({
           label: 'Description',
           description: 'Short excerpt for previews',
@@ -466,7 +483,7 @@ export default config({
         }),
         pubDate: fields.date({ label: 'Published', validation: { isRequired: true } }),
         updatedDate: fields.date({ label: 'Last updated', description: 'Leave blank if never updated.' }),
-        heroImage: coLocatedImageField('Hero image'),
+        heroImage: coLocatedImageField('Hero image', 'src/content/blog'),
         link: fields.url({
           label: 'Original Substack URL',
           description: 'Only set this if the post originated on Substack. Leave blank for native posts.',
@@ -492,9 +509,9 @@ export default config({
       entryLayout: 'content',
       format: { contentField: 'content' },
       schema: {
-        title: fields.text({ label: 'Title', validation: { isRequired: true } }),
+        title: fields.slug({ name: { label: 'Title', validation: { isRequired: true } } }),
         summary: fields.text({ label: 'Summary', multiline: true }),
-        heroImage: coLocatedImageField('Hero image'),
+        heroImage: coLocatedImageField('Hero image', 'src/content/projects'),
         status: fields.select({
           label: 'Status',
           options: [
@@ -527,7 +544,7 @@ export default config({
       path: 'src/content/faq/*',
       format: { contentField: 'answer' },
       schema: {
-        question: fields.text({ label: 'Question', validation: { isRequired: true } }),
+        question: fields.slug({ name: { label: 'Question', validation: { isRequired: true } } }),
         category: fields.text({
           label: 'Category',
           description: 'Groups entries on the FAQ page, e.g. "Engagement", "Charities".',
@@ -548,10 +565,10 @@ export default config({
       entryLayout: 'content',
       format: { contentField: 'content' },
       schema: {
-        name: fields.text({ label: 'Charity name', validation: { isRequired: true } }),
+        name: fields.slug({ name: { label: 'Charity name', validation: { isRequired: true } } }),
         role: fields.text({ label: 'Role', description: 'e.g. "Trustee"' }),
         summary: fields.text({ label: 'Summary', multiline: true }),
-        logo: coLocatedImageField('Logo'),
+        logo: coLocatedImageField('Logo', 'src/content/charities'),
         externalUrl: fields.url({ label: 'Charity website' }),
         order: fields.integer({ label: 'Sort order', defaultValue: 0 }),
         content: fields.mdx({ label: 'Details' }),
