@@ -2,6 +2,19 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
+// Keystatic appears to write an empty string '' for an optional fields.url()
+// left blank on a new entry (observed directly: `link: Invalid URL` on a
+// freshly created post with no link set) — z.string().url() correctly
+// rejects '' since it isn't a valid URL, even though the field is meant to
+// be optional. This coerces '' to undefined before validating, so "blank"
+// is treated as "not set" rather than as an invalid value, while a genuine
+// non-empty string still has to be a real URL.
+const optionalUrl = z
+  .string()
+  .optional()
+  .transform((val) => (val === '' ? undefined : val))
+  .pipe(z.string().url().optional());
+
 // Keystatic's fields.conditional() always stores its value as
 // { discriminant: boolean, value: ... } — discriminant: true means an
 // external URL was used, discriminant: false means a local upload. Every
@@ -21,7 +34,7 @@ import { glob } from 'astro/loaders';
 function conditionalImage(imageSchema: z.ZodType) {
   return z
     .union([
-      z.object({ discriminant: z.literal(true), value: z.string().url().nullable().optional() }),
+      z.object({ discriminant: z.literal(true), value: optionalUrl }),
       z.object({ discriminant: z.literal(false), value: imageSchema.nullable().optional() }),
     ])
     .optional();
@@ -42,7 +55,7 @@ const blog = defineCollection({
       // Optional provenance link if a post originated on Substack — purely
       // informational, only renders the "Originally published on Substack"
       // banner in BlogPost.astro when present. Omit entirely for native posts.
-      link: z.string().url().optional(),
+      link: optionalUrl,
       draft: z.boolean().default(false),
       // SEO overrides — fall back to title/description when blank.
       seoTitle: z.string().optional(),
@@ -61,8 +74,8 @@ const projects = defineCollection({
       summary: z.string(),
       heroImage: conditionalImage(image()),
       status: z.enum(['live', 'in-progress', 'archived']).default('live'),
-      externalUrl: z.string().url().optional(),
-      repoUrl: z.string().url().optional(),
+      externalUrl: optionalUrl,
+      repoUrl: optionalUrl,
       // Lets a project page cross-reference an educational write-up
       // without duplicating content into two collections.
       relatedBlogSlug: z.string().optional(),
@@ -98,7 +111,7 @@ const charities = defineCollection({
       role: z.string(), // e.g. "Trustee"
       summary: z.string(),
       logo: conditionalImage(image()),
-      externalUrl: z.string().url().optional(),
+      externalUrl: optionalUrl,
       order: z.number().default(0),
     }),
 });
