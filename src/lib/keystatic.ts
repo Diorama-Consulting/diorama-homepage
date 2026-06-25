@@ -20,15 +20,18 @@ import type { ImageMetadata } from 'astro';
 export const reader = createReader(process.cwd(), keystaticConfig);
 
 type ConditionalImage =
-  | { discriminant: true; value: string | null }
-  | { discriminant: false; value: ImageMetadata | null }
+  | { discriminant: true; value?: string | null }
+  | { discriminant: false; value?: ImageMetadata | null }
   | null
   | undefined;
 
 // Keystatic writes out the conditional-field "shell" object even when no
-// value has been set — i.e. { discriminant: false, value: null } — rather
-// than omitting the field entirely. Every helper below must treat a present
-// field with a null `value` exactly the same as a missing field.
+// value has been set — observed in both of these shapes:
+//   { discriminant: false, value: null }   — value present but null
+//   { discriminant: false }                — value key absent entirely
+// `field.value == null` below is true for both `null` and `undefined`
+// (absent), so every helper already treats both shapes the same as a
+// genuinely missing field without needing to special-case which one shows up.
 
 /** Unwrap to a plain URL string — for plain <img src> or OG/Twitter meta tags. */
 export function imageUrl(field: ConditionalImage): string | undefined {

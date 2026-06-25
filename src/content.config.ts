@@ -9,16 +9,20 @@ import { glob } from 'astro/loaders';
 // see src/lib/keystatic.ts for the corresponding unwrap helpers used by
 // every page that renders one of these fields.
 //
-// Both branches' `value` are nullable: Keystatic writes out the conditional
-// "shell" object even when nothing has been uploaded/typed yet — i.e.
-// { discriminant: false, value: null } — rather than omitting the field.
+// Both branches' `value` are nullable AND optional: depending on exactly
+// how the field was left unset, Keystatic has been observed writing any of
+// the following for "nothing uploaded/typed yet":
+//   { discriminant: false, value: null }   — value present but null
+//   { discriminant: false }                — value key absent entirely
 // Every consumer (see imageUrl/imageSrc in lib/keystatic.ts) already treats
-// a null value the same as a missing field.
+// a null OR missing value the same as a missing field — `field.value == null`
+// is true for both `null` and `undefined` in JS, so the runtime logic does
+// not need to special-case which of these shapes shows up.
 function conditionalImage(imageSchema: z.ZodType) {
   return z
     .union([
-      z.object({ discriminant: z.literal(true), value: z.string().url().nullable() }),
-      z.object({ discriminant: z.literal(false), value: imageSchema.nullable() }),
+      z.object({ discriminant: z.literal(true), value: z.string().url().nullable().optional() }),
+      z.object({ discriminant: z.literal(false), value: imageSchema.nullable().optional() }),
     ])
     .optional();
 }
