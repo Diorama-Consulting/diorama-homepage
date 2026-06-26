@@ -5,7 +5,7 @@ import Section from '../../components/Section.astro';
 import Profile from '../../components/Profile.astro';
 import Footer from '../../components/Footer.astro';
 import AboutSection from '../../components/AboutSection.astro';
-import { reader, imageUrl } from '../../lib/keystatic';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 const page = await reader.singletons.aboutFounder.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -14,13 +14,15 @@ const siteSettings = await reader.singletons.siteSettings.read();
 
 const pageTitle = page?.seoTitle || `The Founder — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
 const pageDescription = page?.seoDescription || `Meet ${siteSettings?.founderName ?? 'the founder'}.`;
-const pageImage = imageUrl(page?.seoImage) || imageUrl(page?.portrait) || imageUrl(siteSettings?.defaultSeoImage);
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(page?.portrait, page?.portraitUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
-// `portrait` here uses its own explicit { discriminant, value } shape (same
-// convention as every other conditional image field) — AboutSection expects
-// a plain string `imageSrc`, so unwrap fully to a URL string rather than
-// passing through ImageMetadata.
-const portraitUrl = imageUrl(page?.portrait) || '/Mal.png';
+// `portrait`/`portraitUrl` are two separate fields (local upload / external
+// URL) — AboutSection expects a plain string `imageSrc` prop, so resolve
+// fully to a URL string rather than passing through ImageMetadata.
+const portraitUrl = resolveImageUrl(page?.portrait, page?.portraitUrl) || '/Mal.png';
 
 const paragraphs = page?.paragraphs?.length
   ? page.paragraphs

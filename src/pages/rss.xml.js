@@ -15,9 +15,10 @@ export async function GET(context) {
 			description: post.data.description,
 			pubDate: post.data.pubDate,
 			link: `/blog/${post.id}/`,
-			// heroImage is intentionally NOT spread here — it's stored as a
-			// { discriminant, value } object (see lib/keystatic.ts) and would
-			// serialize into malformed RSS XML if included directly.
+			// heroImage/heroImageUrl are intentionally NOT included here — they're
+			// either an ImageMetadata object or a URL string (see lib/keystatic.ts),
+			// and would need resolving via resolveImageUrl() before use; simplest
+			// to omit them from the feed entirely for now.
 		})),
 	});
 }

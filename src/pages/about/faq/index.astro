@@ -4,7 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import { render } from 'astro:content';
-import { reader, imageUrl } from '../../../lib/keystatic';
+import { reader, resolveImageUrl } from '../../../lib/keystatic';
 
 const allFaqs = (await getCollection('faq')).sort((a, b) => a.data.order - b.data.order);
 
@@ -28,7 +28,7 @@ const contentById = new Map(rendered.map((r) => [r.id, r.Content]));
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
-const pageImage = imageUrl(siteSettings?.defaultSeoImage);
+const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
 // FAQPage structured data — specifically favoured by AI answer engines for
 // extracting Q&A pairs directly. JSON-LD values must be plain text, so the

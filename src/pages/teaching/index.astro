@@ -5,7 +5,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import Card from '../../components/Card.astro';
 import BlogCard from '../../components/BlogCard.astro';
-import { reader, imageUrl } from '../../lib/keystatic';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 const page = await reader.singletons.teachingPage.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -17,7 +17,9 @@ const pageDescription =
   page?.seoDescription ||
   page?.subheading ||
   'Teaching material developed in the course of providing executive AI coaching — interactive tools for demystifying AI, quantum computing, and more.';
-const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
 // Pedagogical tools, editable in Keystatic (Teaching — Page singleton).
 // Falls back to the original shipped set if the array hasn't been
@@ -88,7 +90,7 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
               excerpt={post.data.description ?? ''}
               href={`/blog/${post.id}/`}
               date={post.data.pubDate.toISOString()}
-              image={imageUrl(post.data.heroImage)}
+              image={resolveImageUrl(post.data.heroImage, post.data.heroImageUrl)}
             />
           ))}
         </div>

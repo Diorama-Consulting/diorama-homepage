@@ -5,7 +5,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import Footer from '../../components/Footer.astro';
-import { reader, imageSrc, imageUrl } from '../../lib/keystatic';
+import { reader, resolveImageSrc, resolveImageUrl } from '../../lib/keystatic';
 
 const charities = (await getCollection('charities')).sort(
   (a, b) => a.data.order - b.data.order,
@@ -21,7 +21,9 @@ const pageDescription =
   page?.seoDescription ||
   page?.subheading ||
   'Practical Digital and AI strategy support for UK charities, delivered through Trustee and advisory roles.';
-const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
@@ -34,7 +36,7 @@ const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoI
   >
     <div class="charity-grid">
       {charities.map((charity) => {
-        const logo = imageSrc(charity.data.logo);
+        const logo = resolveImageSrc(charity.data.logo, charity.data.logoUrl);
         return (
           <div class="charity-card">
             {logo && (
