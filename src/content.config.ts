@@ -15,29 +15,29 @@ const optionalUrl = z
   .transform((val) => (val === '' ? undefined : val))
   .pipe(z.string().url().optional());
 
-// Keystatic's fields.conditional() always stores its value as
-// { discriminant: boolean, value: ... } — discriminant: true means an
-// external URL was used, discriminant: false means a local upload. Every
-// image/logo field below must use this exact shape, not a plain string —
-// see src/lib/keystatic.ts for the corresponding unwrap helpers used by
-// every page that renders one of these fields.
+// ---------------------------------------------------------------------------
+// IMAGE FIELDS: two separate flat fields, not one fields.conditional().
 //
-// Both branches' `value` are nullable AND optional: depending on exactly
-// how the field was left unset, Keystatic has been observed writing any of
-// the following for "nothing uploaded/typed yet":
-//   { discriminant: false, value: null }   — value present but null
-//   { discriminant: false }                — value key absent entirely
-// Every consumer (see imageUrl/imageSrc in lib/keystatic.ts) already treats
-// a null OR missing value the same as a missing field — `field.value == null`
-// is true for both `null` and `undefined` in JS, so the runtime logic does
-// not need to special-case which of these shapes shows up.
-function conditionalImage(imageSchema: z.ZodType) {
-  return z
-    .union([
-      z.object({ discriminant: z.literal(true), value: optionalUrl }),
-      z.object({ discriminant: z.literal(false), value: imageSchema.nullable().optional() }),
-    ])
-    .optional();
+// An earlier design used a single field storing
+// { discriminant: boolean, value: ... } via Keystatic's fields.conditional().
+// That was repeatedly observed writing a broken path — a subfolder named
+// after the FIELD key containing a file named after the CONDITIONAL BRANCH
+// key (e.g. `heroImage/value.webp`) — instead of co-locating the file next
+// to the entry, even with an explicit `directory` set. This happened
+// consistently for fields.image() nested inside fields.conditional(),
+// confirmed directly against real saved Keystatic entries.
+//
+// A plain, non-nested fields.image() does NOT have this problem (confirmed
+// working with real uploaded files placed directly beside index.mdx).
+// keystatic.config.ts now defines two independent fields per image —
+// `<name>` (local upload) and `<name>Url` (external URL alternative) —
+// and this schema mirrors that shape exactly. See lib/keystatic.ts's
+// resolveImage() helper for how pages read whichever one is actually set.
+function imageFields(name: string, imageSchema: z.ZodType) {
+  return {
+    [name]: imageSchema.optional(),
+    [`${name}Url`]: optionalUrl,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ const blog = defineCollection({
       description: z.string().optional(),
       pubDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
-      heroImage: conditionalImage(image()),
+      ...imageFields('heroImage', image()),
       // Optional provenance link if a post originated on Substack — purely
       // informational, only renders the "Originally published on Substack"
       // banner in BlogPost.astro when present. Omit entirely for native posts.
@@ -72,7 +72,7 @@ const projects = defineCollection({
     z.object({
       title: z.string(),
       summary: z.string(),
-      heroImage: conditionalImage(image()),
+      ...imageFields('heroImage', image()),
       status: z.enum(['live', 'in-progress', 'archived']).default('live'),
       externalUrl: optionalUrl,
       repoUrl: optionalUrl,
@@ -110,7 +110,7 @@ const charities = defineCollection({
       name: z.string(),
       role: z.string(), // e.g. "Trustee"
       summary: z.string(),
-      logo: conditionalImage(image()),
+      ...imageFields('logo', image()),
       externalUrl: optionalUrl,
       order: z.number().default(0),
     }),

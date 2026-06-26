@@ -5,7 +5,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Badge from '../components/Badge.astro';
-import { reader, imageSrc, imageUrl } from '../lib/keystatic';
+import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 
 type Props = CollectionEntry<'projects'>['data'] & { slug: string };
 
@@ -13,6 +13,7 @@ const {
   title,
   summary,
   heroImage,
+  heroImageUrl: heroImageUrlField,
   status,
   externalUrl,
   repoUrl,
@@ -23,8 +24,8 @@ const {
 
 const statusVariant = status === 'live' ? 'accent' : status === 'in-progress' ? 'outline' : 'default';
 
-const resolvedHeroImage = imageSrc(heroImage);
-const heroImageUrl = imageUrl(heroImage);
+const resolvedHeroImage = resolveImageSrc(heroImage, heroImageUrlField);
+const heroImageUrl = resolveImageUrl(heroImage, heroImageUrlField);
 
 const siteSettings = await reader.singletons.siteSettings.read();
 const headerNav = await reader.singletons.headerNav.read();

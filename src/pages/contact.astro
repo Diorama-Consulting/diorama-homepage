@@ -4,7 +4,7 @@ import Header from '../components/Header.astro';
 import Section from '../components/Section.astro';
 import ContactForm from '../components/ContactForm.astro';
 import Footer from '../components/Footer.astro';
-import { reader, imageUrl } from '../lib/keystatic';
+import { reader, resolveImageUrl } from '../lib/keystatic';
 
 const page = await reader.singletons.contactPage.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -13,7 +13,9 @@ const siteSettings = await reader.singletons.siteSettings.read();
 
 const pageTitle = page?.seoTitle || `Contact — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
 const pageDescription = page?.seoDescription || 'Get in touch with the Diorama team.';
-const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>

@@ -5,7 +5,7 @@ import Hero from '../components/Hero.astro';
 import Section from '../components/Section.astro';
 import Card from '../components/Card.astro';
 import Footer from '../components/Footer.astro';
-import { reader, imageSrc, imageUrl } from '../lib/keystatic';
+import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
 import defaultFounderPortrait from '../assets/hero/MalmCol.png';
 
@@ -19,13 +19,15 @@ const pageDescription =
   page?.seoDescription ||
   siteSettings?.defaultSeoDescription ||
   'AI Technology Advisory for Boards, Founders and Investors, with a focus on D2C marketplaces and consumer products.';
-const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
 // Hero image/face fall back to the original shipped defaults if nothing has
 // been set in Keystatic yet, so the homepage never renders with a missing
 // background.
-const heroImage = imageSrc(page?.heroImage) ?? defaultHeroPhoto;
-const heroFace = imageSrc(page?.heroFace) ?? defaultFounderPortrait;
+const heroImage = resolveImageSrc(page?.heroImage, page?.heroImageUrl) ?? defaultHeroPhoto;
+const heroFace = resolveImageSrc(page?.heroFace, page?.heroFaceUrl) ?? defaultFounderPortrait;
 
 const exploreCards = page?.exploreCards?.length
   ? page.exploreCards

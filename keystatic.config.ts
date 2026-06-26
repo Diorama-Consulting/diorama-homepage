@@ -5,41 +5,56 @@ import { block } from '@keystatic/core/content-components';
 // Shared field helpers
 // ---------------------------------------------------------------------------
 
-// Hero/cover images can either be uploaded into the repo (co-located next to
-// the entry, the default Keystatic image-field behaviour) or linked from an
-// external URL. Every consumer of a field built with this helper must
-// destructure it as { discriminant, value } — never as a bare string — see
-// README "Image fields" section.
+// Hero/cover images: two SEPARATE, plain fields rather than one field
+// wrapped in fields.conditional(). This is a deliberate change from an
+// earlier design — fields.image() nested inside fields.conditional() does
+// NOT reliably inherit the "co-locate next to this entry" default the way
+// a genuinely top-level field does, even with an explicit `directory` set.
+// In practice it was repeatedly observed writing a path like
+// `heroImage/value.webp` (a subfolder named after the FIELD key, containing
+// a file named after the CONDITIONAL BRANCH key) instead of co-locating
+// next to the entry — confirmed directly against real saved entries, not
+// just documentation. A plain top-level fields.image() with no `directory`
+// override does NOT have this problem (confirmed working with real
+// uploaded files) — so the conditional wrapper has been removed entirely
+// for collection-entry image fields. Singletons keep an explicit directory
+// where needed since they have no entry slug to anchor to.
 //
-// IMPORTANT: fields.image() nested inside fields.conditional() does NOT
-// inherit the "co-locate next to this entry" default the way a top-level
-// field on a collection entry does — nesting changes how Keystatic computes
-// the default path, and without an explicit `directory` it instead nests
-// the file under a folder named after the FIELD key, using the CONDITIONAL
-// BRANCH key as the filename (e.g. `heroImage/value.webp`), not the entry's
-// own folder. Every caller below MUST pass the collection's own root path
-// (matching that collection's `path` option, without the trailing `*/`) as
-// `directory` — Keystatic appends the entry slug itself when resolving the
-// final on-disk location, so passing the collection root reproduces proper
-// co-location. See https://keystatic.com/docs/fields/image for the
-// underlying default-path mechanics this works around.
-const coLocatedImageField = (label: string, directory: string) =>
-  fields.conditional(
-    fields.checkbox({
-      label: 'Use an external image URL?',
-      description: 'Off = upload a local image (recommended, stored next to this entry). On = paste a URL.',
-      defaultValue: false,
+// Returns an object to SPREAD into a schema — produces two keys:
+//   <name>        — fields.image(), optional, local upload, co-located
+//   <name>Url     — fields.url(), optional, external URL alternative
+// Every consumer must check imageUrl()/imageSrc() in lib/keystatic.ts,
+// which now reads this two-field shape rather than a conditional object.
+function heroImageFields(name: string, label: string) {
+  return {
+    [name]: fields.image({
+      label: `${label} (local upload)`,
+      description: 'Recommended — uploaded into this entry\u2019s own folder.',
     }),
-    {
-      true: fields.url({ label: `${label} URL` }),
-      // No publicPath: with only `directory` set, Keystatic stores the bare
-      // filename (e.g. "avatar.jpg") in frontmatter, which is exactly what
-      // Astro's image() schema helper expects to resolve itself. Adding a
-      // publicPath would make Keystatic store a constructed URL string
-      // instead, which Astro's image() validator does not accept.
-      false: fields.image({ label, directory }),
-    },
-  );
+    [`${name}Url`]: fields.url({
+      label: `${label} (external URL)`,
+      description: 'Alternative to the upload above — only used if no local image is set.',
+    }),
+  };
+}
+
+// Singletons have no entry slug to anchor a co-located image to, so this
+// variant takes an explicit directory (same reasoning as the original
+// fields.image() default-path docs — only an issue for fields.conditional()
+// nesting, never an issue for a plain top-level field like this one).
+function heroImageFieldsForSingleton(name: string, label: string, directory: string) {
+  return {
+    [name]: fields.image({
+      label: `${label} (local upload)`,
+      directory,
+      description: 'Recommended — uploaded into this page\u2019s own folder.',
+    }),
+    [`${name}Url`]: fields.url({
+      label: `${label} (external URL)`,
+      description: 'Alternative to the upload above — only used if no local image is set.',
+    }),
+  };
+}
 
 // Every singleton/collection that represents a real page gets this same
 // trio of fields so search engines and AI answer engines (GEO) have
@@ -56,7 +71,7 @@ const seoFields = (directory: string) => ({
     description: 'Shown in search results and link previews. Aim for 1–2 sentences, ~150 characters.',
     multiline: true,
   }),
-  seoImage: coLocatedImageField('SEO — Social share image', directory),
+  ...heroImageFieldsForSingleton('seoImage', 'SEO — Social share image', directory),
 });
 
 const iframeEmbedComponent = {
@@ -92,7 +107,7 @@ export default config({
           multiline: true,
           defaultValue: 'AI Technology Advisory for Boards, Founders and Investors, with a focus on D2C marketplaces and consumer products.',
         }),
-        defaultSeoImage: coLocatedImageField('Default social share image', 'src/content/pages/site-settings'),
+        ...heroImageFieldsForSingleton('defaultSeoImage', 'Default social share image', 'src/content/pages/site-settings'),
         // --- Organization JSON-LD (read by BaseHead.astro on every page) ---
         legalName: fields.text({ label: 'Legal company name', defaultValue: 'Diorama Consulting Ltd' }),
         foundingDate: fields.date({ label: 'Founding date' }),
@@ -185,8 +200,8 @@ export default config({
         }),
         heroCtaText: fields.text({ label: 'Hero button text', defaultValue: 'Get started' }),
         heroCtaHref: fields.text({ label: 'Hero button link', defaultValue: '/contact' }),
-        heroImage: coLocatedImageField('Hero background image', 'src/content/pages/home'),
-        heroFace: coLocatedImageField('Hero portrait (reveal photo)', 'src/content/pages/home'),
+        ...heroImageFieldsForSingleton('heroImage', 'Hero background image', 'src/content/pages/home'),
+        ...heroImageFieldsForSingleton('heroFace', 'Hero portrait (reveal photo)', 'src/content/pages/home'),
         heroFaceAlt: fields.text({ label: 'Hero portrait alt text', defaultValue: 'Portrait of the founder.' }),
         revealHeading: fields.text({ label: 'Reveal headline', defaultValue: 'Unique Industry Experience.' }),
         revealSubheading: fields.text({
@@ -406,18 +421,7 @@ export default config({
       schema: {
         ...seoFields('src/content/pages/about-founder'),
         heading: fields.text({ label: 'Heading', defaultValue: 'Meet the Founder' }),
-        // Singletons have no entry slug to nest under, so this gets an
-        // explicit directory rather than relying on the per-entry default.
-        portrait: fields.conditional(
-          fields.checkbox({ label: 'Use an external image URL?', defaultValue: false }),
-          {
-            true: fields.url({ label: 'Portrait URL' }),
-            false: fields.image({
-              label: 'Portrait',
-              directory: 'src/content/pages/about-founder',
-            }),
-          },
-        ),
+        ...heroImageFieldsForSingleton('portrait', 'Portrait', 'src/content/pages/about-founder'),
         paragraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
           label: 'Bio paragraphs',
           itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
@@ -483,7 +487,7 @@ export default config({
         }),
         pubDate: fields.date({ label: 'Published', validation: { isRequired: true } }),
         updatedDate: fields.date({ label: 'Last updated', description: 'Leave blank if never updated.' }),
-        heroImage: coLocatedImageField('Hero image', 'src/content/blog'),
+        ...heroImageFields('heroImage', 'Hero image'),
         link: fields.url({
           label: 'Original Substack URL',
           description: 'Only set this if the post originated on Substack. Leave blank for native posts.',
@@ -511,7 +515,7 @@ export default config({
       schema: {
         title: fields.slug({ name: { label: 'Title', validation: { isRequired: true } } }),
         summary: fields.text({ label: 'Summary', multiline: true }),
-        heroImage: coLocatedImageField('Hero image', 'src/content/projects'),
+        ...heroImageFields('heroImage', 'Hero image'),
         status: fields.select({
           label: 'Status',
           options: [
@@ -568,7 +572,7 @@ export default config({
         name: fields.slug({ name: { label: 'Charity name', validation: { isRequired: true } } }),
         role: fields.text({ label: 'Role', description: 'e.g. "Trustee"' }),
         summary: fields.text({ label: 'Summary', multiline: true }),
-        logo: coLocatedImageField('Logo', 'src/content/charities'),
+        ...heroImageFields('logo', 'Logo'),
         externalUrl: fields.url({ label: 'Charity website' }),
         order: fields.integer({ label: 'Sort order', defaultValue: 0 }),
         content: fields.mdx({ label: 'Details' }),

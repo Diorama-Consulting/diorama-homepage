@@ -5,7 +5,7 @@ import Section from '../../components/Section.astro';
 import Card from '../../components/Card.astro';
 import TestimonialCard from '../../components/TestimonialCard.astro';
 import Footer from '../../components/Footer.astro';
-import { reader, imageUrl } from '../../lib/keystatic';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 const page = await reader.singletons.servicesConsulting.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -17,7 +17,9 @@ const pageDescription =
   page?.seoDescription ||
   page?.subheading ||
   'Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors, with a focus on D2C marketplaces.';
-const pageImage = imageUrl(page?.seoImage) || imageUrl(siteSettings?.defaultSeoImage);
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
 const capabilities = page?.capabilities?.length
   ? page.capabilities

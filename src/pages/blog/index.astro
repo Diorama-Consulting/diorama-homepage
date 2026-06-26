@@ -4,7 +4,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import BlogCard from '../../components/BlogCard.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
-import { reader, imageUrl } from '../../lib/keystatic';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -15,7 +15,7 @@ const [featured, ...rest] = posts;
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
-const pageImage = imageUrl(siteSettings?.defaultSeoImage);
+const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 ---
 
 <!doctype html>
@@ -44,7 +44,7 @@ const pageImage = imageUrl(siteSettings?.defaultSeoImage);
               excerpt={featured.data.description ?? ''}
               href={`/blog/${featured.id}/`}
               date={featured.data.pubDate.toISOString()}
-              image={imageUrl(featured.data.heroImage)}
+              image={resolveImageUrl(featured.data.heroImage, featured.data.heroImageUrl)}
             />
           </div>
         )}
@@ -54,7 +54,7 @@ const pageImage = imageUrl(siteSettings?.defaultSeoImage);
             excerpt={post.data.description ?? ''}
             href={`/blog/${post.id}/`}
             date={post.data.pubDate.toISOString()}
-            image={imageUrl(post.data.heroImage)}
+            image={resolveImageUrl(post.data.heroImage, post.data.heroImageUrl)}
           />
         ))}
       </section>

@@ -1,17 +1,23 @@
 // src/lib/keystatic.ts
 //
 // Shared helpers for reading Keystatic singleton/collection content from
-// Astro pages, and for unwrapping the conditional image-field shape that
-// Keystatic's fields.conditional() always produces:
+// Astro pages, and for resolving the two-field image pattern used
+// throughout this project: every image is stored as two SEPARATE fields,
+// `<name>` (a local upload, optional) and `<name>Url` (an external URL,
+// optional) — never as a single fields.conditional() object.
 //
-//   { discriminant: true,  value: 'https://example.com/foo.jpg' }   — external URL
-//   { discriminant: false, value: <ImageMetadata> }                  — local upload
+// This replaced an earlier design using fields.conditional() to combine
+// both options into one field storing { discriminant, value }. That was
+// repeatedly observed writing a broken path for the uploaded file — a
+// subfolder named after the FIELD key containing a file named after the
+// CONDITIONAL BRANCH key (e.g. `heroImage/value.webp`) instead of
+// co-locating next to the entry — confirmed directly against real saved
+// Keystatic entries, not just documentation. A plain, non-nested
+// fields.image() does not have this problem.
 //
-// Never destructure a conditional image field as a bare string or pass it
-// straight to <img src={...}> — always run it through one of the helpers
-// below first. This is the exact bug class that broke the blog post pages
-// twice before; centralising the unwrap here means there's only one place
-// to get it right.
+// Always call resolveImageUrl()/resolveImageSrc() with BOTH fields from a
+// pair — never read `data.heroImage` or `data.heroImageUrl` directly in a
+// page. Local upload takes precedence if somehow both are set.
 
 import { createReader } from '@keystatic/core/reader';
 import keystaticConfig from '../../keystatic.config';
@@ -19,33 +25,38 @@ import type { ImageMetadata } from 'astro';
 
 export const reader = createReader(process.cwd(), keystaticConfig);
 
-type ConditionalImage =
-  | { discriminant: true; value?: string | null }
-  | { discriminant: false; value?: ImageMetadata | null }
-  | null
-  | undefined;
-
-// Keystatic writes out the conditional-field "shell" object even when no
-// value has been set — observed in both of these shapes:
-//   { discriminant: false, value: null }   — value present but null
-//   { discriminant: false }                — value key absent entirely
-// `field.value == null` below is true for both `null` and `undefined`
-// (absent), so every helper already treats both shapes the same as a
-// genuinely missing field without needing to special-case which one shows up.
-
-/** Unwrap to a plain URL string — for plain <img src> or OG/Twitter meta tags. */
-export function imageUrl(field: ConditionalImage): string | undefined {
-  if (!field || field.value == null) return undefined;
-  return field.discriminant ? field.value : field.value.src;
+/**
+ * Resolve an image pair to a plain URL string — for plain <img src> or
+ * OG/Twitter meta tags. Pass the local-upload field first, the external-URL
+ * field second; local takes precedence if both happen to be set.
+ */
+export function resolveImageUrl(
+  local: ImageMetadata | undefined | null,
+  url: string | undefined | null,
+): string | undefined {
+  if (local) return local.src;
+  if (url) return url;
+  return undefined;
 }
 
-/** Unwrap to whatever <Image /> (astro:assets) needs — string OR ImageMetadata. */
-export function imageSrc(field: ConditionalImage): string | ImageMetadata | undefined {
-  if (!field || field.value == null) return undefined;
-  return field.discriminant ? field.value : field.value;
+/**
+ * Resolve an image pair to whatever <Image /> (astro:assets) needs — a
+ * plain string for an external URL, or the ImageMetadata object for a
+ * local upload (Astro's <Image /> component accepts either).
+ */
+export function resolveImageSrc(
+  local: ImageMetadata | undefined | null,
+  url: string | undefined | null,
+): string | ImageMetadata | undefined {
+  if (local) return local;
+  if (url) return url;
+  return undefined;
 }
 
-/** True if the field holds a local upload (ImageMetadata), false for an external URL. */
-export function isLocalImage(field: ConditionalImage): boolean {
-  return Boolean(field && field.value != null && !field.discriminant);
+/** True if the pair resolves to a local upload rather than an external URL. */
+export function isLocalImage(
+  local: ImageMetadata | undefined | null,
+  url: string | undefined | null,
+): boolean {
+  return Boolean(local) && !url;
 }
