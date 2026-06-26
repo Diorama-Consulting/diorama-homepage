@@ -13,6 +13,6 @@ import keystatic from '@keystatic/astro'
 export default defineConfig({
     site: 'https://dioramaconsulting.co.uk',
     integrations: [mdx(), sitemap(), react(), markdoc(), keystatic()],
-    output: 'hybrid',
+    output: 'static',
     adapter: vercel(),
 });
