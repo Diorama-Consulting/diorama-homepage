@@ -388,7 +388,7 @@ export default config({
     }),
 
     // -------------------------------------------------------------------
-    // ABOUT — split into mission (About), Founder, and FAQ (collection).
+    // ABOUT — split into mission (About), Founder, and FAQ.
     // -------------------------------------------------------------------
     about: singleton({
       label: 'About',
@@ -402,9 +402,11 @@ export default config({
           label: 'Body paragraphs',
           itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
         }),
-        founderLinkTitle: fields.text({ label: '"The Founder" link title', defaultValue: 'The Founder' }),
+        quote: fields.text({ label: 'Pull quote', multiline: true }),
+        quoteAuthor: fields.text({ label: 'Quote author' }),
+        founderLinkTitle: fields.text({ label: '"Mal" link title', defaultValue: 'Mal' }),
         founderLinkDescription: fields.text({
-          label: '"The Founder" link description',
+          label: '"Mal" link description',
           defaultValue: 'The story behind Diorama and the person leading it.',
         }),
         faqLinkTitle: fields.text({ label: '"FAQ" link title', defaultValue: 'FAQ' }),
@@ -416,18 +418,16 @@ export default config({
     }),
 
     aboutFounder: singleton({
-      label: 'About — Founder',
+      label: 'About — Mal',
       path: 'src/content/pages/about-founder',
       schema: {
         ...seoFields('src/content/pages/about-founder'),
-        heading: fields.text({ label: 'Heading', defaultValue: 'Meet the Founder' }),
+        heading: fields.text({ label: 'Heading', defaultValue: 'Meet Mal' }),
         ...heroImageFieldsForSingleton('portrait', 'Portrait', 'src/content/pages/about-founder'),
         paragraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
           label: 'Bio paragraphs',
           itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
         }),
-        quote: fields.text({ label: 'Pull quote', multiline: true }),
-        quoteAuthor: fields.text({ label: 'Quote author' }),
         teamHeading: fields.text({ label: 'Team section heading', defaultValue: 'A small team, for complete control' }),
         team: fields.array(
           fields.object({
@@ -445,6 +445,56 @@ export default config({
           {
             label: 'Team members',
             itemLabel: (props) => props.fields.name.value || 'Member',
+          },
+        ),
+      },
+    }),
+
+    // -------------------------------------------------------------------
+    // FAQ — visual, drag-to-reorder structure. Categories and the
+    // questions within each category are both plain arrays, so their
+    // on-screen order in the Keystatic UI IS the display order on the
+    // site — drag to reorder, no numbers to manage. Replaces the old
+    // numeric `order` field and the old flat `faq` collection (which had
+    // no real category-ordering control at all — categories were grouped
+    // by first-appearance order in an unordered file listing).
+    // -------------------------------------------------------------------
+    faqPage: singleton({
+      label: 'FAQ',
+      path: 'src/content/pages/faq',
+      schema: {
+        ...seoFields('src/content/pages/faq'),
+        eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'About' }),
+        heading: fields.text({ label: 'Heading', defaultValue: 'Frequently Asked Questions' }),
+        subheading: fields.text({
+          label: 'Subheading',
+          multiline: true,
+          defaultValue: "Common questions about how we engage with clients. Can't find what you need? Get in touch.",
+        }),
+        categories: fields.array(
+          fields.object({
+            name: fields.text({ label: 'Category name', validation: { isRequired: true } }),
+            questions: fields.array(
+              fields.object({
+                question: fields.text({ label: 'Question', validation: { isRequired: true } }),
+                answer: fields.document({
+                  label: 'Answer',
+                  formatting: true,
+                  links: true,
+                  dividers: true,
+                }),
+              }),
+              {
+                label: 'Questions',
+                description: 'Drag to reorder — this is the order they appear on the page.',
+                itemLabel: (props) => props.fields.question.value || 'Question',
+              },
+            ),
+          }),
+          {
+            label: 'Categories',
+            description: 'Drag to reorder — this is the order categories appear on the page.',
+            itemLabel: (props) => props.fields.name.value || 'Category',
           },
         ),
       },
@@ -536,26 +586,6 @@ export default config({
           label: 'Content',
           components: iframeEmbedComponent,
         }),
-      },
-    }),
-
-    // -------------------------------------------------------------------
-    // FAQ
-    // -------------------------------------------------------------------
-    faq: collection({
-      label: 'FAQ',
-      slugField: 'question',
-      path: 'src/content/faq/*',
-      format: { contentField: 'answer' },
-      schema: {
-        question: fields.slug({ name: { label: 'Question', validation: { isRequired: true } } }),
-        category: fields.text({
-          label: 'Category',
-          description: 'Groups entries on the FAQ page, e.g. "Engagement", "Charities".',
-          defaultValue: 'General',
-        }),
-        order: fields.integer({ label: 'Sort order within category', defaultValue: 0 }),
-        answer: fields.mdx({ label: 'Answer' }),
       },
     }),
 

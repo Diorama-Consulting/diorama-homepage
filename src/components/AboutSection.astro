@@ -4,7 +4,7 @@ interface Props {
   imageSrc: string;
   imageAlt?: string;
   paragraphs: string[];
-  quote: string;
+  quote?: string;
   quoteAuthor?: string;
 }
 
@@ -39,10 +39,12 @@ const {
         ))}
       </div>
 
-      <blockquote class="quote-block">
-        <p class="quote-text">"{quote}"</p>
-        {quoteAuthor && <cite class="quote-author">— {quoteAuthor}</cite>}
-      </blockquote>
+      {quote && (
+        <blockquote class="quote-block">
+          <p class="quote-text">"{quote}"</p>
+          {quoteAuthor && <cite class="quote-author">— {quoteAuthor}</cite>}
+        </blockquote>
+      )}
     </div>
 
   </div>
@@ -53,8 +55,8 @@ const {
     padding: 5rem 1.5rem;
     display: flex;
     justify-content: center;
-    background-color: thistle; /* Subtle background to separate from other sections */
-    color: var(--amber);
+    background-color: var(--forest);
+    color: var(--mist);
   }
 
   .container {
@@ -90,7 +92,7 @@ const {
     aspect-ratio: 4 / 5;
     object-fit: cover;
     border-radius: 16px;
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35);
   }
 
   /* A decorative offset square behind the image */
@@ -100,26 +102,26 @@ const {
     left: -1.5rem;
     width: 100%;
     height: 100%;
-    background-color: var(--mist);
+    background-color: var(--pine);
     border-radius: 16px;
     z-index: -1;
   }
 
   /* --- Content Styling --- */
   .heading {
-    font-family: 'Cal Sans', sans-serif;
+    font-family: var(--font-body);
     font-size: clamp(2.5rem, 5vw, 3.5rem);
     line-height: 1.1;
-    color: var(--amber);
+    color: #ffffff;
     margin-bottom: 1.5rem;
     margin-top: 0;
   }
 
   .prose {
-    font-family: 'Geom Variable', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.125rem;
     line-height: 1.7;
-    color: var(--canopy);
+    color: var(--mist);
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -134,21 +136,21 @@ const {
   .quote-block {
     margin: 0;
     padding-left: 1.5rem;
-    border-left: 4px solid canopy;
+    border-left: 4px solid var(--pine);
   }
 
   .quote-text {
-    font-family: 'Cal Sans', sans-serif var(--forest); /* Using Cal Sans for a punchy quote */
+    font-family: var(--font-body);
     font-size: 1.25rem;
     line-height: 1.4;
-    color: var(--forest);
+    color: var(--mist);
     margin-bottom: 0.75rem;
   }
 
   .quote-author {
-    font-family: 'Geom Variable', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.9rem;
-    color: var(--canopy);
+    color: var(--mint);
     font-style: normal;
     text-transform: uppercase;
     letter-spacing: 0.05em;

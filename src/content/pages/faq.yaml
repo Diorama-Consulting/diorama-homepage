@@ -1,0 +1,37 @@
+eyebrow: About
+heading: Frequently Asked Questions
+subheading: Common questions about how we engage with clients. Can't find what you need?
+categories:
+  - name: Engagement
+    questions:
+      - question: How does a typical engagement start?
+        answer:
+          - type: paragraph
+            children:
+              - text: >-
+                  Most engagements start with a short, no-obligation call to understand
+                  your situation — whether that's a specific technology decision, a need
+                  for fractional leadership, or a broader AI and data strategy question.
+                  From there we agree a scope, typically starting with a focused
+                  diagnostic phase before any longer-term commitment.
+      - question: How is pricing structured?
+        answer:
+          - type: paragraph
+            children:
+              - text: >-
+                  Pricing depends on scope and commitment — day rates for fractional
+                  leadership, fixed fees for defined diagnostic or advisory pieces of
+                  work, and retainers for ongoing support. We'll always agree pricing
+                  upfront before any chargeable work begins.
+  - name: Charities
+    questions:
+      - question: Do you offer reduced rates for charities?
+        answer:
+          - type: paragraph
+            children:
+              - text: 'Yes. Charity support is typically offered through Trustee roles or pro-bono advisory work rather than standard commercial rates — see the '
+              - type: link
+                href: /services/charities
+                children:
+                  - text: Charities
+              - text: ' page for more detail on current and past involvement.'

@@ -22,6 +22,11 @@ const bodyParagraphs = page?.bodyParagraphs?.length
       'We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI — helping create defensible growth, reduce risk, and accelerate value creation through fractional leadership, pragmatic AI and data strategy, platform modernisation, and organisation design.',
       "The name Diorama Consulting is inspired by a quote from David Wallace-Wells and the reality that we're not outside observers of climate change, AI disruption, or technological change. We are all in the diorama, creating it and being shaped by it in turn.",
     ];
+
+const quote =
+  page?.quote ||
+  "you believe that what is contained in the taxidermy scene has something to teach you—but only by the logic of metaphor, because you are not a stuffed animal and do not live in the scene but beyond it, outside it, observing rather than participating. The logic is twisted by global warming, because it collapses the perceived distance between humans and nature—between you and the diorama. One message of climate change is: you do not live outside the scene but within it, subject to all the same horrors you can see afflicting the lives of animals.";
+const quoteAuthor = page?.quoteAuthor || 'David Wallace-Wells, The Uninhabitable Earth';
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
@@ -36,10 +41,15 @@ const bodyParagraphs = page?.bodyParagraphs?.length
       {bodyParagraphs.map((paragraph) => <p>{paragraph}</p>)}
     </div>
 
+    <blockquote class="about-quote">
+      <p class="about-quote-text">"{quote}"</p>
+      {quoteAuthor && <cite class="about-quote-author">— {quoteAuthor}</cite>}
+    </blockquote>
+
     <div class="about-links">
-      <a class="about-link-card" href="/about/founder">
+      <a class="about-link-card" href="/about/mal">
         <span class="about-link-eyebrow">Meet the team</span>
-        <h3>{page?.founderLinkTitle || 'The Founder'}</h3>
+        <h3>{page?.founderLinkTitle || 'Mal'}</h3>
         <p>{page?.founderLinkDescription || 'The story behind Diorama and the person leading it.'}</p>
         <span class="about-link-cta">Read more →</span>
       </a>
@@ -65,6 +75,29 @@ const bodyParagraphs = page?.bodyParagraphs?.length
 
   .about-prose p {
     margin-bottom: 1.2rem;
+  }
+
+  .about-quote {
+    max-width: 760px;
+    margin: 0 0 56px 0;
+    padding-left: 1.5rem;
+    border-left: 4px solid var(--pine);
+  }
+
+  .about-quote-text {
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: var(--mist);
+    margin-bottom: 0.6rem;
+  }
+
+  .about-quote-author {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--mint);
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .about-links {
