@@ -2,13 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { Image } from 'astro:assets';
 import { reader } from '../lib/keystatic';
+import treeImage from '../assets/404-tree.png';
 
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
 ---
-
 <Layout
   title={`Page not found — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
   description="The page you're looking for doesn't exist."
@@ -22,6 +23,10 @@ const siteSettings = await reader.singletons.siteSettings.read();
       The page you're looking for might have been moved, renamed, or never existed.
       Here are a few places to start instead:
     </p>
+
+    <div class="tree-wrap">
+      <Image src={treeImage} alt="" class="tree-image" width={320} height={320} />
+    </div>
 
     <div class="link-grid">
       <a class="link-card" href="/">
@@ -110,5 +115,30 @@ const siteSettings = await reader.singletons.siteSettings.read();
     .link-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  .subheading {
+  color: var(--mist-muted);
+  margin-bottom: 8px;
+  }
+
+  .tree-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: -28px; /* pulls the trunk base down so it overlaps the cards below */
+    position: relative;
+    z-index: 1;
+  }
+
+  .tree-image {
+    width: auto;
+    height: 220px;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.35));
+  }
+
+  .link-grid {
+    position: relative;
+    z-index: 0;
   }
 </style>
