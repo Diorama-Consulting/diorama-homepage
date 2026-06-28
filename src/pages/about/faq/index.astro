@@ -84,7 +84,9 @@ const faqJsonLd = {
             <details class="faq-item">
               <summary>{item.question}</summary>
               <div class="faq-answer">
-                <DocumentRenderer document={item.answer} />
+                <div class="faq-answer-inner">
+                  <DocumentRenderer document={item.answer} />
+                </div>
               </div>
             </details>
           ))}
@@ -141,10 +143,19 @@ const faqJsonLd = {
   }
 
   .faq-item {
-    background: var(--forest);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
-    padding: 18px 22px;
+  background: var(--forest);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  /* Hover = visual affordance only. It signals "this is clickable" without
+    opening anything — actual opening still requires a real click/tap, which
+    is what keeps this accessible and consistent between desktop and mobile. */
+  .faq-item:hover {
+    border-color: var(--moss);
+    background-color: rgba(255, 255, 255, 0.02);
   }
 
   .faq-item summary {
@@ -163,24 +174,42 @@ const faqJsonLd = {
     display: inline-block;
     width: 1.2em;
     color: var(--signal);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .faq-item:hover summary::before {
+    color: var(--mint);
   }
 
   .faq-item[open] summary::before {
     content: '−';
   }
 
+  /* Animated expand/collapse. The grid-template-rows trick lets a
+    height:auto-equivalent element actually transition smoothly — plain
+    height/max-height can't animate to "auto" in CSS. */
   .faq-answer {
-    margin-top: 12px;
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+    transition: grid-template-rows 0.25s ease, opacity 0.2s ease;
+    opacity: 0;
     padding-left: 1.2em;
     color: var(--mist-muted);
     line-height: 1.6;
   }
 
-  .faq-answer :global(a) {
-    color: var(--signal);
+  .faq-answer > :global(*) {
+    min-height: 0;
   }
 
-  .faq-answer :global(a:hover) {
-    color: var(--mint);
+  .faq-item[open] .faq-answer {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-top: 12px;
+  }
+
+  .faq-answer-inner {
+  padding-top: 0;
   }
 </style>
