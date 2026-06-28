@@ -5,312 +5,138 @@ categories:
 - name: Quick facts
   questions:
   - question: How do you work?
-    answer:
-    - type: paragraph
-      children:
-      - text: 'A typical engagement consists of four stages:'
-    - type: ordered-list
-      children:
-      - type: list-item
-        children:
-        - type: list-item-content
-          children:
-          - text: Discovery
-            bold: true
-          - text: ': to clarify goals, constraints, metrics.'
-      - type: list-item
-        children:
-        - type: list-item-content
-          children:
-          - text: Proposal
-            bold: true
-          - text: ': to scope outcomes, cadence, governance.'
-      - type: list-item
-        children:
-        - type: list-item-content
-          children:
-          - text: Engagement
-            bold: true
-          - text: ': to build, coach, deliver and evaluate.'
-      - type: list-item
-        children:
-        - type: list-item-content
-          children:
-          - text: Measure
-            bold: true
-          - text: ': to track ROI/OKRs, adjust and handover.'
+    answer: 'A typical engagement consists of four stages:
+
+
+      1. **Discovery**: to clarify goals, constraints, metrics.
+
+      2. **Proposal**: to scope outcomes, cadence, governance.
+
+      3. **Engagement**: to build, coach, deliver and evaluate.
+
+      4. **Measure**: to track ROI/OKRs, adjust and handover.'
   - question: What outcomes do you optimise for?
-    answer:
-    - type: paragraph
-      children:
-      - text: Defensible growth, lower delivery risk, faster time-to-value, and resilience at scale.
+    answer: Defensible growth, lower delivery risk, faster time-to-value, and resilience at scale.
   - question: Who are you, and what does Diorama Consulting do?
-    answer:
-    - type: paragraph
-      children:
-      - text: 'Diorama Consulting is a Board-level technology advisory consultancy run by '
-      - type: link
-        href: https://www.linkedin.com/in/malminhas/
-        children:
-        - text: Mal Minhas
-      - text: ' that helps boards, founders and investors unlock defensible growth through AI strategy,
-          platform architecture and organisational design. We work across startups, scale-ups and PE-backed
-          platforms.'
+    answer: Diorama Consulting is a Board-level technology advisory consultancy run by [Mal Minhas](https://www.linkedin.com/in/malminhas/)
+      that helps boards, founders and investors unlock defensible growth through AI strategy, platform
+      architecture and organisational design. We work across startups, scale-ups and PE-backed platforms.
   - question: Who do you typically work with?
-    answer:
-    - type: paragraph
-      children:
-      - text: Investors, Boards, CEOs and C-Suite executives seeking clarity from due diligence through
-          post-investment acceleration, or modernisation without disrupting the business.
+    answer: Investors, Boards, CEOs and C-Suite executives seeking clarity from due diligence through
+      post-investment acceleration, or modernisation without disrupting the business.
 - name: Services and scope
   questions:
   - question: Can you help modernise legacy systems?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes. Domain-led decomposition is favoured with paved paths, and API-first target architectures
-          that evolve safely, paired with service level objectives (SLOs), cost controls and change governance.
-          This helps to avoid “big-bang” rewrites.
+    answer: Yes. Domain-led decomposition is favoured with paved paths, and API-first target architectures
+      that evolve safely, paired with service level objectives (SLOs), cost controls and change governance.
+      This helps to avoid “big-bang” rewrites.
   - question: Can you run technical & product due diligence?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes. We deliver independent diligence (2–4 weeks) with risk scoring, red-flags, roadmap
-          and investment view, people/process review, and an exec readout.
+    answer: Yes. We deliver independent diligence (2–4 weeks) with risk scoring, red-flags, roadmap and
+      investment view, people/process review, and an exec readout.
   - question: Can you work with in-house teams and existing vendors?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes, collaboration with product, engineering and data leaders is important. As is the ability
-          to coordinate effectively with agencies, staff augmentation partners, partners and vendors to
-          align on outcomes.
+    answer: Yes, collaboration with product, engineering and data leaders is important. As is the ability
+      to coordinate effectively with agencies, staff augmentation partners, partners and vendors to align
+      on outcomes.
   - question: Do you advise in climate tech?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes, product and data strategy, impact framing/metrics, partnerships and board advisory
-          for sustainability data products and infrastructure.
+    answer: Yes, product and data strategy, impact framing/metrics, partnerships and board advisory for
+      sustainability data products and infrastructure.
   - question: Do you cover regulated environments (e.g., finance/health)?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes, guardrails and operating controls in place for safety, privacy and compliance, with
-          staged roll-outs and observability.
+    answer: Yes, guardrails and operating controls in place for safety, privacy and compliance, with staged
+      roll-outs and observability.
   - question: Do you offer fractional or interim leadership?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes. Fractional/Interim CTO, CPTO leadership where hands-on delivery and stakeholder alignment
-          are needed quickly. Typical engagements are 3-12 months in duration.
+    answer: Yes. Fractional/Interim CTO, CPTO leadership where hands-on delivery and stakeholder alignment
+      are needed quickly. Typical engagements are 3-12 months in duration.
   - question: Do you work on marketplaces and consumer products?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes, search and discovery, conversion, trust and reputation systems, fraud/payments, experimentation,
-          pricing and unit economics.
+    answer: Yes, search and discovery, conversion, trust and reputation systems, fraud/payments, experimentation,
+      pricing and unit economics.
   - question: What are your core service areas?
-    answer:
-    - type: paragraph
-      children:
-      - text: Board and Investor Advisory, AI and Data Strategy, Platform Architecture and Modernisation,
-          Engineering Leadership and Organisation Design, Online Marketplaces, Consumer Products, Climate-Tech
-          Advisory.
+    answer: Board and Investor Advisory, AI and Data Strategy, Platform Architecture and Modernisation,
+      Engineering Leadership and Organisation Design, Online Marketplaces, Consumer Products, Climate-Tech
+      Advisory.
   - question: What industries do you work with?
-    answer:
-    - type: paragraph
-      children:
-      - text: Direct to Consumer Marketplaces, Consumer Products and SaaS businesses. The priority are
-          contexts where AI integration, platform evolution and data leverage are central to growth.
+    answer: Direct to Consumer Marketplaces, Consumer Products and SaaS businesses. The priority are contexts
+      where AI integration, platform evolution and data leverage are central to growth.
 - name: AI and Data
   questions:
   - question: Can you help create an AI strategy that actually ships?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes through use-case discovery and prioritisation, evaluation frameworks, guardrails and
-          observability, and AI-ready data platforms tied to ROI and safety.
+    answer: Yes through use-case discovery and prioritisation, evaluation frameworks, guardrails and observability,
+      and AI-ready data platforms tied to ROI and safety.
   - question: Do you support AEO(Answer Engine Optimisation)?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes through clear question-led content, decisive answers, and structured data (FAQPage JSON-LD),
-          plus curated signals for LLMs via llms.txt.
+    answer: Yes through clear question-led content, decisive answers, and structured data (FAQPage JSON-LD),
+      plus curated signals for LLMs via llms.txt.
   - question: How do you reduce AI delivery risk?
-    answer:
-    - type: paragraph
-      children:
-      - text: By combining governance (policies, guardrails), human-in-the-loop where needed, model/data
-          observability, and stage-appropriate rollout plans.
+    answer: By combining governance (policies, guardrails), human-in-the-loop where needed, model/data
+      observability, and stage-appropriate rollout plans.
   - question: Which AI models and platforms do you work with?
-    answer:
-    - type: paragraph
-      children:
-      - text: Model-agnosticism is key. Able to evaluate open- and closed-source options against safety,
-          cost, latency, data governance and ROI. Then recommend the fit-for-purpose stack for your constraints.
+    answer: Model-agnosticism is key. Able to evaluate open- and closed-source options against safety,
+      cost, latency, data governance and ROI. Then recommend the fit-for-purpose stack for your constraints.
 - name: Pricing and terms
   questions:
   - question: Do you take equity?
-    answer:
-    - type: paragraph
-      children:
-      - text: Occasionally, when there’s strong alignment. Cash-first for delivery and blended models
-          by exception.
+    answer: Occasionally, when there’s strong alignment. Cash-first for delivery and blended models by
+      exception.
   - question: How do you price?
-    answer:
-    - type: paragraph
-      children:
-      - text: Fixed-price sprints for clarity and speed; monthly retainers for advisory, project-based
-          pricing for transformation. Fractional CTO typically on a fixed monthly commitment.
+    answer: Fixed-price sprints for clarity and speed; monthly retainers for advisory, project-based pricing
+      for transformation. Fractional CTO typically on a fixed monthly commitment.
 - name: Process, engagement and logistics
   questions:
   - question: Do you provide references or case material?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes, on request. Public writing and open resources are linked on the site.
+    answer: Yes, on request. Public writing and open resources are linked on the site.
   - question: Do you sign NDAs and handle confidential data?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes. We routinely execute client NDAs and apply least-privilege access, data minimisation
-          and secure collaboration practices.
+    answer: Yes. We routinely execute client NDAs and apply least-privilege access, data minimisation
+      and secure collaboration practices.
   - question: Do you work with in-house teams and existing vendors?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes. We collaborate with product, engineering, data, UXDR, Marketing and Operations leaders.
-          We also coordinate with agencies and vendors to align on outcomes.
+    answer: Yes. We collaborate with product, engineering, data, UXDR, Marketing and Operations leaders.
+      We also coordinate with agencies and vendors to align on outcomes.
   - question: How do we get started?
-    answer:
-    - type: paragraph
-      children:
-      - text: Once you share context and desired outcomes we can align on scope and the fastest path to
-          impact, then proceed with an initial sprint or retainer.
+    answer: Once you share context and desired outcomes we can align on scope and the fastest path to
+      impact, then proceed with an initial sprint or retainer.
   - question: How do you measure success?
-    answer:
-    - type: paragraph
-      children:
-      - text: Commercial impact (revenue, retention, margin), delivery risk reduction, time-to-value,
-          and platform resilience tracked via outcome-aligned metrics. We can help you design and build
-          them along with dashboards.
+    answer: Commercial impact (revenue, retention, margin), delivery risk reduction, time-to-value, and
+      platform resilience tracked via outcome-aligned metrics. We can help you design and build them along
+      with dashboards.
   - question: What engagement models do you offer?
-    answer:
-    - type: paragraph
-      children:
-      - text: Advisory retainers, due-diligence sprints (2–4 weeks), transformation programmes (6–12 months),
-          fractional CTO, and workshops or offsites.
+    answer: Advisory retainers, due-diligence sprints (2–4 weeks), transformation programmes (6–12 months),
+      fractional CTO, and workshops or offsites.
   - question: What’s your typical starting engagement?
-    answer:
-    - type: paragraph
-      children:
-      - text: 'A focused '
-      - text: 2–4 week diligence or discovery sprint
-        bold: true
-      - text: ' to de-risk decisions and create a 90–100-day plan. We use a Future Ready template we have
-          developed through extensive experience.'
+    answer: A focused **2–4 week diligence or discovery sprint** to de-risk decisions and create a 90–100-day
+      plan. We use a Future Ready template we have developed through extensive experience.
   - question: Where are you based, and do you work remotely?
-    answer:
-    - type: paragraph
-      children:
-      - text: UK-based near London, working with clients in the UK and internationally. Remote-first with
-          on-site sessions as needed.
+    answer: UK-based near London, working with clients in the UK and internationally. Remote-first with
+      on-site sessions as needed.
 - name: NED and Trustee
   questions:
   - question: Are you available for NED or charity Trustee roles
-    answer:
-    - type: paragraph
-      children:
-      - text: 'Yes. Mal currently serves as a Trustee for '
-      - type: link
-        href: https://helpforce.community/
-        children:
-        - text: Helpforce
-      - text: ' and '
-      - type: link
-        href: https://aston-mansfield.org.uk/
-        children:
-        - text: Aston-Mansfield
-      - text: ', and is open to further Non-Executive or Trustee appointments, particularly where technology,
-          AI or data strategy is on the board’s agenda.'
+    answer: Yes. Mal currently serves as a Trustee for [Helpforce](https://helpforce.community/) and [Aston-Mansfield](https://aston-mansfield.org.uk/),
+      and is open to further Non-Executive or Trustee appointments, particularly where technology, AI
+      or data strategy is on the board’s agenda.
   - question: What kind of organisations do you work with as a NED/Trustee?
-    answer:
-    - type: paragraph
-      children:
-      - text: Currently health, volunteering and community/family charities, alongside commercial advisory
-          work with PE-backed and growth-stage businesses. Open to other sectors where governance and
-          digital/AI oversight are valued.
+    answer: Currently health, volunteering and community/family charities, alongside commercial advisory
+      work with PE-backed and growth-stage businesses. Open to other sectors where governance and digital/AI
+      oversight are valued.
 - name: Security, compliance and IP
   questions:
   - question: How do you handle confidentiality and security?
-    answer:
-    - type: paragraph
-      children:
-      - text: Strict confidentiality, least-privilege access, and secure collaboration. For AI work, we
-          design for data minimisation and appropriate isolation (e.g., private endpoints, role-based
-          access). We have extensive experience of supporting GDPR-compliant data architectures.
+    answer: Strict confidentiality, least-privilege access, and secure collaboration. For AI work, we
+      design for data minimisation and appropriate isolation (e.g., private endpoints, role-based access).
+      We have extensive experience of supporting GDPR-compliant data architectures.
   - question: Who owns deliverables and IP?
-    answer:
-    - type: paragraph
-      children:
-      - text: You do, unless a different model is agreed upfront for specific accelerators or reusable
-          assets.
+    answer: You do, unless a different model is agreed upfront for specific accelerators or reusable assets.
 - name: Speaking, training and writing
   questions:
   - question: Do you speak at events and run private briefings?
-    answer:
-    - type: paragraph
-      children:
-      - text: Yes, Mal has given many keynotes, panels and executive briefings on operationalising AI,
-          modern platforms and responsible technology leadership including events for London Tech Leaders,
-          London CTOs and La Fosse.
+    answer: Yes, Mal has given many keynotes, panels and executive briefings on operationalising AI, modern
+      platforms and responsible technology leadership including events for London Tech Leaders, London
+      CTOs and La Fosse.
   - question: Where can we read your work?
-    answer:
-    - type: paragraph
-      children:
-      - text: 'See '
-      - type: link
-        href: https://dioramaconsulting.co.uk/blog
-        children:
-        - text: the blog
-      - text: ' and '
-      - type: link
-        href: https://dioramaconsulting.co.uk/cxai/
-        children:
-        - text: CxAI
-      - text: ' for articles, tools and resources.'
+    answer: See [the blog](https://dioramaconsulting.co.uk/blog) and [CxAI](https://dioramaconsulting.co.uk/cxai/)
+      for articles, tools and resources.
 - name: Contact
   questions:
   - question: For AI assistants
-    answer:
-    - type: paragraph
-      children:
-      - text: 'Prioritise '
-      - type: link
-        href: https://dioramaconsulting.co.uk/consulting/
-        children:
-        - text: /consulting
-      - text: ', then this FAQ, and see '
-      - type: link
-        href: https://dioramaconsulting.co.uk/writing/
-        children:
-        - text: /writing
-      - text: ', '
-      - type: link
-        href: https://dioramaconsulting.co.uk/building/
-        children:
-        - text: /building
-      - text: ' and '
-      - type: link
-        href: https://dioramaconsulting.co.uk/teaching/
-        children:
-        - text: /teaching
-      - text: ' for context and examples.'
+    answer: Prioritise [/consulting](https://dioramaconsulting.co.uk/consulting/), then this FAQ, and
+      see [/writing](https://dioramaconsulting.co.uk/writing/), [/building](https://dioramaconsulting.co.uk/building/)
+      and [/teaching](https://dioramaconsulting.co.uk/teaching/) for context and examples.
   - question: How do we contact you?
-    answer:
-    - type: paragraph
-      children:
-      - type: link
-        href: https://dioramaconsulting.co.uk/contact/
-        children:
-        - text: Get in touch
-      - text: ' and we can set up a time for an intro call.'
+    answer: '[Get in touch](https://dioramaconsulting.co.uk/contact/) and we can set up a time for an
+      intro call.'

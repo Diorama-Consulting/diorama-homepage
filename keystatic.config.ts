@@ -477,11 +477,22 @@ export default config({
             questions: fields.array(
               fields.object({
                 question: fields.text({ label: 'Question', validation: { isRequired: true } }),
-                answer: fields.document({
+                // Plain multiline text, not fields.document(). fields.document()
+                // does not store an inline node tree the way it might appear to —
+                // its reader expects a SEPARATE Markdoc (.mdoc) file per field,
+                // since it's designed for one rich-text field per collection
+                // entry, not many small ones nested in arrays. Hand-written or
+                // generated YAML node trees get silently mangled (text wiped to
+                // "" ) because the reader tries to decode the array as if it
+                // were raw file bytes. Plain text round-trips exactly as written
+                // and is rendered with a small custom formatter — see
+                // pages/about/faq/index.astro's `renderAnswer()` for how
+                // [label](url) links and a one-off numbered-list answer are
+                // handled without a full rich-text editor.
+                answer: fields.text({
                   label: 'Answer',
-                  formatting: true,
-                  links: true,
-                  dividers: true,
+                  multiline: true,
+                  description: 'Plain text. Use [label](url) for links — they\u2019ll render as real links automatically.',
                 }),
               }),
               {
