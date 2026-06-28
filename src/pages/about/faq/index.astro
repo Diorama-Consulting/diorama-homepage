@@ -189,27 +189,21 @@ const faqJsonLd = {
     height:auto-equivalent element actually transition smoothly — plain
     height/max-height can't animate to "auto" in CSS. */
   .faq-answer {
-    display: grid;
-    grid-template-rows: 0fr;
-    overflow: hidden;
-    transition: grid-template-rows 0.25s ease, opacity 0.2s ease;
-    opacity: 0;
-    padding-left: 1.2em;
-    color: var(--mist-muted);
-    line-height: 1.6;
-  }
-
-  .faq-answer > :global(*) {
-    min-height: 0;
-  }
-
-  .faq-item[open] .faq-answer {
-    grid-template-rows: 1fr;
-    opacity: 1;
-    margin-top: 12px;
+  padding-left: 1.2em;
+  color: var(--mist-muted);
+  line-height: 1.6;
   }
 
   .faq-answer-inner {
-  padding-top: 0;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.2s ease;
+  }
+
+  .faq-item[open] .faq-answer-inner {
+    max-height: 600px; /* generous ceiling — real content is always shorter */
+    opacity: 1;
+    margin-top: 12px;
   }
 </style>
