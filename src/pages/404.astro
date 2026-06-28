@@ -1,0 +1,114 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { reader } from '../lib/keystatic';
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+---
+
+<Layout
+  title={`Page not found — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
+  description="The page you're looking for doesn't exist."
+>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <main class="container">
+    <p class="error-code">404</p>
+    <h1>We couldn't find that page</h1>
+    <p class="subheading">
+      The page you're looking for might have been moved, renamed, or never existed.
+      Here are a few places to start instead:
+    </p>
+
+    <div class="link-grid">
+      <a class="link-card" href="/">
+        <span class="link-card-eyebrow">Start here</span>
+        <h3>Home</h3>
+      </a>
+      <a class="link-card" href="/services">
+        <span class="link-card-eyebrow">What we do</span>
+        <h3>Services</h3>
+      </a>
+      <a class="link-card" href="/projects">
+        <span class="link-card-eyebrow">Side projects</span>
+        <h3>Projects</h3>
+      </a>
+      <a class="link-card" href="/contact">
+        <span class="link-card-eyebrow">Get in touch</span>
+        <h3>Contact</h3>
+      </a>
+    </div>
+  </main>
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
+
+<style>
+  main.container {
+    padding-top: 96px;
+    padding-bottom: 96px;
+    max-width: 640px;
+    text-align: center;
+  }
+
+  .error-code {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    color: var(--mint);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+  }
+
+  .subheading {
+    color: var(--mist-muted);
+    margin-bottom: 48px;
+  }
+
+  .link-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    text-align: left;
+  }
+
+  .link-card {
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .link-card:hover {
+    border-color: var(--moss);
+  }
+
+  .link-card-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mint);
+  }
+
+  .link-card h3 {
+    font-size: 1.05rem;
+    margin-top: 4px;
+    color: #ffffff;
+  }
+
+  @media (max-width: 540px) {
+    .link-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

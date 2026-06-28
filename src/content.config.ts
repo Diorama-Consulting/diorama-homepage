@@ -87,19 +87,6 @@ const projects = defineCollection({
 });
 
 // ---------------------------------------------------------------------------
-// FAQ  (src/content/faq/<slug>.mdx) — flat files, no images needed
-// ---------------------------------------------------------------------------
-const faq = defineCollection({
-  loader: glob({ pattern: '*.mdx', base: './src/content/faq' }),
-  schema: z.object({
-    question: z.string(),
-    order: z.number().default(0),
-    // Groups FAQ entries on the page, e.g. "Engagement", "Pricing", "Charities"
-    category: z.string().default('General'),
-  }),
-});
-
-// ---------------------------------------------------------------------------
 // CHARITIES  (src/content/charities/<slug>/index.mdx + co-located images)
 // Used by both /services/charities and the standalone homepage widget.
 // ---------------------------------------------------------------------------
@@ -116,4 +103,4 @@ const charities = defineCollection({
     }),
 });
 
-export const collections = { blog, projects, faq, charities };
+export const collections = { blog, projects, charities };
