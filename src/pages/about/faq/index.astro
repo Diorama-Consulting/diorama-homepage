@@ -2,14 +2,9 @@
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
-import { DocumentRenderer } from '@keystatic/core/renderer';
 import { reader, resolveImageUrl } from '../../../lib/keystatic';
 
-// resolveLinkedFiles: true resolves every document field immediately as
-// plain JSON, rather than as a deferred async function — simpler here since
-// each answer is nested inside arrays-within-a-singleton, not a top-level
-// collection entry with its own linked files.
-const page = await reader.singletons.faqPage.read({ resolveLinkedFiles: true });
+const page = await reader.singletons.faqPage.read();
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
@@ -24,25 +19,67 @@ const pageImage =
   resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
 const categories = page?.categories ?? [];
+const allQuestions = categories.flatMap((category) => category.questions ?? []);
+
+// Answers are stored as plain text (see keystatic.config.ts for why
+// fields.document() doesn't work for this — it expects one separate
+// Markdoc file per field, not many small ones nested in arrays, and
+// silently mangles hand-written/generated node trees). This renders the
+// handful of conventions actually used in real answers: blank-line-separated
+// paragraphs, a contiguous run of "1. " lines as a numbered list,
+// [label](url) links, and **bold** spans. Anything else is escaped and
+// shown as plain text — there's no risk of unrendered markdown leaking
+// through unescaped HTML.
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function inline(str: string): string {
+  let out = escapeHtml(str);
+  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  return out;
+}
+
+function renderAnswer(text: string | undefined | null): string {
+  if (!text) return '';
+  const lines = text.split('\n');
+  const html: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const listMatch = line.match(/^\d+\.\s+(.*)$/);
+    if (listMatch) {
+      const items: string[] = [];
+      while (i < lines.length) {
+        const m = lines[i].match(/^\d+\.\s+(.*)$/);
+        if (!m) break;
+        items.push(m[1]);
+        i++;
+      }
+      html.push(`<ol>${items.map((item) => `<li>${inline(item)}</li>`).join('')}</ol>`);
+    } else if (line.trim() === '') {
+      i++;
+    } else {
+      html.push(`<p>${inline(line)}</p>`);
+      i++;
+    }
+  }
+  return html.join('');
+}
 
 // FAQPage structured data — specifically favoured by AI answer engines for
-// extracting Q&A pairs directly. JSON-LD values must be plain text, so the
-// document field's structured nodes are flattened to plain text rather
-// than rendered as HTML.
-function documentToPlainText(nodes: any[]): string {
-  if (!Array.isArray(nodes)) return '';
-  return nodes
-    .map((node) => {
-      if (typeof node.text === 'string') return node.text;
-      if (Array.isArray(node.children)) return documentToPlainText(node.children);
-      return '';
-    })
-    .join(' ')
+// extracting Q&A pairs directly. JSON-LD wants plain text, so this strips
+// the [label](url) / **bold** markers rather than converting to HTML.
+function toPlainText(text: string | undefined | null): string {
+  if (!text) return '';
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\n+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
-
-const allQuestions = categories.flatMap((category) => category.questions ?? []);
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -52,7 +89,7 @@ const faqJsonLd = {
     name: item.question,
     acceptedAnswer: {
       '@type': 'Answer',
-      text: documentToPlainText(item.answer ?? []),
+      text: toPlainText(item.answer),
     },
   })),
 };
@@ -84,9 +121,7 @@ const faqJsonLd = {
             <details class="faq-item">
               <summary>{item.question}</summary>
               <div class="faq-answer">
-                <div class="faq-answer-inner">
-                  <DocumentRenderer document={item.answer} />
-                </div>
+                <div class="faq-answer-inner" set:html={renderAnswer(item.answer)} />
               </div>
             </details>
           ))}
@@ -143,16 +178,16 @@ const faqJsonLd = {
   }
 
   .faq-item {
-  background: var(--forest);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  padding: 18px 22px;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
   }
 
   /* Hover = visual affordance only. It signals "this is clickable" without
-    opening anything — actual opening still requires a real click/tap, which
-    is what keeps this accessible and consistent between desktop and mobile. */
+     opening anything — actual opening still requires a real click/tap, which
+     is what keeps this accessible and consistent between desktop and mobile. */
   .faq-item:hover {
     border-color: var(--moss);
     background-color: rgba(255, 255, 255, 0.02);
@@ -185,13 +220,10 @@ const faqJsonLd = {
     content: '−';
   }
 
-  /* Animated expand/collapse. The grid-template-rows trick lets a
-    height:auto-equivalent element actually transition smoothly — plain
-    height/max-height can't animate to "auto" in CSS. */
   .faq-answer {
-  padding-left: 1.2em;
-  color: var(--mist-muted);
-  line-height: 1.6;
+    padding-left: 1.2em;
+    color: var(--mist-muted);
+    line-height: 1.6;
   }
 
   .faq-answer-inner {
@@ -199,6 +231,27 @@ const faqJsonLd = {
     max-height: 0;
     opacity: 0;
     transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.2s ease;
+  }
+
+  .faq-answer-inner :global(p) {
+    margin: 0 0 0.6em 0;
+  }
+
+  .faq-answer-inner :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .faq-answer-inner :global(ol) {
+    margin: 0.4em 0 0 1.2em;
+    padding: 0;
+  }
+
+  .faq-answer-inner :global(a) {
+    color: var(--signal);
+  }
+
+  .faq-answer-inner :global(a:hover) {
+    color: var(--mint);
   }
 
   .faq-item[open] .faq-answer-inner {
