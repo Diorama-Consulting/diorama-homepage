@@ -1,4 +1,7 @@
 ---
+import SustainabilityNote from './SustainabilityNote.astro';
+import { reader } from '../lib/keystatic';
+
 interface LinkGroup {
   heading: string;
   links: { label: string; href: string }[];
@@ -10,6 +13,8 @@ interface Props {
   legalLine?: string;
   groups?: LinkGroup[];
 }
+
+const siteSettings = await reader.singletons.siteSettings.read();
 
 const {
   brandName = 'Diorama Consulting Ltd',
@@ -68,6 +73,15 @@ const {
         </ul>
       </div>
     ))}
+  </div>
+  <div class="container footer-sustainability">
+    <SustainabilityNote
+      hostingProvider={siteSettings?.hostingProvider}
+      hostingRegion={siteSettings?.hostingRegion}
+      greenHostingVerified={siteSettings?.greenHostingVerified}
+      greenHostingEvidenceUrl={siteSettings?.greenHostingEvidenceUrl}
+      sustainabilityNotes={siteSettings?.sustainabilityNotes}
+    />
   </div>
   <div class="container footer-bottom">
     <p>{legalLine}</p>
@@ -129,6 +143,10 @@ const {
   }
   .footer-group a:hover {
     color: var(--signal);
+  }
+
+  .footer-sustainability {
+    margin-bottom: 32px;
   }
 
   .footer-bottom {

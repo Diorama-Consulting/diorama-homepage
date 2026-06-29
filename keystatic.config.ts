@@ -124,6 +124,38 @@ export default config({
           description: 'LinkedIn, Substack, GitHub, etc. — helps AI answer engines link this entity to its public profiles.',
           itemLabel: (props) => props.value || 'Link',
         }),
+        // -----------------------------------------------------------------
+        // SUSTAINABILITY — editable, not hardcoded, because hosting and
+        // verification status genuinely change over time (DigitalOcean's
+        // own Green Web Foundation listing has lapsed and been reinstated
+        // before — see SustainabilityNote.astro for the full reasoning).
+        // Update these once hosting migrates and a real, current Green Web
+        // Check result confirms green status — never tick the checkbox
+        // speculatively.
+        // -----------------------------------------------------------------
+        hostingProvider: fields.text({
+          label: 'Hosting provider',
+          defaultValue: 'Vercel',
+          description: 'Update once a hosting migration (e.g. to DigitalOcean) is actually live.',
+        }),
+        hostingRegion: fields.text({
+          label: 'Hosting region',
+          description: 'e.g. "London (LON1)" — only fill in once self-hosting in a specific region.',
+        }),
+        greenHostingVerified: fields.checkbox({
+          label: 'Green hosting verified?',
+          defaultValue: false,
+          description: 'Only check this once a real, current Green Web Check result confirms it. Check live at thegreenwebfoundation.org/green-web-check — do not assert this speculatively.',
+        }),
+        greenHostingEvidenceUrl: fields.url({
+          label: 'Evidence / verification link',
+          description: 'Link to the live Green Web Check result for this domain, or the provider\u2019s own published evidence.',
+        }),
+        sustainabilityNotes: fields.text({
+          label: 'Sustainability notes',
+          multiline: true,
+          description: 'Honest, specific notes on what\u2019s actually been done (image optimisation, static-first architecture, etc.) — shown regardless of hosting verification status.',
+        }),
       },
     }),
 
