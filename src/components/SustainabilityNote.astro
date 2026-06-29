@@ -1,0 +1,157 @@
+---
+// src/components/SustainabilityNote.astro
+//
+// Honest sustainability disclosure, not a green badge. Shows whatever the
+// real, current state actually is — reads from siteSettings rather than
+// hardcoding a claim, since hosting verification status changes over time
+// (see lib/carbon.ts for why `green` must never be hardcoded true).
+import { estimatePageCarbon } from '../lib/carbon';
+
+interface Props {
+  /** Approximate transferred bytes for THIS page. Pass a real measured
+      figure once available; falls back to a disclosed estimate otherwise. */
+  pageBytes?: number;
+  hostingProvider?: string;
+  hostingRegion?: string;
+  greenHostingVerified?: boolean;
+  greenHostingEvidenceUrl?: string;
+  sustainabilityNotes?: string;
+}
+
+const {
+  pageBytes = 600 * 1024, // disclosed estimate — see methodology note below
+  hostingProvider = 'Vercel',
+  hostingRegion,
+  greenHostingVerified = false,
+  greenHostingEvidenceUrl,
+  sustainabilityNotes,
+} = Astro.props;
+
+const estimate = estimatePageCarbon(pageBytes, greenHostingVerified);
+const gramsDisplay = estimate.grams < 0.1 ? estimate.grams.toFixed(3) : estimate.grams.toFixed(2);
+---
+
+<section class="sustainability-note">
+  <p class="sustainability-eyebrow">Sustainability</p>
+
+  <div class="sustainability-grid">
+    <div class="sustainability-stat">
+      <span class="stat-value">~{gramsDisplay}g</span>
+      <span class="stat-label">Estimated CO₂ per page view</span>
+    </div>
+    <div class="sustainability-stat">
+      <span class="stat-value">{hostingProvider}{hostingRegion && ` · ${hostingRegion}`}</span>
+      <span class="stat-label">Current hosting</span>
+    </div>
+    <div class="sustainability-stat">
+      <span class="stat-value">{greenHostingVerified ? 'Verified green' : 'Not yet verified'}</span>
+      <span class="stat-label">Green Web Foundation status</span>
+    </div>
+  </div>
+
+  {sustainabilityNotes && <p class="sustainability-notes">{sustainabilityNotes}</p>}
+
+  <p class="sustainability-links">
+    <a href="https://www.thegreenwebfoundation.org/green-web-check/?url=dioramaconsulting.co.uk" target="_blank" rel="noopener noreferrer">
+      Check our live hosting status →
+    </a>
+    {greenHostingEvidenceUrl && (
+      <a href={greenHostingEvidenceUrl} target="_blank" rel="noopener noreferrer">
+        View verification evidence →
+      </a>
+    )}
+  </p>
+
+  <p class="sustainability-methodology">
+    CO₂ estimate calculated using <a href="https://www.thegreenwebfoundation.org/co2-js/" target="_blank" rel="noopener noreferrer">CO2.js</a> (Sustainable Web Design Model v4), the open-source methodology built by the Green Web Foundation and used by Mozilla, WebPageTest and others. Based on an estimated page weight — not yet a precise per-page measurement.
+  </p>
+</section>
+
+<style>
+  .sustainability-note {
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 28px 32px;
+    margin-top: 32px;
+  }
+
+  .sustainability-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin: 0 0 18px;
+  }
+
+  .sustainability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+
+  .sustainability-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .stat-label {
+    font-size: 12.5px;
+    color: var(--mist-muted);
+  }
+
+  .sustainability-notes {
+    font-size: 14px;
+    color: var(--mist);
+    line-height: 1.6;
+    margin: 0 0 16px;
+  }
+
+  .sustainability-links {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 0 0 16px;
+    font-size: 13.5px;
+  }
+
+  .sustainability-links a {
+    color: var(--signal);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .sustainability-links a:hover {
+    color: var(--mint);
+  }
+
+  .sustainability-methodology {
+    font-size: 12px;
+    color: var(--mist-muted);
+    line-height: 1.6;
+    margin: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .sustainability-methodology a {
+    color: var(--mist-muted);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .sustainability-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+  }
+</style>
