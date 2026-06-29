@@ -129,10 +129,45 @@ export default config({
         // verification status genuinely change over time (DigitalOcean's
         // own Green Web Foundation listing has lapsed and been reinstated
         // before — see SustainabilityNote.astro for the full reasoning).
-        // Update these once hosting migrates and a real, current Green Web
-        // Check result confirms green status — never tick the checkbox
-        // speculatively.
+        // Update the hosting fields once a migration is live and a real,
+        // current Green Web Check result confirms green status — never
+        // tick greenHostingVerified speculatively.
+        //
+        // Every visible piece is independently toggleable so the section
+        // can be trimmed down to just what's actually worth showing,
+        // rather than an all-or-nothing block.
         // -----------------------------------------------------------------
+        showSustainabilitySection: fields.checkbox({
+          label: 'Show sustainability section in footer at all',
+          defaultValue: true,
+        }),
+        showCarbonBadge: fields.checkbox({
+          label: 'Show live carbon badge (Website Carbon, external)',
+          defaultValue: true,
+          description: 'Fetches a live per-page CO2 figure from websitecarbon.com. Sends the page URL to a third party — see SustainabilityNote.astro for details. Turn off to remove this single external request.',
+        }),
+        showCo2Estimate: fields.checkbox({
+          label: 'Show self-hosted CO2.js estimate',
+          defaultValue: true,
+          description: 'No external request — calculated entirely from page weight using the open-source CO2.js library.',
+        }),
+        showHostingInfo: fields.checkbox({
+          label: 'Show current hosting provider/region',
+          defaultValue: true,
+        }),
+        showVerificationStatus: fields.checkbox({
+          label: 'Show Green Web Foundation verification status',
+          defaultValue: true,
+        }),
+        showSustainabilityNotes: fields.checkbox({
+          label: 'Show sustainability notes paragraph',
+          defaultValue: true,
+        }),
+        showMethodologyLink: fields.checkbox({
+          label: 'Show methodology footnote',
+          defaultValue: false,
+          description: 'Off by default — keeps the section lighter. Turn on if you want the CO2.js/Website Carbon attribution line visible.',
+        }),
         hostingProvider: fields.text({
           label: 'Hosting provider',
           defaultValue: 'Vercel',
