@@ -351,6 +351,10 @@ export default config({
             itemLabel: (props) => props.fields.title.value || 'Tile',
           },
         ),
+        bodyParagraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
+          label: 'Body paragraphs',
+          itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
+        }),
       },
     }),
 
