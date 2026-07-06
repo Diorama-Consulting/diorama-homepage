@@ -95,7 +95,7 @@ jobs:
 
       - name: Rsync build output to the server
         run: |
-          rsync -az --delete \
+          rsync -az --delete --exclude='.env' \
             build-output/dist/ \
             build-output/package.json \
             build-output/package-lock.json \

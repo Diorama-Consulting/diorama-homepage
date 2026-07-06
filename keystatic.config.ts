@@ -87,7 +87,7 @@ const iframeEmbedComponent = {
 };
 
 export default config({
-  storage: { kind: 'github', repo: 'paolominhas/diorama-homepage' },
+  storage: { kind: 'github', repo: 'Diorama-Consulting/diorama-homepage' },
 
   singletons: {
     // -------------------------------------------------------------------

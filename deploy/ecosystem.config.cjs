@@ -2,7 +2,9 @@
 //
 // Usage on the server (see also .github/workflows/ci-cd.yml, which reloads
 // this after every deploy):
-//   pm2 start deploy/ecosystem.config.cjs
+//   pm2 start ecosystem.config.cjs      (run from /var/www/diorama-homepage —
+//                                        rsync flattens deploy/ecosystem.config.cjs
+//                                        to the deploy path root, no subfolder)
 //   pm2 save                 # persist the process list
 //   pm2 startup              # generate + run the systemd hook so PM2 (and
 //                             # this app) comes back up after a reboot
@@ -10,6 +12,15 @@
 // If you'd rather avoid the extra `pm2` global dependency and use plain
 // systemd instead, see deploy/diorama-homepage.service for an equivalent —
 // pick one, you don't need both.
+//
+// Loading .env: PM2 does NOT read a .env file automatically, and
+// `pm2 start ... --env-file .env` is NOT a real flag on PM2 7.x — confirmed
+// directly, it errors with "unknown option" and the app never starts. The
+// reliable approach, tested working on both `pm2 start` and `pm2 reload`,
+// is having this config file load it itself via the `dotenv` package.
+// Requires: npm install dotenv
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+
 module.exports = {
   apps: [
     {
@@ -24,14 +35,11 @@ module.exports = {
         NODE_ENV: 'production',
         HOST: '127.0.0.1', // only Caddy talks to this — see Caddyfile.example
         PORT: 4321,
-        // Secrets below are intentionally NOT hardcoded here — this file is
-        // committed to the repo. Set the real values in a .env file at
-        // /var/www/diorama-homepage/.env (chmod 600, not in git) and either
-        //   (a) load it with `pm2 start ... --env-file .env`, or
-        //   (b) `require('dotenv').config()` at the very top of a thin
-        //       wrapper script you point `script:` at instead.
-        // Either way, ANTHROPIC_API_KEY / DATABASE_URL / RESEND_API_KEY need
-        // to exist in the process's environment before entry.mjs starts.
+        // Pulled from .env via dotenv above, then passed through explicitly —
+        // PM2 only forwards env vars that are actually listed here.
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+        DATABASE_URL: process.env.DATABASE_URL,
+        RESEND_API_KEY: process.env.RESEND_API_KEY,
       },
     },
   ],
