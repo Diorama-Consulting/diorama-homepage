@@ -1,0 +1,112 @@
+name: CI / CD
+
+# Runs on every push (this is also what fires when Keystatic saves an edit —
+# GitHub-mode Keystatic commits straight to `main` via the GitHub API, which
+# is indistinguishable from a normal `git push` as far as Actions is
+# concerned) and on every pull request, so feature-branch work gets the same
+# build/typecheck signal before it's merged.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {} # lets you re-run a deploy manually from the Actions tab
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------
+  # CHECKS — this is the "subject to checks" gate. It runs identically
+  # whether the push came from `git push`, a merged PR, or Keystatic. The
+  # deploy job below only runs if this one succeeds (`needs: build`), so a
+  # commit that fails to typecheck or build simply never reaches the server
+  # — it sits in git history same as any other bad commit would.
+  # ---------------------------------------------------------------------
+  build:
+    name: Typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Astro 6 requires Node 22.12+
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (Astro + TypeScript)
+        run: npx astro check
+
+      - name: Build
+        run: npm run build
+        env:
+          # astro build does NOT need real secrets: server-only env vars
+          # (ANTHROPIC_API_KEY, DATABASE_URL, RESEND_API_KEY) are read from
+          # process.env at RUNTIME by the @astrojs/node output, not inlined
+          # at build time — that's only true of PUBLIC_-prefixed vars. These
+          # placeholders exist purely so nothing throws on an undefined var
+          # during the build itself.
+          ANTHROPIC_API_KEY: build-placeholder
+          DATABASE_URL: postgres://placeholder/placeholder
+          RESEND_API_KEY: build-placeholder
+
+      # Only needed on the runs that might actually deploy.
+      - name: Upload build output
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: |
+            dist/
+            package.json
+            package-lock.json
+          retention-days: 3
+
+  # ---------------------------------------------------------------------
+  # DEPLOY — only runs after `build` succeeds, and only for pushes to main.
+  # Ships the artifact built above (not a fresh clone+build on the server),
+  # so the production box never needs devDependencies or the full toolchain.
+  # ---------------------------------------------------------------------
+  deploy:
+    name: Deploy to server
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-build
+          path: build-output
+
+      - name: Load deploy SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Trust the host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Rsync build output to the server
+        run: |
+          rsync -az --delete \
+            build-output/dist/ \
+            build-output/package.json \
+            build-output/package-lock.json \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Install production deps and restart
+        run: |
+          ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" '
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            npm ci --omit=dev
+            pm2 reload diorama-homepage
+          '
+          # systemd instead of PM2? Swap the two lines above for:
+          #   sudo systemctl restart diorama-homepage
