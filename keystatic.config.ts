@@ -351,9 +351,23 @@ export default config({
             itemLabel: (props) => props.fields.title.value || 'Tile',
           },
         ),
-        bodyParagraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
-          label: 'Body paragraphs',
-          itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
+        // Free-form section rendered below the two tiles. Plain multiline
+        // text, not fields.document() — same reasoning as the FAQ answer
+        // field above: this is one small field living alongside several
+        // others in a YAML singleton, not a whole entry's body, so the
+        // document()/mdx() "separate content file" model doesn't fit.
+        // Rendered with `marked` in pages/services/index.astro, which gives
+        // real Markdown (headings, lists, links, code) rather than the
+        // FAQ page's hand-rolled subset.
+        sectionHeading: fields.text({
+          label: 'Below-tiles section — Heading',
+          description: 'Optional. Leave both this and the body blank to hide the section entirely.',
+        }),
+        sectionBody: fields.text({
+          label: 'Below-tiles section — Body (Markdown)',
+          multiline: true,
+          description:
+            'Supports Markdown: **bold**, _italic_, # / ## headings, - bullet lists, 1. numbered lists, [link text](https://example.com), and `code`.',
         }),
       },
     }),
@@ -595,6 +609,43 @@ export default config({
         subheading: fields.text({
           label: 'Subheading',
           defaultValue: 'Talk to us directly and find the solution you need.',
+        }),
+      },
+    }),
+
+    // -------------------------------------------------------------------
+    // CHATBOT — persona/knowledge editable without a code deploy. The bulk
+    // of what the bot "knows" is assembled at request time from the
+    // singletons already above (services, about, FAQ, teaching) via
+    // lib/chatbot-context.ts, so most content never needs duplicating here.
+    // This singleton only holds the handful of things that don't already
+    // live on a page: the bot's persona/tone instructions, anything extra
+    // it should know that isn't public copy, and the widget's UI strings.
+    // -------------------------------------------------------------------
+    chatbotSettings: singleton({
+      label: 'Chatbot',
+      path: 'src/content/pages/chatbot-settings',
+      schema: {
+        enabled: fields.checkbox({
+          label: 'Show chat widget on the site',
+          defaultValue: true,
+        }),
+        welcomeMessage: fields.text({
+          label: 'Opening message',
+          multiline: true,
+          defaultValue: "Hi — I'm the Diorama site assistant. Ask me about our consulting or charity work, or how to get in touch.",
+        }),
+        personaInstructions: fields.text({
+          label: 'Persona / tone instructions (system prompt)',
+          multiline: true,
+          description: 'How the assistant should behave — tone, what to do when unsure, when to point to the contact form.',
+          defaultValue:
+            'You are the website assistant for Diorama Consulting Ltd. Answer only using the CONTEXT provided below — do not invent services, pricing, availability, or client names. Keep answers short (2-4 sentences) and point people to /contact for anything requiring a real quote or scheduling. If the answer is not in the context, say so plainly and suggest getting in touch.',
+        }),
+        extraContext: fields.text({
+          label: 'Extra context (Markdown)',
+          multiline: true,
+          description: 'Anything the bot should know that is not already public copy elsewhere on the site — e.g. how to book a call, response-time expectations.',
         }),
       },
     }),
