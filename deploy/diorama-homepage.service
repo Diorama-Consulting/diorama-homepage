@@ -1,0 +1,35 @@
+# deploy/diorama-homepage.service
+#
+# Alternative to ecosystem.config.cjs/PM2 — pick one. Systemd needs no
+# global npm package and starts on boot without a separate `pm2 startup`
+# step, at the cost of being slightly less convenient for `pm2 logs`-style
+# ad-hoc log tailing (use `journalctl -u diorama-homepage -f` instead).
+#
+# Install:
+#   sudo cp deploy/diorama-homepage.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now diorama-homepage
+#
+# The GitHub Actions deploy job's `systemctl restart diorama-homepage`
+# assumes this exact unit name.
+
+[Unit]
+Description=Diorama Consulting website (Astro/Node)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/var/www/diorama-homepage
+EnvironmentFile=/var/www/diorama-homepage/.env
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4321
+ExecStart=/usr/bin/node ./dist/server/entry.mjs
+Restart=always
+RestartSec=5
+# Node 22+ required by Astro 6 — point at wherever you installed it if not
+# using the system default (e.g. /home/deploy/.nvm/versions/node/v22.x.x/bin/node).
+
+[Install]
+WantedBy=multi-user.target
