@@ -3,7 +3,7 @@
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 
 import react from '@astrojs/react';
 import markdoc from '@astrojs/markdoc';
@@ -14,5 +14,5 @@ export default defineConfig({
     site: 'https://dioramaconsulting.co.uk',
     integrations: [mdx(), sitemap(), react(), markdoc(), keystatic()],
     output: 'static',
-    adapter: vercel(),
+    adapter: node({ mode: 'standalone' }),
 });
