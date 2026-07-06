@@ -1,0 +1,93 @@
+# deploy/Caddyfile.example
+#
+# This is a REFERENCE — copy the relevant block(s) into your real Caddy
+# setup, don't drop this file in wholesale. It assumes the common
+# multi-app-on-one-box layout: one /etc/caddy/Caddyfile that just imports
+# one small file per site, so adding this app means adding ONE file and one
+# import line, without touching anything that's already running.
+#
+# /etc/caddy/
+#   Caddyfile                     <- imports sites/*.caddy
+#   sites/
+#     diorama.caddy                <- this app (subdomain version below)
+#     euco.caddy                   <- your other apps, untouched
+#     cxai.caddy
+
+# ---------------------------------------------------------------------------
+# /etc/caddy/Caddyfile (the ONLY file Caddy loads directly)
+# ---------------------------------------------------------------------------
+# {
+# 	email you@dioramaconsulting.co.uk   # for Let's Encrypt renewal notices
+# }
+#
+# import sites/*.caddy
+
+
+# ---------------------------------------------------------------------------
+# OPTION A — subdomain (recommended: simplest, no Astro `base` config needed)
+# /etc/caddy/sites/diorama.caddy
+# ---------------------------------------------------------------------------
+dioramaconsulting.co.uk, www.dioramaconsulting.co.uk {
+	# Caddy issues/renews the TLS cert for this block automatically — nothing
+	# else to configure as long as DNS for both names points at this server.
+	reverse_proxy 127.0.0.1:4321 {
+		# Caddy sets X-Forwarded-For / -Proto / -Host by default; header_up
+		# lines are only needed if you want to ADD something on top.
+		header_up X-Real-IP {remote_host}
+	}
+
+	encode gzip zstd
+	# The log directory does NOT exist by default after a fresh Caddy install,
+	# and Caddy (running as its own unprivileged `caddy` user) can't create it
+	# itself — you'll get a silent "permission denied" service failure on
+	# reload/restart until you run this once, before the first reload:
+	#   sudo mkdir -p /var/log/caddy && sudo chown caddy:caddy /var/log/caddy
+	# (We hit exactly this the first time this file was used — see if the
+	# directory/ownership already exists before adding a second app's log here.)
+	log {
+		output file /var/log/caddy/diorama-access.log
+	}
+}
+
+
+# ---------------------------------------------------------------------------
+# OPTION B — subdirectory on a shared domain (e.g. everything-you-run.dev/diorama)
+# Use this instead of Option A if this app should live at a PATH under a
+# domain that other apps also share, rather than getting its own (sub)domain.
+# ---------------------------------------------------------------------------
+# everything-you-run.dev {
+# 	# handle_path strips the /diorama prefix before forwarding, so the Node
+# 	# app itself never sees it and needs NO `base` config in astro.config —
+# 	# it just thinks it's being served from /. This is the "Caddy owns the
+# 	# prefix" approach; the alternative (Astro's own `base` option, so the
+# 	# app is prefix-aware and generates /diorama/... links itself) works too,
+# 	# but means updating `base` and re-testing every internal link and
+# 	# asset path — handle_path avoids all of that for a single extra app.
+# 	handle_path /diorama* {
+# 		reverse_proxy 127.0.0.1:4321
+# 	}
+#
+# 	handle_path /euco* {
+# 		reverse_proxy 127.0.0.1:4322
+# 	}
+#
+# 	# ...your other apps, each on their own local port...
+# }
+
+
+# ---------------------------------------------------------------------------
+# Port allocation — pick one fixed port per app and keep a running list
+# somewhere (this comment is as good a place as any). @astrojs/node's
+# standalone server reads HOST/PORT from the environment (see
+# ecosystem.config.cjs), so each app's systemd/PM2 entry just sets a
+# different PORT and Caddy points at the matching one.
+#
+#   4321  diorama-homepage  (this app)
+#   4322  euco-frontend
+#   4323  euco-education
+#   4324  cxai
+#
+# Firewall: only Caddy should be reachable from the internet (ports 80/443).
+# Bind the Node apps to 127.0.0.1 (not 0.0.0.0) and/or `ufw deny 4321:4400/tcp`
+# from anywhere except localhost, so the only way to reach a given app is
+# through Caddy.
