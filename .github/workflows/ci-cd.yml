@@ -64,6 +64,7 @@ jobs:
             dist/
             package.json
             package-lock.json
+            deploy/ecosystem.config.cjs
           retention-days: 3
 
   # ---------------------------------------------------------------------
@@ -98,6 +99,7 @@ jobs:
             build-output/dist/ \
             build-output/package.json \
             build-output/package-lock.json \
+            build-output/deploy/ecosystem.config.cjs \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
 
       - name: Install production deps and restart
