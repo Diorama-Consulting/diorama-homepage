@@ -1,0 +1,336 @@
+---
+// Reads chatbotSettings at render time. On pages that are statically
+// prerendered (the default for this project — see astro.config), that
+// means "enabled" and the welcome message are baked in at build time, same
+// as every other piece of Keystatic copy on the site: toggling `enabled`
+// off in Keystatic takes effect after the next deploy. /api/chat.ts also
+// checks `enabled` itself on every request, so that's the instant kill
+// switch if you need the bot gone right now without waiting on a rebuild.
+import { reader } from '../lib/keystatic';
+
+const settings = await reader.singletons.chatbotSettings.read();
+if (settings?.enabled === false) {
+  return null;
+}
+
+const welcomeMessage =
+  settings?.welcomeMessage ||
+  "Hi — I'm the Diorama site assistant. Ask me about our consulting or charity work, or how to get in touch.";
+---
+
+<div id="chat-widget" data-welcome={welcomeMessage}>
+  <button id="chat-toggle" type="button" aria-expanded="false" aria-controls="chat-panel" aria-label="Open chat">
+    <svg id="chat-icon-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+    </svg>
+    <svg id="chat-icon-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+      <path d="M18 6 6 18M6 6l12 12"></path>
+    </svg>
+  </button>
+
+  <div id="chat-panel" role="dialog" aria-label="Chat with Diorama Consulting" aria-hidden="true">
+    <header class="chat-header">
+      <span>Diorama Assistant</span>
+      <button id="chat-close" type="button" aria-label="Close chat">✕</button>
+    </header>
+
+    <div id="chat-messages"></div>
+
+    <form id="chat-form">
+      <textarea
+        id="chat-input"
+        rows="1"
+        maxlength="2000"
+        placeholder="Ask a question…"
+        aria-label="Message"
+      ></textarea>
+      <button type="submit" id="chat-send" aria-label="Send">→</button>
+    </form>
+    <p class="chat-disclaimer">General info only — for anything specific, use the <a href="/contact">contact form</a>.</p>
+  </div>
+</div>
+
+<style>
+  #chat-widget {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 60;
+    font-family: var(--font-body);
+  }
+
+  #chat-toggle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--signal);
+    color: var(--canopy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  #chat-toggle:hover {
+    background: var(--mint);
+    transform: translateY(-1px);
+  }
+
+  #chat-toggle svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  #chat-panel {
+    position: absolute;
+    right: 0;
+    bottom: 72px;
+    width: min(360px, calc(100vw - 40px));
+    height: min(480px, calc(100vh - 140px));
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  #chat-widget.open #chat-panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--hairline);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+
+  .chat-header button {
+    background: none;
+    border: none;
+    color: var(--mist-muted);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .chat-header button:hover {
+    color: var(--mist);
+  }
+
+  #chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .chat-bubble {
+    max-width: 85%;
+    padding: 9px 13px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .chat-bubble.assistant {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--mist);
+    border: 1px solid var(--hairline);
+  }
+
+  .chat-bubble.user {
+    align-self: flex-end;
+    background: var(--signal);
+    color: var(--canopy);
+  }
+
+  .chat-bubble.error {
+    align-self: flex-start;
+    background: rgba(244, 166, 39, 0.12);
+    border: 1px solid rgba(244, 166, 39, 0.4);
+    color: var(--amber);
+  }
+
+  .chat-bubble.pending {
+    align-self: flex-start;
+    color: var(--mist-muted);
+    font-style: italic;
+  }
+
+  #chat-form {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  #chat-input {
+    flex: 1;
+    resize: none;
+    max-height: 90px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    color: var(--mist);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 9px 11px;
+  }
+
+  #chat-input:focus {
+    outline: none;
+    border-color: var(--mint);
+  }
+
+  #chat-send {
+    width: 38px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--signal);
+    color: var(--canopy);
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  #chat-send:hover {
+    background: var(--mint);
+  }
+
+  #chat-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .chat-disclaimer {
+    margin: 0;
+    padding: 0 14px 12px;
+    font-size: 11px;
+    color: var(--mist-muted);
+  }
+
+  .chat-disclaimer a {
+    color: var(--signal);
+  }
+
+  @media (max-width: 480px) {
+    #chat-panel {
+      right: -4px;
+    }
+  }
+</style>
+
+<script>
+  const widget = document.getElementById('chat-widget')!;
+  const toggle = document.getElementById('chat-toggle')!;
+  const panel = document.getElementById('chat-panel')!;
+  const closeBtn = document.getElementById('chat-close')!;
+  const iconOpen = document.getElementById('chat-icon-open')!;
+  const iconClose = document.getElementById('chat-icon-close')!;
+  const messagesEl = document.getElementById('chat-messages')!;
+  const form = document.getElementById('chat-form') as HTMLFormElement;
+  const input = document.getElementById('chat-input') as HTMLTextAreaElement;
+  const sendBtn = document.getElementById('chat-send') as HTMLButtonElement;
+
+  type Role = 'user' | 'assistant';
+  const history: { role: Role; content: string }[] = [];
+  let hasGreeted = false;
+  let sending = false;
+
+  function addBubble(role: Role | 'error' | 'pending', text: string) {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+    bubble.textContent = text;
+    messagesEl.appendChild(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function setOpen(open: boolean) {
+    widget.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    panel.setAttribute('aria-hidden', String(!open));
+    iconOpen.style.display = open ? 'none' : '';
+    iconClose.style.display = open ? '' : 'none';
+    if (open) {
+      if (!hasGreeted) {
+        hasGreeted = true;
+        addBubble('assistant', widget.dataset.welcome || 'Hi! How can I help?');
+      }
+      input.focus();
+    }
+  }
+
+  toggle.addEventListener('click', () => setOpen(!widget.classList.contains('open')));
+  closeBtn.addEventListener('click', () => setOpen(false));
+
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 90)}px`;
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text || sending) return;
+
+    sending = true;
+    sendBtn.disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+
+    addBubble('user', text);
+    history.push({ role: 'user', content: text });
+    const pending = addBubble('pending', 'Thinking…');
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await res.json();
+      pending.remove();
+
+      if (!res.ok) {
+        addBubble('error', data.error || 'Something went wrong — please try again.');
+      } else {
+        addBubble('assistant', data.reply);
+        history.push({ role: 'assistant', content: data.reply });
+      }
+    } catch {
+      pending.remove();
+      addBubble('error', 'Network error — please check your connection and try again.');
+    } finally {
+      sending = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+
+  form.addEventListener('keydown', (event) => {
+    if (event instanceof KeyboardEvent && event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+</script>

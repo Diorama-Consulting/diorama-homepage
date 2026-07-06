@@ -1,4 +1,5 @@
 ---
+import { marked } from 'marked';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
@@ -6,6 +7,13 @@ import Footer from '../../components/Footer.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 const page = await reader.singletons.servicesIndex.read();
+
+// sectionBody is trusted CMS content (Paolo/Mal via Keystatic), not public
+// user input, so this mirrors the FAQ page's set:html approach rather than
+// sanitising — see pages/about/faq/index.astro for the equivalent
+// hand-rolled version of this same trust call. `marked.parse()` runs
+// synchronously here because no async extensions are registered.
+const sectionHtml = page?.sectionBody ? (marked.parse(page.sectionBody) as string) : '';
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
@@ -60,6 +68,12 @@ const tiles = page?.tiles?.length
       ))}
     </div>
   </Section>
+
+  {sectionHtml && (
+    <Section heading={page?.sectionHeading}>
+      <div class="markdown-body" set:html={sectionHtml} />
+    </Section>
+  )}
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
@@ -120,5 +134,81 @@ const tiles = page?.tiles?.length
     .service-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* Markdown section below the tiles. Scoped with :global() because the
+     content inside comes from set:html, so Astro's scoping attribute never
+     reaches these elements directly. */
+  .markdown-body {
+    max-width: 720px;
+    color: var(--mist-muted);
+    font-size: 15.5px;
+    line-height: 1.7;
+  }
+
+  .markdown-body :global(h1),
+  .markdown-body :global(h2),
+  .markdown-body :global(h3) {
+    color: #ffffff;
+    margin: 1.6em 0 0.6em;
+  }
+
+  .markdown-body :global(h1:first-child),
+  .markdown-body :global(h2:first-child),
+  .markdown-body :global(h3:first-child) {
+    margin-top: 0;
+  }
+
+  .markdown-body :global(h2) {
+    font-size: 1.4rem;
+  }
+
+  .markdown-body :global(h3) {
+    font-size: 1.15rem;
+  }
+
+  .markdown-body :global(p) {
+    margin: 0 0 1em;
+  }
+
+  .markdown-body :global(ul),
+  .markdown-body :global(ol) {
+    margin: 0 0 1em;
+    padding-left: 1.3em;
+  }
+
+  .markdown-body :global(li) {
+    margin-bottom: 0.4em;
+  }
+
+  .markdown-body :global(a) {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .markdown-body :global(a:hover) {
+    color: var(--mint);
+  }
+
+  .markdown-body :global(strong) {
+    color: var(--mist);
+  }
+
+  .markdown-body :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+  }
+
+  .markdown-body :global(blockquote) {
+    margin: 0 0 1em;
+    padding-left: 1em;
+    border-left: 2px solid var(--moss);
+    color: var(--mist-muted);
+    font-style: italic;
   }
 </style>

@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import ChatWidget from '../components/ChatWidget.astro';
 
 interface Props {
   title: string;
@@ -7,9 +8,11 @@ interface Props {
   /** Already-unwrapped plain URL string — see lib/keystatic.ts resolveImageUrl(). */
   image?: string;
   jsonLd?: Record<string, unknown>;
+  /** Set false to omit the chat widget on a specific page (e.g. /contact). */
+  showChatWidget?: boolean;
 }
 
-const { title, description = 'Built with Astro.', image, jsonLd } = Astro.props;
+const { title, description = 'Built with Astro.', image, jsonLd, showChatWidget = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -19,5 +22,6 @@ const { title, description = 'Built with Astro.', image, jsonLd } = Astro.props;
   </head>
   <body>
     <slot />
+    {showChatWidget && <ChatWidget />}
   </body>
 </html>
