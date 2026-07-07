@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { db } from '../../lib/db';
 import { submissions } from '../../lib/schema';
 import { getPostHogServer } from '../../lib/posthog-server';
+import { appendContactSubmission } from '../../lib/sheets';
 
 export const prerender = false;
 
@@ -52,8 +53,9 @@ export const POST: APIRoute = async ({ request }) => {
     },
   });
 
-  // Notify you, and confirm receipt to the sender — independently,
-  // so one failing doesn't block or roll back the other.
+  // Notify you, confirm receipt to the sender, and log to the spreadsheet —
+  // independently, so any one of the three failing doesn't block or roll
+  // back the others.
   const results = await Promise.allSettled([
     resend.emails.send({
       from: 'Diorama site <notifications@dioramaconsulting.com>',
@@ -68,11 +70,19 @@ export const POST: APIRoute = async ({ request }) => {
       subject: 'Thanks for getting in touch',
       text: `Hi ${name},\n\nThanks for reaching out — we've received your message and will get back to you shortly.\n\nBest,\nDiorama Consulting`,
     }),
+    appendContactSubmission({
+      submissionId: row.id,
+      submittedAt: row.createdAt.toISOString(),
+      name,
+      email,
+      message,
+    }),
   ]);
 
   results.forEach((result, i) => {
     if (result.status === 'rejected') {
-      console.error(`Email ${i === 0 ? 'notification' : 'confirmation'} failed for submission ${row.id}`, result.reason);
+      const label = ['notification email', 'confirmation email', 'spreadsheet log'][i];
+      console.error(`${label} failed for submission ${row.id}`, result.reason);
     }
   });
 
