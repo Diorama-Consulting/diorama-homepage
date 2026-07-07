@@ -63,6 +63,18 @@ const pageImage =
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll<HTMLAnchorElement>('.charity-link[href]').forEach((link) => {
+      link.addEventListener('click', () => {
+        const card = link.closest('.charity-card');
+        const charity_name = card?.querySelector('h3')?.textContent?.trim() ?? '';
+        window.posthog?.capture('charity_link_clicked', { charity_name, charity_href: link.href });
+      });
+    });
+  });
+</script>
+
 <style>
   .charity-grid {
     display: grid;

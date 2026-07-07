@@ -281,4 +281,11 @@ const {
   }
 
   initHero();
-</script>v
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const heroCta = document.querySelector('.phase-one .hero-actions a');
+    heroCta?.addEventListener('click', () => {
+      window.posthog?.capture('hero_cta_clicked', { href: heroCta.getAttribute('href') });
+    });
+  });
+</script>

@@ -80,24 +80,33 @@ import Button from './Button.astro';
     submitBtn?.setAttribute('disabled', 'true');
 
     try {
+      const formData = Object.fromEntries(new FormData(form));
+      const sessionId = window.posthog?.get_session_id?.() || '';
+      const distinctId = window.posthog?.get_distinct_id?.() || '';
       const res = await fetch(form.action, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PostHog-Session-Id': sessionId,
+          'X-PostHog-Distinct-Id': distinctId,
+        },
+        body: JSON.stringify(formData),
       });
       const result = await res.json();
 
       if (result.ok) {
         status.dataset.state = 'ok';
         status.textContent = "Thanks — we'll be in touch shortly.";
+        window.posthog?.capture('contact_form_submitted');
         form.reset();
       } else {
         status.dataset.state = 'error';
         status.textContent = result.error ?? 'Something went wrong. Please try again.';
       }
-    } catch {
+    } catch (err) {
       status.dataset.state = 'error';
       status.textContent = 'Network error — please try again.';
+      window.posthog?.captureException(err);
     } finally {
       submitBtn?.removeAttribute('disabled');
     }

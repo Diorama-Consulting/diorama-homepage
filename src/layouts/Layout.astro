@@ -1,6 +1,7 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
 import ChatWidget from '../components/ChatWidget.astro';
+import PostHog from '../components/posthog.astro';
 
 interface Props {
   title: string;
@@ -19,6 +20,7 @@ const { title, description = 'Built with Astro.', image, jsonLd, showChatWidget 
 <html lang="en">
   <head>
     <BaseHead title={title} description={description} image={image} jsonLd={jsonLd} />
+    <PostHog />
   </head>
   <body>
     <slot />

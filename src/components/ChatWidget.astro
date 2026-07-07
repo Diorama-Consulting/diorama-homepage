@@ -275,6 +275,7 @@ const welcomeMessage =
       if (!hasGreeted) {
         hasGreeted = true;
         addBubble('assistant', widget.dataset.welcome || 'Hi! How can I help?');
+        window.posthog?.capture('chat_opened');
       }
       input.focus();
     }
@@ -301,11 +302,19 @@ const welcomeMessage =
     addBubble('user', text);
     history.push({ role: 'user', content: text });
     const pending = addBubble('pending', 'Thinking…');
+    const sessionId = window.posthog?.get_session_id?.() || '';
+    const distinctId = window.posthog?.get_distinct_id?.() || '';
+
+    window.posthog?.capture('chat_message_sent', { turn: history.length });
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PostHog-Session-Id': sessionId,
+          'X-PostHog-Distinct-Id': distinctId,
+        },
         body: JSON.stringify({ messages: history }),
       });
       const data = await res.json();
@@ -317,9 +326,10 @@ const welcomeMessage =
         addBubble('assistant', data.reply);
         history.push({ role: 'assistant', content: data.reply });
       }
-    } catch {
+    } catch (err) {
       pending.remove();
       addBubble('error', 'Network error — please check your connection and try again.');
+      window.posthog?.captureException(err);
     } finally {
       sending = false;
       sendBtn.disabled = false;

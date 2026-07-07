@@ -101,6 +101,17 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll<HTMLAnchorElement>('.card-grid .card a[href]').forEach((link) => {
+      link.addEventListener('click', () => {
+        const title = link.closest('.card')?.querySelector('h3')?.textContent?.trim() ?? '';
+        window.posthog?.capture('teaching_tool_clicked', { tool_href: link.href, tool_title: title });
+      });
+    });
+  });
+</script>
+
 <style>
   main.container {
     padding-top: 56px;
