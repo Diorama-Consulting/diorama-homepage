@@ -44,15 +44,25 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # astro build does NOT need real secrets: server-only env vars
-          # (ANTHROPIC_API_KEY, DATABASE_URL, RESEND_API_KEY) are read from
-          # process.env at RUNTIME by the @astrojs/node output, not inlined
-          # at build time — that's only true of PUBLIC_-prefixed vars. These
-          # placeholders exist purely so nothing throws on an undefined var
-          # during the build itself.
+          # astro build does NOT need real secrets for server-only vars:
+          # ANTHROPIC_API_KEY / DATABASE_URL / RESEND_API_KEY / the Google
+          # Sheets vars are read from process.env at RUNTIME by the
+          # @astrojs/node output, not inlined at build time — placeholders
+          # are fine for these, purely so nothing throws on an undefined var.
           ANTHROPIC_API_KEY: build-placeholder
           DATABASE_URL: postgres://placeholder/placeholder
           RESEND_API_KEY: build-placeholder
+          # PUBLIC_-prefixed vars are the opposite: anything referenced in
+          # client-side code (like the posthog.astro snippet, included on
+          # every statically-prerendered page) gets its VALUE baked directly
+          # into the shipped HTML at build time, here, on this runner — not
+          # read from the server's .env at request time. Confirmed directly:
+          # without the real value here, every page ships with a literal
+          # `const apiKey = undefined`, and PostHog never actually receives
+          # any client-side events no matter what the server's .env has.
+          # These need to be the real values, not placeholders.
+          PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          PUBLIC_POSTHOG_HOST: ${{ secrets.PUBLIC_POSTHOG_HOST }}
 
       # Only needed on the runs that might actually deploy.
       - name: Upload build output
@@ -108,7 +118,18 @@ jobs:
             set -e
             cd "${{ secrets.DEPLOY_PATH }}"
             npm ci --omit=dev
-            pm2 reload diorama-homepage
+            pm2 reload ecosystem.config.cjs --update-env
           '
+          # Passing the FILE (not just the process name) forces PM2 to
+          # re-require ecosystem.config.cjs — which is what actually re-runs
+          # the dotenv.config() call at its top — and --update-env tells PM2
+          # to apply the freshly-loaded values to the process. Confirmed by
+          # direct testing that BOTH parts are required: `pm2 reload
+          # diorama-homepage` (by name only, no flag) silently keeps
+          # whatever env existed at the process's original `pm2 start`,
+          # even across repeated reloads — new .env entries never reach the
+          # running app without this. `--update-env` alone (still by name)
+          # isn't sufficient either; it has to be the file.
+          #
           # systemd instead of PM2? Swap the two lines above for:
           #   sudo systemctl restart diorama-homepage
