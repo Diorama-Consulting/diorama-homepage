@@ -45,12 +45,11 @@ jobs:
         run: npm run build
         env:
           # astro build does NOT need real secrets for server-only vars:
-          # ANTHROPIC_API_KEY / DATABASE_URL / RESEND_API_KEY / the Google
-          # Sheets vars are read from process.env at RUNTIME by the
-          # @astrojs/node output, not inlined at build time — placeholders
-          # are fine for these, purely so nothing throws on an undefined var.
+          # ANTHROPIC_API_KEY / RESEND_API_KEY / the Google Sheets vars are
+          # read from process.env at RUNTIME by the @astrojs/node output,
+          # not inlined at build time — placeholders are fine for these,
+          # purely so nothing throws on an undefined var.
           ANTHROPIC_API_KEY: build-placeholder
-          DATABASE_URL: postgres://placeholder/placeholder
           RESEND_API_KEY: build-placeholder
           # PUBLIC_-prefixed vars are the opposite: anything referenced in
           # client-side code (like the posthog.astro snippet, included on
