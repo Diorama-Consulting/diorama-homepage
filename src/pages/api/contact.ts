@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { Resend } from 'resend';
 import { db } from '../../lib/db';
 import { submissions } from '../../lib/schema';
+import { getPostHogServer } from '../../lib/posthog-server';
 
 export const prerender = false;
 
@@ -38,6 +39,18 @@ export const POST: APIRoute = async ({ request }) => {
     .insert(submissions)
     .values({ name, email, message })
     .returning();
+
+  const sessionId = request.headers.get('X-PostHog-Session-Id') || undefined;
+  const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `contact-anon-${row.id}`;
+  const posthog = getPostHogServer();
+  posthog.capture({
+    distinctId,
+    event: 'contact_form_received',
+    properties: {
+      $session_id: sessionId,
+      submission_id: row.id,
+    },
+  });
 
   // Notify you, and confirm receipt to the sender — independently,
   // so one failing doesn't block or roll back the other.

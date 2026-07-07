@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import Anthropic from '@anthropic-ai/sdk';
 import { reader } from '../../lib/keystatic';
 import { buildKnowledgeBase } from '../../lib/chatbot-context';
+import { getPostHogServer } from '../../lib/posthog-server';
 
 export const prerender = false;
 
@@ -67,6 +68,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   const ip = clientIp(request);
   if (isRateLimited(ip)) {
+    const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `chat-anon-${ip}`;
+    const posthog = getPostHogServer();
+    posthog.capture({ distinctId, event: 'chat_rate_limited' });
     return json({ error: "Too many messages — please wait a few minutes and try again, or use the contact form." }, 429);
   }
 
@@ -114,6 +118,20 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     const reply = response.content.find((block) => block.type === 'text')?.text?.trim();
+
+    const sessionId = request.headers.get('X-PostHog-Session-Id') || undefined;
+    const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `chat-anon-${ip}`;
+    const posthog = getPostHogServer();
+    posthog.capture({
+      distinctId,
+      event: 'chat_message_processed',
+      properties: {
+        $session_id: sessionId,
+        turn_count: messages.length,
+        input_tokens: response.usage?.input_tokens,
+        output_tokens: response.usage?.output_tokens,
+      },
+    });
 
     return json({ reply: reply || "Sorry, I didn't catch that — could you rephrase?" });
   } catch (error) {
