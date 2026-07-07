@@ -1,7 +1,5 @@
 import type { APIRoute } from 'astro';
 import { Resend } from 'resend';
-import { db } from '../../lib/db';
-import { submissions } from '../../lib/schema';
 import { getPostHogServer } from '../../lib/posthog-server';
 import { appendContactSubmission } from '../../lib/sheets';
 
@@ -34,28 +32,29 @@ export const POST: APIRoute = async ({ request }) => {
     return respond(isJson, { ok: false, error: 'Please fill in every field with a valid email.' }, 400);
   }
 
-  // Write to the database first — this is your source of truth.
-  // Even if both emails below fail, the lead is never lost.
-  const [row] = await db
-    .insert(submissions)
-    .values({ name, email, message })
-    .returning();
+  // No database anymore — this ID/timestamp used to come from the Postgres
+  // row. Generated here instead, purely so the spreadsheet log has a stable
+  // ID and timestamp per submission; nothing depends on it beyond that.
+  const submissionId = crypto.randomUUID();
+  const submittedAt = new Date().toISOString();
 
   const sessionId = request.headers.get('X-PostHog-Session-Id') || undefined;
-  const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `contact-anon-${row.id}`;
+  const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `contact-anon-${submissionId}`;
   const posthog = getPostHogServer();
   posthog.capture({
     distinctId,
     event: 'contact_form_received',
-    properties: {
-      $session_id: sessionId,
-      submission_id: row.id,
-    },
+    properties: { $session_id: sessionId, submission_id: submissionId },
   });
 
-  // Notify you, confirm receipt to the sender, and log to the spreadsheet —
-  // independently, so any one of the three failing doesn't block or roll
-  // back the others.
+  // With no database, the spreadsheet and the notification email are now
+  // jointly the durable record — no single one of them is "the" source of
+  // truth the way the DB write used to be. They still run independently,
+  // so one failing doesn't block the others, but the three are no longer
+  // equally disposable: if BOTH the notification email and the sheet log
+  // fail, the lead is genuinely gone, and the visitor deserves to be told
+  // that rather than a false "success" — the confirmation email failing
+  // alone still doesn't matter to them.
   const results = await Promise.allSettled([
     resend.emails.send({
       from: 'Diorama site <notifications@dioramaconsulting.com>',
@@ -70,21 +69,27 @@ export const POST: APIRoute = async ({ request }) => {
       subject: 'Thanks for getting in touch',
       text: `Hi ${name},\n\nThanks for reaching out — we've received your message and will get back to you shortly.\n\nBest,\nDiorama Consulting`,
     }),
-    appendContactSubmission({
-      submissionId: row.id,
-      submittedAt: row.createdAt.toISOString(),
-      name,
-      email,
-      message,
-    }),
+    appendContactSubmission({ submissionId, submittedAt, name, email, message }),
   ]);
 
   results.forEach((result, i) => {
     if (result.status === 'rejected') {
       const label = ['notification email', 'confirmation email', 'spreadsheet log'][i];
-      console.error(`${label} failed for submission ${row.id}`, result.reason);
+      console.error(`${label} failed for submission ${submissionId}`, result.reason);
     }
   });
+
+  const notificationOk = results[0].status === 'fulfilled';
+  const sheetOk = results[2].status === 'fulfilled';
+
+  if (!notificationOk && !sheetOk) {
+    // Both durability paths failed — genuinely lost, don't pretend otherwise.
+    return respond(
+      isJson,
+      { ok: false, error: "Something went wrong on our end — please try again, or email hello@dioramaconsulting.com directly." },
+      502,
+    );
+  }
 
   return respond(isJson, { ok: true });
 };

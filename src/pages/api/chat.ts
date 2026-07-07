@@ -22,8 +22,8 @@ const MAX_MESSAGE_LENGTH = 2000; // characters, per message
 // Good enough for a single-process deployment behind Caddy (this project's
 // target — see the Caddy section of the deploy notes). Resets on restart
 // and doesn't share state across multiple instances; if this ever runs
-// behind more than one Node process, move this to the Neon database
-// (lib/db.ts already has the connection) or a small Redis/Upstash instance.
+// behind more than one Node process, move this to a small Redis/Upstash
+// instance, or a row in the Google Sheet if you want to stay dependency-free.
 const requestLog = new Map<string, number[]>();
 const RATE_LIMIT = 20; // requests
 const RATE_WINDOW_MS = 10 * 60 * 1000; // per 10 minutes, per IP
