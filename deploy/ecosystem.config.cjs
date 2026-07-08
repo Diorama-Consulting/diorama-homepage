@@ -25,7 +25,7 @@ module.exports = {
   apps: [
     {
       name: 'diorama-homepage',
-      script: './dist/server/entry.mjs',
+      script: './server/entry.mjs', // NOT ./dist/server/entry.mjs — rsync's `dist/` source (trailing slash) copies dist's CONTENTS to the deploy path root, so server/ and client/ end up there directly, never nested under a dist/ folder. Confirmed against the real deploy path — this was wrong from the start.
       cwd: '/var/www/diorama-homepage', // matches DEPLOY_PATH in the GitHub Actions secret
       exec_mode: 'fork', // @astrojs/node's standalone server isn't cluster-aware
       instances: 1,
