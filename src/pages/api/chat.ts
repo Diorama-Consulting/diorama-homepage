@@ -60,8 +60,18 @@ export const POST: APIRoute = async ({ request }) => {
   // reason for another site to be calling it directly from a browser.
   // Doesn't stop server-to-server abuse, only casual cross-site embedding;
   // the rate limit below is the real backstop.
+  //
+  // Behind Caddy, request.url reflects the internal connection (Caddy talks
+  // to this Node process over plain HTTP on 127.0.0.1), not the public
+  // https://dioramaconsulting.co.uk the browser actually used — so it can
+  // never match a real browser's Origin header. Reconstruct the public
+  // origin from the X-Forwarded-Host/-Proto headers Caddy sets by default
+  // instead, falling back to request.url only when those aren't present
+  // (e.g. local dev with no proxy in front).
   const origin = request.headers.get('origin');
-  const site = new URL(request.url).origin;
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  const site = forwardedHost ? `${forwardedProto || 'https'}://${forwardedHost}` : new URL(request.url).origin;
   if (origin && origin !== site) {
     return json({ error: 'Forbidden' }, 403);
   }
