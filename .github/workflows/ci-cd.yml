@@ -62,6 +62,11 @@ jobs:
           # These need to be the real values, not placeholders.
           PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.PUBLIC_POSTHOG_PROJECT_TOKEN }}
           PUBLIC_POSTHOG_HOST: ${{ secrets.PUBLIC_POSTHOG_HOST }}
+          # Drives astro.config.mjs's `site` field (sitemap, RSS, canonical
+          # URLs) — genuinely needed at build time, same reasoning as the
+          # PostHog vars above. Not sensitive, but kept as a secret for
+          # consistency with how everything else here is already set up.
+          SITE_DOMAIN: ${{ secrets.SITE_DOMAIN }}
 
       # Only needed on the runs that might actually deploy.
       - name: Upload build output

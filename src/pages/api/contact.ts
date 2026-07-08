@@ -6,6 +6,13 @@ import { appendContactSubmission } from '../../lib/sheets';
 export const prerender = false;
  
 const resend = new Resend(import.meta.env.RESEND_API_KEY);
+
+// Falls back to dioramas.uk only so this never silently breaks if the var
+// is ever unset — SITE_DOMAIN should always be set in production .env.
+const domain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
+const notificationFrom = `Diorama site <notifications@${domain}>`;
+const businessInbox = `hello@${domain}`;
+const confirmationFrom = `Diorama Consulting <hello@${domain}>`;
  
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -57,14 +64,14 @@ export const POST: APIRoute = async ({ request }) => {
   // alone still doesn't matter to them.
   const results = await Promise.allSettled([
     resend.emails.send({
-      from: 'Diorama site <notifications@dioramaconsulting.com>',
-      to: 'hello@dioramaconsulting.com',
+      from: notificationFrom,
+      to: businessInbox,
       replyTo: email,
       subject: `New enquiry from ${name}`,
       text: `${name} <${email}> wrote:\n\n${message}`,
     }),
     resend.emails.send({
-      from: 'Diorama Consulting <hello@dioramaconsulting.com>',
+      from: confirmationFrom,
       to: email,
       subject: 'Thanks for getting in touch',
       text: `Hi ${name},\n\nThanks for reaching out — we've received your message and will get back to you shortly.\n\nBest,\nDiorama Consulting`,
@@ -94,7 +101,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Both durability paths failed — genuinely lost, don't pretend otherwise.
     return respond(
       isJson,
-      { ok: false, error: "Something went wrong on our end — please try again, or email hello@dioramaconsulting.com directly." },
+      { ok: false, error: `Something went wrong on our end — please try again, or email ${businessInbox} directly.` },
       502,
     );
   }
