@@ -53,6 +53,7 @@ const estimate = estimatePageCarbon(pageBytes, greenHostingVerified);
 const gramsDisplay = estimate.grams < 0.1 ? estimate.grams.toFixed(3) : estimate.grams.toFixed(2);
 
 const hasAnyStat = showCo2Estimate || showHostingInfo || showVerificationStatus;
+const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
 ---
 
 {showSustainabilitySection && (
@@ -77,7 +78,7 @@ const hasAnyStat = showCo2Estimate || showHostingInfo || showVerificationStatus;
           <div class="sustainability-stat">
             <span class="stat-value">{greenHostingVerified ? 'Verified green' : 'Not yet verified'}</span>
             <span class="stat-label">
-              <a href="https://www.thegreenwebfoundation.org/green-web-check/?url=dioramaconsulting.co.uk" target="_blank" rel="noopener noreferrer">
+              <a href={`https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`} target="_blank" rel="noopener noreferrer">
                 Green Web Foundation status →
               </a>
               {greenHostingEvidenceUrl && (
