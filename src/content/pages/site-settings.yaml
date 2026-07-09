@@ -10,6 +10,7 @@ companyNumber: '16137029'
 vatNumber: '483184277'
 sameAs: []
 showSustainabilitySection: true
+showGreenBadges: true
 showCarbonBadge: true
 showCo2Estimate: true
 showHostingInfo: true

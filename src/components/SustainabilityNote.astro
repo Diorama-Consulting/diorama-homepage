@@ -1,10 +1,18 @@
 ---
 // src/components/SustainabilityNote.astro
 //
-// Honest sustainability disclosure, not a green badge. Every element is
-// independently toggleable from Keystatic (siteSettings) so this section
-// can be trimmed down rather than being all-or-nothing — and so its own
-// footprint can be kept light, in keeping with what it's actually about.
+// Collapsed by default: just the two green-hosting badges (Green Web
+// Foundation's live check image for this exact domain, and the hosting
+// provider's own green badge), so the footer stays light and un-technical
+// at a glance. Click anywhere on the widget to expand it into the fuller
+// technical disclosure (CO2 estimate, hosting info, verification status,
+// notes, live carbon badge, methodology) — all of which stays fully
+// toggleable from Keystatic, same as before.
+//
+// Built on native <details>/<summary> rather than a JS-driven accordion:
+// expand/collapse works with zero client JS and can't be broken by a
+// build-tool issue — see Layout.astro's data-reveal comment for the same
+// reasoning applied here.
 //
 // Two CO2 sources, intentionally different:
 //   - co2.js estimate: self-hosted, zero external requests, calculated
@@ -25,6 +33,7 @@ interface Props {
   greenHostingEvidenceUrl?: string;
   sustainabilityNotes?: string;
   showSustainabilitySection?: boolean;
+  showGreenBadges?: boolean;
   showCarbonBadge?: boolean;
   showCo2Estimate?: boolean;
   showHostingInfo?: boolean;
@@ -41,6 +50,7 @@ const {
   greenHostingEvidenceUrl,
   sustainabilityNotes,
   showSustainabilitySection = true,
+  showGreenBadges = true,
   showCarbonBadge = true,
   showCo2Estimate = true,
   showHostingInfo = true,
@@ -54,62 +64,107 @@ const gramsDisplay = estimate.grams < 0.1 ? estimate.grams.toFixed(3) : estimate
 
 const hasAnyStat = showCo2Estimate || showHostingInfo || showVerificationStatus;
 const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
+const greenCheckImageUrl = `https://app.greenweb.org/api/v3/greencheckimage/${siteDomain}?nocache=true`;
+const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`;
 ---
 
 {showSustainabilitySection && (
-  <section class="sustainability-note">
-    <p class="sustainability-eyebrow">Sustainability</p>
+  <details class="sustainability-note">
+    <summary class="sustainability-summary">
+      <span class="sustainability-eyebrow">Sustainability</span>
 
-    {hasAnyStat && (
-      <div class="sustainability-grid">
-        {showCo2Estimate && (
-          <div class="sustainability-stat">
-            <span class="stat-value">~{gramsDisplay}g</span>
-            <span class="stat-label">CO₂ per page view (self-measured)</span>
-          </div>
-        )}
-        {showHostingInfo && (
-          <div class="sustainability-stat">
-            <span class="stat-value">{hostingProvider}{hostingRegion && ` · ${hostingRegion}`}</span>
-            <span class="stat-label">Current hosting</span>
-          </div>
-        )}
-        {showVerificationStatus && (
-          <div class="sustainability-stat">
-            <span class="stat-value">{greenHostingVerified ? 'Verified green' : 'Not yet verified'}</span>
-            <span class="stat-label">
-              <a href={`https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`} target="_blank" rel="noopener noreferrer">
-                Green Web Foundation status →
-              </a>
-              {greenHostingEvidenceUrl && (
-                <>
-                  {' '}·{' '}
-                  <a href={greenHostingEvidenceUrl} target="_blank" rel="noopener noreferrer">Evidence →</a>
-                </>
-              )}
-            </span>
-          </div>
-        )}
-      </div>
-    )}
+      {showGreenBadges && (
+        <span class="sustainability-badges">
+          <a
+            href={greenCheckLinkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Green Web Foundation check for this site"
+          >
+            <img
+              src={greenCheckImageUrl}
+              alt="This website runs on green hosting - verified by thegreenwebfoundation.org"
+              width="150"
+              height="71"
+              loading="lazy"
+            />
+          </a>
+          <a
+            href="https://www.kualo.co.uk/webhosting/green-web-hosting"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Kualo green web hosting"
+          >
+            <img
+              src="https://cdn.kualo.com/website/greenbadges/badge8.png"
+              alt="Kualo Green Hosting"
+              width="90"
+              loading="lazy"
+            />
+          </a>
+        </span>
+      )}
 
-    {showSustainabilityNotes && sustainabilityNotes && (
-      <p class="sustainability-notes">{sustainabilityNotes}</p>
-    )}
+      <span class="sustainability-toggle">
+        Details
+        <svg class="sustainability-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </span>
+    </summary>
 
-    {showCarbonBadge && (
-      <div class="carbon-badge-wrap">
-        <div id="wcb" class="carbonbadge wcb-d"></div>
-        <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
-      </div>
-    )}
+    <div class="sustainability-panel">
+      {hasAnyStat && (
+        <div class="sustainability-grid">
+          {showCo2Estimate && (
+            <div class="sustainability-stat">
+              <span class="stat-value">~{gramsDisplay}g</span>
+              <span class="stat-label">CO₂ per page view (self-measured)</span>
+            </div>
+          )}
+          {showHostingInfo && (
+            <div class="sustainability-stat">
+              <span class="stat-value">{hostingProvider}{hostingRegion && ` · ${hostingRegion}`}</span>
+              <span class="stat-label">Current hosting</span>
+            </div>
+          )}
+          {showVerificationStatus && (
+            <div class="sustainability-stat">
+              <span class="stat-value">{greenHostingVerified ? 'Verified green' : 'Not yet verified'}</span>
+              <span class="stat-label">
+                <a href={greenCheckLinkUrl} target="_blank" rel="noopener noreferrer">
+                  Green Web Foundation status →
+                </a>
+                {greenHostingEvidenceUrl && (
+                  <>
+                    {' '}·{' '}
+                    <a href={greenHostingEvidenceUrl} target="_blank" rel="noopener noreferrer">Evidence →</a>
+                  </>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
-    {showMethodologyLink && (
-      <p class="sustainability-methodology">
-        Self-measured estimate via <a href="https://www.thegreenwebfoundation.org/co2-js/" target="_blank" rel="noopener noreferrer">CO2.js</a>; live badge via <a href="https://www.websitecarbon.com/" target="_blank" rel="noopener noreferrer">Website Carbon</a>.
-      </p>
-    )}
-  </section>
+      {showSustainabilityNotes && sustainabilityNotes && (
+        <p class="sustainability-notes">{sustainabilityNotes}</p>
+      )}
+
+      {showCarbonBadge && (
+        <div class="carbon-badge-wrap">
+          <div id="wcb" class="carbonbadge wcb-d"></div>
+          <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
+        </div>
+      )}
+
+      {showMethodologyLink && (
+        <p class="sustainability-methodology">
+          Self-measured estimate via <a href="https://www.thegreenwebfoundation.org/co2-js/" target="_blank" rel="noopener noreferrer">CO2.js</a>; live badge via <a href="https://www.websitecarbon.com/" target="_blank" rel="noopener noreferrer">Website Carbon</a>.
+        </p>
+      )}
+    </div>
+  </details>
 )}
 
 <style>
@@ -117,7 +172,22 @@ const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
     background: var(--forest);
     border: 1px solid var(--hairline);
     border-radius: var(--radius-md);
-    padding: 22px 26px;
+    padding: 18px 22px;
+  }
+
+  .sustainability-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .sustainability-summary::-webkit-details-marker {
+    display: none;
+  }
+  .sustainability-summary::marker {
+    content: '';
   }
 
   .sustainability-eyebrow {
@@ -126,7 +196,53 @@ const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--mint);
-    margin: 0 0 14px;
+    flex-shrink: 0;
+  }
+
+  .sustainability-badges {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .sustainability-badges img {
+    display: block;
+    opacity: 0.9;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .sustainability-badges a:hover img {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+
+  .sustainability-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--mist-muted);
+    transition: color 0.2s ease;
+  }
+
+  .sustainability-summary:hover .sustainability-toggle {
+    color: var(--mint);
+  }
+
+  .sustainability-chevron {
+    transition: transform 0.25s ease;
+  }
+
+  .sustainability-note[open] .sustainability-chevron {
+    transform: rotate(180deg);
+  }
+
+  .sustainability-panel {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--hairline);
   }
 
   .sustainability-grid {
@@ -184,6 +300,12 @@ const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
   }
 
   @media (max-width: 640px) {
+    .sustainability-summary {
+      gap: 12px;
+    }
+    .sustainability-toggle {
+      margin-left: 0;
+    }
     .sustainability-grid {
       grid-template-columns: 1fr;
       gap: 10px;

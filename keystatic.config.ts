@@ -141,6 +141,11 @@ export default config({
           label: 'Show sustainability section in footer at all',
           defaultValue: true,
         }),
+        showGreenBadges: fields.checkbox({
+          label: 'Show green-hosting badges (Green Web Foundation + hosting provider)',
+          description: 'These two badges are always visible as the collapsed widget; clicking expands the technical detail below.',
+          defaultValue: true,
+        }),
         showCarbonBadge: fields.checkbox({
           label: 'Show live carbon badge (Website Carbon, external)',
           defaultValue: true,
@@ -315,10 +320,23 @@ export default config({
           defaultValue: false,
         }),
         heroCarouselPosts: fields.array(
-          fields.relationship({ label: 'Article', collection: 'blog' }),
+          fields.conditional(
+            fields.select({
+              label: 'Source',
+              options: [
+                { label: 'Blog article', value: 'blog' },
+                { label: 'Event', value: 'event' },
+              ],
+              defaultValue: 'blog',
+            }),
+            {
+              blog: fields.relationship({ label: 'Article', collection: 'blog' }),
+              event: fields.relationship({ label: 'Event', collection: 'events' }),
+            },
+          ),
           {
-            label: 'Hero carousel — featured articles (add up to 4, in display order)',
-            itemLabel: (props) => props.value || 'Article',
+            label: 'Hero carousel — featured articles or events (add up to 4, in display order)',
+            itemLabel: (props) => `${props.fields.discriminant.value === 'event' ? 'Event' : 'Article'}: ${props.fields.value.value || '—'}`,
           },
         ),
 
@@ -340,24 +358,12 @@ export default config({
 
         // -----------------------------------------------------------------
         // UPCOMING EVENTS
+        // Section copy only — the events themselves are a collection (see
+        // Events, below) so they can also be picked as hero-carousel slides.
         // -----------------------------------------------------------------
         eventsEyebrow: fields.text({ label: 'Events section eyebrow', defaultValue: 'Upcoming' }),
         eventsHeading: fields.text({ label: 'Events section heading', defaultValue: 'Events' }),
         eventsSubheading: fields.text({ label: 'Events section subheading', multiline: true }),
-        events: fields.array(
-          fields.object({
-            title: fields.text({ label: 'Title', validation: { isRequired: true } }),
-            date: fields.date({ label: 'Date', validation: { isRequired: true } }),
-            location: fields.text({ label: 'Location (optional)' }),
-            description: fields.text({ label: 'Description', multiline: true }),
-            href: fields.url({ label: 'Link (registration page, write-up, etc.)' }),
-            linkText: fields.text({ label: 'Link text', defaultValue: 'Details' }),
-          }),
-          {
-            label: 'Events',
-            itemLabel: (props) => props.fields.title.value || 'Event',
-          },
-        ),
       },
     }),
 
@@ -801,6 +807,29 @@ export default config({
         externalUrl: fields.url({ label: 'Charity website' }),
         order: fields.integer({ label: 'Sort order', defaultValue: 0 }),
         content: fields.mdx({ label: 'Details' }),
+      },
+    }),
+    // -------------------------------------------------------------------
+    // EVENTS — a proper collection (not an inline array) specifically so
+    // it can be picked as a hero-carousel slide source via
+    // fields.relationship, the same way blog posts already can be.
+    // -------------------------------------------------------------------
+    events: collection({
+      label: 'Events',
+      slugField: 'title',
+      path: 'src/content/events/*/',
+      entryLayout: 'content',
+      format: { contentField: 'content' },
+      schema: {
+        title: fields.slug({ name: { label: 'Title', validation: { isRequired: true } } }),
+        date: fields.date({ label: 'Date', validation: { isRequired: true } }),
+        location: fields.text({ label: 'Location (optional)' }),
+        description: fields.text({ label: 'Description', multiline: true }),
+        ...heroImageFields('heroImage', 'Image (used on the homepage events card, and as the hero-carousel slide background if selected)'),
+        href: fields.url({ label: 'Link (registration page, write-up, etc.)' }),
+        linkText: fields.text({ label: 'Link text', defaultValue: 'Details' }),
+        draft: fields.checkbox({ label: 'Draft (hide from site)', defaultValue: false }),
+        content: fields.mdx({ label: 'Additional details (optional)' }),
       },
     }),
   },
