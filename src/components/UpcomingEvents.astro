@@ -1,0 +1,153 @@
+---
+// Upcoming Events section — placed on the homepage directly after the
+// Trusted Companies banner and before "Explore" (high visibility for
+// time-sensitive content, without competing with the hero for attention).
+// Whole-card-clickable per the site's box-link convention; each card leads
+// to an external registration link, a blog write-up, or a plain details
+// href. Content lives on the Homepage singleton in Keystatic.
+import Section from './Section.astro';
+
+interface EventItem {
+  title: string;
+  date: string; // ISO date
+  location?: string;
+  description?: string;
+  href?: string;
+  linkText?: string;
+}
+
+interface Props {
+  events: EventItem[];
+  eyebrow?: string;
+  heading?: string;
+  subheading?: string;
+}
+
+const { events, eyebrow = 'Upcoming', heading = 'Events', subheading } = Astro.props;
+
+function formatEventDate(iso: string) {
+  const d = new Date(iso);
+  return {
+    day: d.toLocaleDateString('en-GB', { day: '2-digit' }),
+    month: d.toLocaleDateString('en-GB', { month: 'short' }),
+    full: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+  };
+}
+---
+
+{events.length > 0 && (
+  <Section id="events" eyebrow={eyebrow} heading={heading} subheading={subheading}>
+    <div class="events-grid">
+      {events.map((event) => {
+        const { day, month, full } = formatEventDate(event.date);
+        const Tag = event.href ? 'a' : 'div';
+        return (
+          <Tag class="event-card" href={event.href} {...(event.href?.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+            <div class="event-date">
+              <span class="event-day">{day}</span>
+              <span class="event-month">{month}</span>
+            </div>
+            <div class="event-body">
+              <p class="event-full-date">{full}{event.location ? ` · ${event.location}` : ''}</p>
+              <h3>{event.title}</h3>
+              {event.description && <p class="event-description">{event.description}</p>}
+              {event.href && <span class="event-cta">{event.linkText ?? 'Details'} →</span>}
+            </div>
+          </Tag>
+        );
+      })}
+    </div>
+  </Section>
+)}
+
+<style>
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .event-card {
+    display: flex;
+    gap: var(--space-md);
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+
+  a.event-card:hover {
+    border-color: var(--moss);
+    transform: translateY(-2px);
+  }
+
+  .event-date {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    background: var(--signal-soft);
+    border: 1px solid hsl(var(--hue-green) 48% 46% / 0.3);
+  }
+
+  .event-day {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .event-month {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-top: 3px;
+  }
+
+  .event-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .event-full-date {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+    margin: 0;
+  }
+
+  .event-body h3 {
+    font-size: 17px;
+  }
+
+  .event-description {
+    font-size: 14px;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+
+  .event-cta {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--signal);
+  }
+
+  a.event-card:hover .event-cta {
+    color: var(--mint);
+  }
+</style>

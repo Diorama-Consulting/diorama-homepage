@@ -1,0 +1,242 @@
+---
+// Interactive "click between options" component: a list of options on the
+// left (title + description, active one expanded), an image on the right
+// that crossfades/slides when the active option changes. Used on the
+// homepage "Explore" section and on /services in place of the old static
+// card grids. Pure CSS + a small vanilla script — no framework needed.
+interface ToggleItem {
+  title: string;
+  description: string;
+  image: string;
+  imageAlt?: string;
+  href?: string;
+  linkText?: string;
+}
+
+interface Props {
+  items: ToggleItem[];
+  /** Unique id so multiple FeatureToggles can exist on one page without JS/CSS clashing. */
+  groupId: string;
+}
+
+const { items, groupId } = Astro.props;
+---
+
+<div class="feature-toggle" data-feature-toggle={groupId}>
+  <div class="feature-toggle-options" role="tablist" aria-label="Options">
+    {items.map((item, i) => (
+      <button
+        type="button"
+        class="feature-option"
+        data-index={i}
+        aria-selected={i === 0 ? 'true' : 'false'}
+        role="tab"
+      >
+        <span class="feature-option-index">{String(i + 1).padStart(2, '0')}</span>
+        <span class="feature-option-text">
+          <span class="feature-option-title">{item.title}</span>
+          <span class="feature-option-description">{item.description}</span>
+          {item.href && (
+            <a class="feature-option-link" href={item.href} onclick="event.stopPropagation()">
+              {item.linkText ?? 'Learn more'}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          )}
+        </span>
+      </button>
+    ))}
+  </div>
+
+  <div class="feature-toggle-visual">
+    {items.map((item, i) => (
+      <img
+        src={item.image}
+        alt={item.imageAlt ?? ''}
+        class="feature-visual-image"
+        data-index={i}
+        data-active={i === 0 ? 'true' : 'false'}
+        loading={i === 0 ? 'eager' : 'lazy'}
+      />
+    ))}
+    <div class="feature-visual-glow" aria-hidden="true"></div>
+  </div>
+</div>
+
+<style>
+  .feature-toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  .feature-toggle-options {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .feature-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--hairline);
+    padding: var(--space-md) var(--space-2xs);
+    cursor: pointer;
+    color: var(--mist);
+    font-family: var(--font-body);
+    transition: background 0.25s ease;
+  }
+
+  .feature-option:hover {
+    background: hsl(var(--hue-green) 40% 100% / 0.03);
+  }
+
+  .feature-option-index {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--mist-faint);
+    padding-top: 3px;
+    transition: color 0.25s ease;
+  }
+
+  .feature-option[aria-selected='true'] .feature-option-index {
+    color: var(--signal);
+  }
+
+  .feature-option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .feature-option-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--mist-muted);
+    transition: color 0.25s ease;
+  }
+
+  .feature-option[aria-selected='true'] .feature-option-title {
+    color: #ffffff;
+  }
+
+  .feature-option-description {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--mist-muted);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease;
+  }
+
+  .feature-option[aria-selected='true'] .feature-option-description {
+    max-height: 200px;
+    opacity: 1;
+    margin-top: 8px;
+  }
+
+  .feature-option-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--signal);
+    text-decoration: none;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.35s ease;
+  }
+
+  .feature-option[aria-selected='true'] .feature-option-link {
+    max-height: 40px;
+    opacity: 1;
+  }
+
+  .feature-option-link:hover {
+    color: var(--mint);
+  }
+
+  .feature-toggle-visual {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--pine);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .feature-visual-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .feature-visual-image[data-active='true'] {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .feature-visual-glow {
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-radial-glow);
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  @media (max-width: 860px) {
+    .feature-toggle {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+    .feature-toggle-visual {
+      order: -1;
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feature-option-description,
+    .feature-option-link,
+    .feature-visual-image {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  function initFeatureToggles() {
+    document.querySelectorAll<HTMLElement>('[data-feature-toggle]').forEach((root) => {
+      const options = root.querySelectorAll<HTMLButtonElement>('.feature-option');
+      const images = root.querySelectorAll<HTMLImageElement>('.feature-visual-image');
+
+      options.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const index = btn.dataset.index;
+          options.forEach((o) => o.setAttribute('aria-selected', String(o.dataset.index === index)));
+          images.forEach((img) => img.setAttribute('data-active', String(img.dataset.index === index)));
+        });
+      });
+    });
+  }
+
+  initFeatureToggles();
+  document.addEventListener('astro:page-load', initFeatureToggles);
+</script>

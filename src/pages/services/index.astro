@@ -3,8 +3,10 @@ import { marked } from 'marked';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
+import FeatureToggle from '../../components/FeatureToggle.astro';
 import Footer from '../../components/Footer.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
+import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
 const page = await reader.singletons.servicesIndex.read();
 
@@ -47,6 +49,15 @@ const tiles = page?.tiles?.length
         linkText: 'Explore Charity Support',
       },
     ];
+
+const defaultHeroPhotoUrl = (defaultHeroPhoto as unknown as { src: string }).src;
+const tileItems = tiles.map((tile) => ({
+  title: tile.title,
+  description: tile.description,
+  href: tile.href,
+  linkText: tile.linkText,
+  image: resolveImageUrl(tile.image, tile.imageUrl) || defaultHeroPhotoUrl,
+}));
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
@@ -57,16 +68,7 @@ const tiles = page?.tiles?.length
     heading={page?.heading || 'Two practices, one disciplined approach'}
     subheading={page?.subheading || 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'}
   >
-    <div class="service-grid">
-      {tiles.map((tile) => (
-        <a class="service-tile" href={tile.href}>
-          <span class="service-eyebrow">{tile.eyebrow}</span>
-          <h3>{tile.title}</h3>
-          <p>{tile.description}</p>
-          <span class="service-link">{tile.linkText} →</span>
-        </a>
-      ))}
-    </div>
+    <FeatureToggle groupId="services" items={tileItems} />
   </Section>
 
   {sectionHtml && (
@@ -79,63 +81,6 @@ const tiles = page?.tiles?.length
 </Layout>
 
 <style>
-  .service-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-
-  .service-tile {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    background: var(--forest);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-lg);
-    padding: 40px;
-    text-decoration: none;
-    transition: border-color 0.2s ease, transform 0.2s ease;
-  }
-
-  .service-tile:hover {
-    border-color: var(--moss);
-    transform: translateY(-2px);
-  }
-
-  .service-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--mint);
-  }
-
-  .service-tile h3 {
-    font-size: 1.6rem;
-  }
-
-  .service-tile p {
-    color: var(--mist-muted);
-    font-size: 15px;
-    flex-grow: 1;
-  }
-
-  .service-link {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--signal);
-  }
-
-  .service-tile:hover .service-link {
-    color: var(--mint);
-  }
-
-  @media (max-width: 860px) {
-    .service-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
   /* Markdown section below the tiles. Scoped with :global() because the
      content inside comes from set:html, so Astro's scoping attribute never
      reaches these elements directly. */

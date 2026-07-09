@@ -14,8 +14,8 @@ groups:
     links:
       - label: About
         href: /about
-      - label: Mal
-        href: /about/mal
+      - label: Team
+        href: /about#team
       - label: FAQ
         href: /about/faq
       - label: Contact

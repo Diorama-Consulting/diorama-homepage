@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import Card from '../../components/Card.astro';
+import LinkCard from '../../components/LinkCard.astro';
 import BlogCard from '../../components/BlogCard.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
@@ -73,7 +74,7 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
 
     <section class="card-grid">
       {teachingTools.map((tool) => (
-        <Card title={tool.title} description={tool.description} href={tool.href} linkText="Try it" />
+        <LinkCard title={tool.title} description={tool.description} href={tool.href} linkText="Try it" external={tool.href?.startsWith('http')} />
       ))}
     </section>
 

@@ -1,9 +1,14 @@
 ---
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
+import HeroCarousel from '../components/HeroCarousel.astro';
+import TrustedCompanies from '../components/TrustedCompanies.astro';
+import UpcomingEvents from '../components/UpcomingEvents.astro';
 import Section from '../components/Section.astro';
-import Card from '../components/Card.astro';
+import FeatureToggle from '../components/FeatureToggle.astro';
+import LinkCard from '../components/LinkCard.astro';
 import Footer from '../components/Footer.astro';
 import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
@@ -37,6 +42,62 @@ const exploreCards = page?.exploreCards?.length
       { title: 'Teaching', description: 'Interactive tools for demystifying AI, plus our blog.', href: '/teaching', linkText: 'View Teaching' },
     ];
 
+const defaultHeroPhotoUrl = (defaultHeroPhoto as unknown as { src: string }).src;
+const exploreItems = exploreCards.map((card) => ({
+  title: card.title,
+  description: card.description,
+  href: card.href,
+  linkText: card.linkText,
+  image: resolveImageUrl(card.image, card.imageUrl) || defaultHeroPhotoUrl,
+}));
+
+// -----------------------------------------------------------------------
+// HERO CAROUSEL — resolve the selected blog-post slugs into full slide
+// data (title/description/hero image straight from each post). Falls back
+// to the classic static Hero if the carousel is off or nothing's selected.
+// -----------------------------------------------------------------------
+const heroCarouselSlugs = (page?.heroCarouselPosts ?? []).filter(Boolean).slice(0, 4) as string[];
+let heroCarouselSlides: { eyebrow: string; title: string; description?: string; image: string; imageAlt: string; href: string; linkText: string }[] = [];
+if (page?.heroCarouselEnabled && heroCarouselSlugs.length > 0) {
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+  heroCarouselSlides = heroCarouselSlugs
+    .map((slug) => allPosts.find((p) => p.id === slug))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((post) => ({
+      eyebrow: 'Featured article',
+      title: post.data.title,
+      description: post.data.description,
+      image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
+      imageAlt: post.data.title,
+      href: `/blog/${post.id}/`,
+      linkText: 'Read article',
+    }));
+}
+const useHeroCarousel = page?.heroCarouselEnabled && heroCarouselSlides.length > 0;
+
+// -----------------------------------------------------------------------
+// TRUSTED COMPANIES
+// -----------------------------------------------------------------------
+const trustedCompanies = (page?.trustedCompanies ?? [])
+  .map((c) => ({ name: c.name, logo: resolveImageUrl(c.logo, c.logoUrl), href: c.href || undefined }))
+  .filter((c): c is { name: string; logo: string; href?: string } => Boolean(c.logo));
+
+// -----------------------------------------------------------------------
+// UPCOMING EVENTS — only future-dated events are shown on the homepage.
+// -----------------------------------------------------------------------
+const allEvents = page?.events ?? [];
+const upcomingEvents = allEvents
+  .filter((e) => new Date(e.date).getTime() >= Date.now() - 1000 * 60 * 60 * 24)
+  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  .map((e) => ({
+    title: e.title,
+    date: e.date,
+    location: e.location || undefined,
+    description: e.description || undefined,
+    href: e.href || undefined,
+    linkText: e.linkText || undefined,
+  }));
+
 // Homepage widgets are deliberately standalone content (their own Keystatic
 // singletons) rather than teasers pulled live from /services/charities or
 // the CxAI Substack — see README for the reasoning.
@@ -49,17 +110,30 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
   <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
-  <Hero
-    eyebrow={page?.heroEyebrow || 'Now in beta'}
-    heading={page?.heroHeading || 'Ideas that make a difference.'}
-    subheading={page?.heroSubheading || 'We help ambitious teams ship AI products that actually work.'}
-    ctaText={page?.heroCtaText || 'Get started'}
-    ctaHref={page?.heroCtaHref || '/contact'}
-    revealHeading={page?.revealHeading || 'Unique Industry Experience.'}
-    revealSubheading={page?.revealSubheading || 'Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.'}
-    image={heroImage}
-    face={heroFace}
-    faceAlt={page?.heroFaceAlt || 'Portrait of the founder.'}
+  {useHeroCarousel ? (
+    <HeroCarousel slides={heroCarouselSlides} ctaText={page?.heroCtaText || 'Get started'} ctaHref={page?.heroCtaHref || '/contact'} />
+  ) : (
+    <Hero
+      eyebrow={page?.heroEyebrow || 'Now in beta'}
+      heading={page?.heroHeading || 'Ideas that make a difference.'}
+      subheading={page?.heroSubheading || 'We help ambitious teams ship AI products that actually work.'}
+      ctaText={page?.heroCtaText || 'Get started'}
+      ctaHref={page?.heroCtaHref || '/contact'}
+      revealHeading={page?.revealHeading || 'Unique Industry Experience.'}
+      revealSubheading={page?.revealSubheading || 'Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.'}
+      image={heroImage}
+      face={heroFace}
+      faceAlt={page?.heroFaceAlt || 'Portrait of the founder.'}
+    />
+  )}
+
+  <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
+
+  <UpcomingEvents
+    events={upcomingEvents}
+    eyebrow={page?.eventsEyebrow}
+    heading={page?.eventsHeading}
+    subheading={page?.eventsSubheading}
   />
 
   <Section
@@ -68,37 +142,37 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     heading={page?.exploreHeading || 'Where to start'}
     subheading={page?.exploreSubheading || "A quick map of what's on this site."}
   >
-    <div class="explore-grid">
-      {exploreCards.map((card) => (
-        <Card title={card.title} description={card.description} href={card.href} linkText={card.linkText} />
-      ))}
-    </div>
+    <FeatureToggle groupId="explore" items={exploreItems} />
   </Section>
 
   <!-- ===================================================================
        HOMEPAGE WIDGETS
        Standalone content widgets, independently editable in Keystatic.
-       Add further widgets here following the same card pattern.
+       Add further widgets here following the same LinkCard pattern.
   ==================================================================== -->
   {(showCharityWidget || showCxaiWidget) && (
     <Section id="widgets" eyebrow={page?.widgetsEyebrow || 'From the network'} heading={page?.widgetsHeading || 'More from Diorama'}>
       <div class="widget-grid">
         {showCharityWidget && charityWidget && (
-          <a class="widget-card" href={charityWidget.ctaHref} target={charityWidget.ctaHref?.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
-            <span class="widget-eyebrow">Charities</span>
-            <h3>{charityWidget.heading}</h3>
-            <p>{charityWidget.body}</p>
-            <span class="widget-cta">{charityWidget.ctaText} →</span>
-          </a>
+          <LinkCard
+            href={charityWidget.ctaHref}
+            eyebrow="Charities"
+            title={charityWidget.heading}
+            description={charityWidget.body}
+            linkText={charityWidget.ctaText}
+            external={charityWidget.ctaHref?.startsWith('http')}
+          />
         )}
 
         {showCxaiWidget && cxaiWidget && (
-          <a class="widget-card" href={cxaiWidget.ctaHref} target={cxaiWidget.ctaHref?.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
-            <span class="widget-eyebrow">Newsletter</span>
-            <h3>{cxaiWidget.heading}</h3>
-            <p>{cxaiWidget.body}</p>
-            <span class="widget-cta">{cxaiWidget.ctaText} →</span>
-          </a>
+          <LinkCard
+            href={cxaiWidget.ctaHref}
+            eyebrow="Newsletter"
+            title={cxaiWidget.heading}
+            description={cxaiWidget.body}
+            linkText={cxaiWidget.ctaText}
+            external={cxaiWidget.ctaHref?.startsWith('http')}
+          />
         )}
       </div>
     </Section>
@@ -108,59 +182,13 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
 </Layout>
 
 <style>
-  .explore-grid,
   .widget-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-  }
-
-  .widget-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .widget-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background: var(--forest);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
-    padding: 28px;
-    text-decoration: none;
-    transition: border-color 0.2s ease;
-  }
-
-  .widget-card:hover {
-    border-color: var(--moss);
-  }
-
-  .widget-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--mint);
-  }
-
-  .widget-card p {
-    color: var(--mist-muted);
-    font-size: 14.5px;
-    flex-grow: 1;
-  }
-
-  .widget-cta {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--signal);
-  }
-
-  .widget-card:hover .widget-cta {
-    color: var(--mint);
+    gap: var(--space-md);
   }
 
   @media (max-width: 860px) {
-    .explore-grid,
     .widget-grid {
       grid-template-columns: 1fr;
     }

@@ -3,9 +3,18 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import Footer from '../../components/Footer.astro';
+import QuoteBanner from '../../components/QuoteBanner.astro';
+import LinkCard from '../../components/LinkCard.astro';
+import Profile from '../../components/Profile.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
+import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
+// The former standalone /about/mal page is now merged into this page as a
+// "Team" section — see about/mal.astro, which now just redirects here for
+// old links/bookmarks/SEO. Both singletons are still read independently so
+// no Keystatic content had to be migrated.
 const page = await reader.singletons.about.read();
+const founder = await reader.singletons.aboutFounder.read();
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
@@ -25,40 +34,107 @@ const bodyParagraphs = page?.bodyParagraphs?.length
 
 const quote =
   page?.quote ||
-  "you believe that what is contained in the taxidermy scene has something to teach you—but only by the logic of metaphor, because you are not a stuffed animal and do not live in the scene but beyond it, outside it, observing rather than participating. The logic is twisted by global warming, because it collapses the perceived distance between humans and nature—between you and the diorama. One message of climate change is: you do not live outside the scene but within it, subject to all the same horrors you can see afflicting the lives of animals.";
+  "you believe that what is contained in the taxidermy scene has something to teach you—but only by the logic of metaphor, because you are not a stuffed animal and do not live in the scene but beyond it, outside it, observing rather than participating. The logic is twisted by global warming, because it collapses the perceived distance between humans and nature—between you and the diorama.";
 const quoteAuthor = page?.quoteAuthor || 'David Wallace-Wells, The Uninhabitable Earth';
+// Falls back to the site's default hero photograph if no dedicated quote
+// backdrop has been uploaded yet, so the banner never renders with nothing
+// behind it.
+const quoteImage =
+  resolveImageUrl(page?.quoteImage, page?.quoteImageUrl) ||
+  resolveImageUrl(founder?.portrait, founder?.portraitUrl) ||
+  (defaultHeroPhoto as unknown as { src: string }).src;
+
+const portraitUrl = resolveImageUrl(founder?.portrait, founder?.portraitUrl) || '/Mal.png';
+
+const founderParagraphs = founder?.paragraphs?.length
+  ? founder.paragraphs
+  : [
+      'Mal Minhas founded Diorama Consulting in 2024 to help Boards, Founders and Investors turn product, technology and AI strategy into commercial outcomes through fractional CTO/CPTO leadership and AI enablement including platform modernisation and organisation design, with a particular focus on D2C marketplaces and consumer products.',
+      'Alongside advisory work, Mal serves as a Trustee for two UK charities: Helpforce, which supports NHS trusts and community organisations to build high-impact volunteering programmes across the health system, and Aston-Mansfield, which supports children, young people and families in Newham and east London.',
+    ];
+
+const team = founder?.team?.length
+  ? founder.team
+  : [
+      {
+        name: 'Mal Minhas',
+        role: 'Founder & Everything Else',
+        bio: 'AI Technology Advisor, charity Trustee, and occasional Substack writer.',
+        socials: [{ label: 'LinkedIn', href: 'https://linkedin.com/malminhas' }],
+      },
+      {
+        name: 'Paolo Minhas',
+        role: 'Website & Engineering',
+        bio: 'Builds and maintains the Diorama site and tooling.',
+        socials: [
+          { label: 'GitHub', href: 'https://github.com/paolominhas' },
+          { label: 'LinkedIn', href: 'https://linkedin.com/in/paolo-m' },
+        ],
+      },
+      {
+        name: 'Rowan Caulfield',
+        role: 'Logo Design',
+        bio: 'Makes logos.',
+        socials: [{ label: 'LinkedIn', href: 'https://linkedin.com' }],
+      },
+    ];
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
-  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} transparentOverHero={false} />
 
   <Section
     eyebrow={page?.eyebrow || 'About us'}
     heading={page?.heading || 'We are all in the diorama'}
     subheading={page?.subheading || 'Diorama Consulting Ltd is an AI Technology Advisory practice with a focus on D2C marketplaces and consumer products.'}
   >
-    <div class="about-prose">
+    <div class="about-prose" data-reveal>
       {bodyParagraphs.map((paragraph) => <p>{paragraph}</p>)}
     </div>
 
-    <blockquote class="about-quote">
-      <p class="about-quote-text">"{quote}"</p>
-      {quoteAuthor && <cite class="about-quote-author">— {quoteAuthor}</cite>}
-    </blockquote>
+    <div class="about-links" data-reveal data-reveal-delay="1">
+      <LinkCard
+        href="#team"
+        eyebrow="Meet the team"
+        title={founder?.heading?.replace('Meet ', '') || 'Mal & the team'}
+        description={page?.founderLinkDescription || 'The story behind Diorama and the people building it.'}
+        linkText="Read more"
+        size="compact"
+      />
+      <LinkCard
+        href="/about/faq"
+        eyebrow="Questions"
+        title={page?.faqLinkTitle || 'FAQ'}
+        description={page?.faqLinkDescription || 'How we engage with clients and what to expect.'}
+        linkText="View FAQ"
+        size="compact"
+      />
+    </div>
+  </Section>
 
-    <div class="about-links">
-      <a class="about-link-card" href="/about/mal">
-        <span class="about-link-eyebrow">Meet the team</span>
-        <h3>{page?.founderLinkTitle || 'Mal'}</h3>
-        <p>{page?.founderLinkDescription || 'The story behind Diorama and the person leading it.'}</p>
-        <span class="about-link-cta">Read more →</span>
-      </a>
-      <a class="about-link-card" href="/about/faq">
-        <span class="about-link-eyebrow">Questions</span>
-        <h3>{page?.faqLinkTitle || 'FAQ'}</h3>
-        <p>{page?.faqLinkDescription || 'How we engage with clients and what to expect.'}</p>
-        <span class="about-link-cta">View FAQ →</span>
-      </a>
+  <div class="container">
+    <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
+  </div>
+
+  <!-- ===================================================================
+       TEAM — merged in from the former standalone /about/mal page.
+  ==================================================================== -->
+  <Section id="team" eyebrow="The team" heading={founder?.heading || 'Meet Mal'} subheading={founder?.teamHeading}>
+    <div class="founder-block" data-reveal>
+      <div class="founder-portrait">
+        <img src={portraitUrl} alt="A portrait of Mal smiling in a studio" loading="lazy" />
+      </div>
+      <div class="founder-copy">
+        {founderParagraphs.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      {team.map((member, i) => (
+        <div data-reveal data-reveal-delay={String(Math.min(i + 1, 4))}>
+          <Profile name={member.name} role={member.role} bio={member.bio} socials={member.socials} />
+        </div>
+      ))}
     </div>
   </Section>
 
@@ -70,84 +146,65 @@ const quoteAuthor = page?.quoteAuthor || 'David Wallace-Wells, The Uninhabitable
     max-width: 760px;
     color: var(--mist);
     line-height: 1.7;
-    margin-bottom: 56px;
+    margin-bottom: var(--space-lg);
   }
 
   .about-prose p {
     margin-bottom: 1.2rem;
   }
 
-  .about-quote {
-    max-width: 760px;
-    margin: 0 0 56px 0;
-    padding-left: 1.5rem;
-    border-left: 4px solid var(--pine);
-  }
-
-  .about-quote-text {
-    font-size: 1.15rem;
-    line-height: 1.5;
-    color: var(--mist);
-    margin-bottom: 0.6rem;
-  }
-
-  .about-quote-author {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--mint);
-    font-style: normal;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
   .about-links {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: var(--space-sm);
   }
 
-  .about-link-card {
+  .founder-block {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: var(--space-xl);
+    align-items: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .founder-portrait img {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .founder-copy {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    background: var(--forest);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
-    padding: 28px;
-    text-decoration: none;
-    transition: border-color 0.2s ease;
+    gap: var(--space-sm);
+    color: var(--mist);
+    line-height: 1.7;
   }
 
-  .about-link-card:hover {
-    border-color: var(--moss);
+  .founder-copy p {
+    margin: 0;
   }
 
-  .about-link-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--mint);
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
   }
 
-  .about-link-card p {
-    color: var(--mist-muted);
-    font-size: 14.5px;
-  }
-
-  .about-link-cta {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--signal);
-  }
-
-  .about-link-card:hover .about-link-cta {
-    color: var(--mint);
-  }
-
-  @media (max-width: 720px) {
-    .about-links {
+  @media (max-width: 860px) {
+    .about-links,
+    .profile-grid {
       grid-template-columns: 1fr;
+    }
+    .founder-block {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+    .founder-portrait img {
+      max-width: 280px;
+      margin: 0 auto;
     }
   }
 </style>

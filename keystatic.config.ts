@@ -288,6 +288,7 @@ export default config({
             description: fields.text({ label: 'Description', multiline: true }),
             href: fields.text({ label: 'Link' }),
             linkText: fields.text({ label: 'Link text', defaultValue: 'Learn more' }),
+            ...heroImageFieldsForSingleton('image', 'Image (shown in the interactive Explore panel)', 'src/content/pages/home'),
           }),
           {
             label: 'Explore cards',
@@ -298,6 +299,65 @@ export default config({
         widgetsHeading: fields.text({ label: 'Widgets section heading', defaultValue: 'More from Diorama' }),
         showCxaiWidget: fields.checkbox({ label: 'Show CxAI widget', defaultValue: true }),
         showCharityWidget: fields.checkbox({ label: 'Show Charity widget', defaultValue: true }),
+
+        // -----------------------------------------------------------------
+        // HERO CAROUSEL — toggle between the classic static Hero and a
+        // full-screen carousel of up to 4 featured articles. When enabled,
+        // heroCarouselPosts picks which blog posts appear (in order); each
+        // slide uses that post's own hero image + title + description, so
+        // no separate image upload is needed here. When disabled (or when
+        // fewer than 1 post is selected) the page falls back to the
+        // original static Hero using the fields above.
+        // -----------------------------------------------------------------
+        heroCarouselEnabled: fields.checkbox({
+          label: 'Use hero carousel',
+          description: 'When on, the hero becomes a full-screen carousel of the featured articles selected below. When off, the static hero above is used.',
+          defaultValue: false,
+        }),
+        heroCarouselPosts: fields.array(
+          fields.relationship({ label: 'Article', collection: 'blog' }),
+          {
+            label: 'Hero carousel — featured articles (add up to 4, in display order)',
+            itemLabel: (props) => props.value || 'Article',
+          },
+        ),
+
+        // -----------------------------------------------------------------
+        // TRUSTED COMPANIES BANNER
+        // -----------------------------------------------------------------
+        trustedCompaniesHeading: fields.text({ label: 'Trusted-by banner heading', defaultValue: 'Trusted by teams at' }),
+        trustedCompanies: fields.array(
+          fields.object({
+            name: fields.text({ label: 'Company name', validation: { isRequired: true } }),
+            ...heroImageFieldsForSingleton('logo', 'Logo (transparent PNG/SVG recommended)', 'src/content/pages/home'),
+            href: fields.url({ label: 'Link (optional)' }),
+          }),
+          {
+            label: 'Trusted companies',
+            itemLabel: (props) => props.fields.name.value || 'Company',
+          },
+        ),
+
+        // -----------------------------------------------------------------
+        // UPCOMING EVENTS
+        // -----------------------------------------------------------------
+        eventsEyebrow: fields.text({ label: 'Events section eyebrow', defaultValue: 'Upcoming' }),
+        eventsHeading: fields.text({ label: 'Events section heading', defaultValue: 'Events' }),
+        eventsSubheading: fields.text({ label: 'Events section subheading', multiline: true }),
+        events: fields.array(
+          fields.object({
+            title: fields.text({ label: 'Title', validation: { isRequired: true } }),
+            date: fields.date({ label: 'Date', validation: { isRequired: true } }),
+            location: fields.text({ label: 'Location (optional)' }),
+            description: fields.text({ label: 'Description', multiline: true }),
+            href: fields.url({ label: 'Link (registration page, write-up, etc.)' }),
+            linkText: fields.text({ label: 'Link text', defaultValue: 'Details' }),
+          }),
+          {
+            label: 'Events',
+            itemLabel: (props) => props.fields.title.value || 'Event',
+          },
+        ),
       },
     }),
 
@@ -345,6 +405,7 @@ export default config({
             description: fields.text({ label: 'Description', multiline: true }),
             href: fields.text({ label: 'Link' }),
             linkText: fields.text({ label: 'Link text' }),
+            ...heroImageFieldsForSingleton('image', 'Image (shown in the interactive panel)', 'src/content/pages/services-index'),
           }),
           {
             label: 'Service tiles',
@@ -489,6 +550,7 @@ export default config({
         }),
         quote: fields.text({ label: 'Pull quote', multiline: true }),
         quoteAuthor: fields.text({ label: 'Quote author' }),
+        ...heroImageFieldsForSingleton('quoteImage', 'Pull-quote background image', 'src/content/pages/about'),
         founderLinkTitle: fields.text({ label: '"Mal" link title', defaultValue: 'Mal' }),
         founderLinkDescription: fields.text({
           label: '"Mal" link description',
