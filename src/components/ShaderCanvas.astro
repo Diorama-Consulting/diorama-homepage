@@ -1,0 +1,228 @@
+---
+// Full-bleed animated WebGL gradient — the "dynamic feel" layer that sits
+// behind the hero carousel (or behind the static hero background as an
+// optional low-opacity overlay). A small hand-written fragment shader
+// flows two soft colour fields (the brand green + the amber accent, both
+// pulled live from the CSS custom properties so it always matches the
+// palette in global.css) using layered sine waves — no external shader
+// library or dependency required.
+//
+// Falls back to a static CSS gradient (no canvas/JS at all) when
+// prefers-reduced-motion is set, WebGL isn't available, or JS fails to
+// load, so the hero never breaks.
+interface Props {
+  /** Opacity of the shader layer — lower when it sits under photographic slides. */
+  opacity?: number;
+  class?: string;
+}
+
+const { opacity = 0.55, class: className = '' } = Astro.props;
+---
+
+<div class:list={['shader-layer', className]} style={`--shader-opacity: ${opacity}`}>
+  <canvas class="shader-canvas" aria-hidden="true"></canvas>
+  <div class="shader-fallback" aria-hidden="true"></div>
+</div>
+
+<style>
+  .shader-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    opacity: var(--shader-opacity, 0.55);
+  }
+
+  .shader-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .shader-fallback {
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-surface), var(--gradient-radial-glow);
+    display: none;
+  }
+
+  .shader-canvas.is-unavailable {
+    display: none;
+  }
+  .shader-canvas.is-unavailable + .shader-fallback {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shader-canvas {
+      display: none;
+    }
+    .shader-fallback {
+      display: block;
+    }
+  }
+</style>
+
+<script>
+  // Runs once per canvas on the page (there can be more than one, e.g. hero + about).
+  function hslVarToRgb(varName: string): [number, number, number] {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    // raw looks like "hsl(152 48% 46%)" — parse the three numbers out of it.
+    const match = raw.match(/([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/);
+    if (!match) return [0.2, 0.6, 0.4];
+    const [, h, s, l] = match.map(Number) as unknown as [number, number, number, number];
+    const sN = s / 100;
+    const lN = l / 100;
+    const c = (1 - Math.abs(2 * lN - 1)) * sN;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = lN - c / 2;
+    let [r, g, b] = [0, 0, 0];
+    if (h < 60) [r, g, b] = [c, x, 0];
+    else if (h < 120) [r, g, b] = [x, c, 0];
+    else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c];
+    else if (h < 300) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    return [r + m, g + m, b + m];
+  }
+
+  const VERT_SRC = `
+    attribute vec2 aPos;
+    void main() {
+      gl_Position = vec4(aPos, 0.0, 1.0);
+    }
+  `;
+
+  const FRAG_SRC = `
+    precision mediump float;
+    uniform vec2 uResolution;
+    uniform float uTime;
+    uniform vec3 uColorA;
+    uniform vec3 uColorB;
+    uniform vec3 uColorBg;
+
+    float wave(vec2 uv, float t, float freq, float speed) {
+      return sin((uv.x * freq) + (uv.y * freq * 0.6) + t * speed) * 0.5 + 0.5;
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uResolution.xy;
+      float t = uTime * 0.06;
+
+      float w1 = wave(uv, t, 3.2, 1.0);
+      float w2 = wave(uv * 1.4, t + 10.0, 2.1, -0.7);
+      float w3 = wave(uv * 0.8, t + 30.0, 4.0, 0.5);
+
+      float mixA = smoothstep(0.2, 0.9, (w1 + w2) * 0.5);
+      float mixB = smoothstep(0.3, 1.0, w3);
+
+      vec3 color = uColorBg;
+      color = mix(color, uColorA, mixA * 0.6);
+      color = mix(color, uColorB, mixB * 0.35);
+
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `;
+
+  function compile(gl: WebGLRenderingContext, type: number, src: string) {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+    return shader;
+  }
+
+  function initShaderCanvas(canvas: HTMLCanvasElement) {
+    const gl = canvas.getContext('webgl', { antialias: true, alpha: false });
+    if (!gl) {
+      canvas.classList.add('is-unavailable');
+      return;
+    }
+
+    const program = gl.createProgram()!;
+    gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERT_SRC));
+    gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAG_SRC));
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      canvas.classList.add('is-unavailable');
+      return;
+    }
+
+    gl.useProgram(program);
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+      gl.STATIC_DRAW,
+    );
+
+    const aPos = gl.getAttribLocation(program, 'aPos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const uColorA = gl.getUniformLocation(program, 'uColorA');
+    const uColorB = gl.getUniformLocation(program, 'uColorB');
+    const uColorBg = gl.getUniformLocation(program, 'uColorBg');
+
+    const colorA = hslVarToRgb('--signal');
+    const colorB = hslVarToRgb('--amber');
+    const colorBg = hslVarToRgb('--canopy');
+
+    gl.uniform3f(uColorA, ...colorA);
+    gl.uniform3f(uColorB, ...colorB);
+    gl.uniform3f(uColorBg, ...colorBg);
+
+    let raf = 0;
+    let running = true;
+    const start = performance.now();
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+      const { clientWidth, clientHeight } = canvas;
+      canvas.width = clientWidth * dpr;
+      canvas.height = clientHeight * dpr;
+      gl!.viewport(0, 0, canvas.width, canvas.height);
+      gl!.uniform2f(uResolution, canvas.width, canvas.height);
+    }
+
+    function frame(now: number) {
+      if (!running) return;
+      gl!.uniform1f(uTime, (now - start) / 1000);
+      gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+      raf = requestAnimationFrame(frame);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    raf = requestAnimationFrame(frame);
+
+    // Pause the render loop when off-screen to save battery/CPU.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        running = entry.isIntersecting;
+        if (running) raf = requestAnimationFrame(frame);
+        else cancelAnimationFrame(raf);
+      },
+      { threshold: 0 },
+    );
+    observer.observe(canvas);
+  }
+
+  function initAllShaders() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll<HTMLCanvasElement>('.shader-canvas').forEach((canvas) => {
+      if (canvas.dataset.initialized) return;
+      canvas.dataset.initialized = 'true';
+      initShaderCanvas(canvas);
+    });
+  }
+
+  initAllShaders();
+  document.addEventListener('astro:page-load', initAllShaders);
+</script>

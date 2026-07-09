@@ -1,0 +1,90 @@
+---
+// Full-bleed pull-quote laid over a background image — used on the About
+// page. Image can be a local Keystatic upload or an external URL (already
+// resolved to a plain string by the calling page via resolveImageUrl()).
+interface Props {
+  quote: string;
+  author?: string;
+  image: string;
+  imageAlt?: string;
+}
+
+const { quote, author, image, imageAlt = '' } = Astro.props;
+---
+
+<section class="quote-banner" data-reveal>
+  <img src={image} alt={imageAlt} class="quote-banner-bg" loading="lazy" />
+  <div class="quote-banner-scrim" aria-hidden="true"></div>
+  <div class="container quote-banner-content">
+    <svg class="quote-mark" width="40" height="32" viewBox="0 0 40 32" fill="none" aria-hidden="true">
+      <path d="M0 32V19.5C0 8.7 6.9 1.6 17.3 0l2.1 4.9C12.4 6.9 8.6 11 8.6 16.6h8.7V32H0ZM22.7 32V19.5C22.7 8.7 29.6 1.6 40 0l2.1 4.9c-7 2-10.8 6.1-10.8 11.7H40V32H22.7Z" fill="currentColor"/>
+    </svg>
+    <p class="quote-banner-text">{quote}</p>
+    {author && <cite class="quote-banner-author">{author}</cite>}
+  </div>
+</section>
+
+<style>
+  .quote-banner {
+    position: relative;
+    min-height: 62vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    margin-block: var(--space-section);
+  }
+
+  .quote-banner-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .quote-banner-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, hsl(var(--hue-green) 42% 6% / 0.55) 0%, hsl(var(--hue-green) 42% 6% / 0.82) 100%);
+  }
+
+  .quote-banner-content {
+    position: relative;
+    z-index: 2;
+    max-width: 780px;
+    padding-block: var(--space-xl);
+  }
+
+  .quote-mark {
+    color: var(--signal);
+    opacity: 0.85;
+    margin-bottom: var(--space-sm);
+  }
+
+  .quote-banner-text {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1.4;
+    color: #fff;
+    margin: 0 0 var(--space-sm);
+  }
+
+  .quote-banner-author {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mint);
+    font-style: normal;
+  }
+
+  @media (max-width: 700px) {
+    .quote-banner {
+      min-height: 50vh;
+      border-radius: var(--radius-lg);
+    }
+  }
+</style>
