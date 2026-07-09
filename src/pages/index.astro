@@ -52,52 +52,50 @@ const exploreItems = exploreCards.map((card) => ({
 }));
 
 // -----------------------------------------------------------------------
-// HERO CAROUSEL — each selected slide is either a blog article or an
-// event (fields.conditional in Keystatic), resolved here into full slide
-// data. Falls back to the classic static Hero if the carousel is off or
-// nothing's selected — this fallback is unconditional, never dependent on
-// Keystatic content existing.
+// HERO CAROUSEL — blog slugs and event slugs come from two separate,
+// plain relationship arrays (deliberately not a single conditional field —
+// see keystatic.config.ts for why), concatenated (articles first, then
+// events) and capped at 4 slides total. Falls back to the classic static
+// Hero if the carousel is off or nothing resolves — this fallback is
+// unconditional, never dependent on Keystatic content existing.
 // -----------------------------------------------------------------------
-const heroCarouselRefs = (page?.heroCarouselPosts ?? []).slice(0, 4) as { discriminant: 'blog' | 'event'; value: string | null }[];
+const heroBlogSlugs = ((page?.heroCarouselBlogPosts ?? []).filter(Boolean) as string[]);
+const heroEventSlugs = ((page?.heroCarouselEvents ?? []).filter(Boolean) as string[]);
 let heroCarouselSlides: { eyebrow: string; title: string; description?: string; image: string; imageAlt: string; href: string; linkText: string }[] = [];
 
-if (page?.heroCarouselEnabled && heroCarouselRefs.length > 0) {
-  const needsBlog = heroCarouselRefs.some((r) => r.discriminant === 'blog');
-  const needsEvents = heroCarouselRefs.some((r) => r.discriminant === 'event');
+if (page?.heroCarouselEnabled && (heroBlogSlugs.length > 0 || heroEventSlugs.length > 0)) {
   const [allPosts, allEvents] = await Promise.all([
-    needsBlog ? getCollection('blog', ({ data }) => !data.draft) : Promise.resolve([]),
-    needsEvents ? getCollection('events', ({ data }) => !data.draft) : Promise.resolve([]),
+    heroBlogSlugs.length > 0 ? getCollection('blog', ({ data }) => !data.draft) : Promise.resolve([]),
+    heroEventSlugs.length > 0 ? getCollection('events', ({ data }) => !data.draft) : Promise.resolve([]),
   ]);
 
-  heroCarouselSlides = heroCarouselRefs
-    .map((ref) => {
-      if (!ref.value) return null;
-      if (ref.discriminant === 'blog') {
-        const post = allPosts.find((p) => p.id === ref.value);
-        if (!post) return null;
-        return {
-          eyebrow: 'Featured article',
-          title: post.data.title,
-          description: post.data.description,
-          image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
-          imageAlt: post.data.title,
-          href: `/blog/${post.id}/`,
-          linkText: 'Read article',
-        };
-      }
-      const event = allEvents.find((e) => e.id === ref.value);
-      if (!event) return null;
-      return {
-        eyebrow: 'Upcoming event',
-        title: event.data.title,
-        description: event.data.description,
-        image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl) || defaultHeroPhotoUrl,
-        imageAlt: event.data.title,
-        href: event.data.href || '#events',
-        linkText: event.data.linkText || 'Event details',
-      };
-    })
-    .filter((slide): slide is NonNullable<typeof slide> => Boolean(slide));
+  const blogSlides = heroBlogSlugs
+    .map((slug) => allPosts.find((p) => p.id === slug))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((post) => ({
+      eyebrow: 'Featured article',
+      title: post.data.title,
+      description: post.data.description,
+      image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
+      imageAlt: post.data.title,
+      href: `/blog/${post.id}/`,
+      linkText: 'Read article',
+    }));
+
+  const eventSlides = heroEventSlugs
+    .map((slug) => allEvents.find((e) => e.id === slug))
+    .filter((e): e is NonNullable<typeof e> => Boolean(e))
+    .map((event) => ({
+      eyebrow: 'Upcoming event',
+      title: event.data.title,
+      description: event.data.description,
+      image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl) || defaultHeroPhotoUrl,
+      imageAlt: event.data.title,
+      href: event.data.href || '#events',
+      linkText: event.data.linkText || 'Event details',
+    }));
+
+  heroCarouselSlides = [...blogSlides, ...eventSlides].slice(0, 4);
 }
 const useHeroCarousel = page?.heroCarouselEnabled && heroCarouselSlides.length > 0;
 
@@ -141,18 +139,27 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
   {useHeroCarousel ? (
     <HeroCarousel slides={heroCarouselSlides} ctaText={page?.heroCtaText || 'Get started'} ctaHref={page?.heroCtaHref || '/contact'} />
   ) : (
-    <Hero
-      eyebrow={page?.heroEyebrow || 'Now in beta'}
-      heading={page?.heroHeading || 'Ideas that make a difference.'}
-      subheading={page?.heroSubheading || 'We help ambitious teams ship AI products that actually work.'}
-      ctaText={page?.heroCtaText || 'Get started'}
-      ctaHref={page?.heroCtaHref || '/contact'}
-      revealHeading={page?.revealHeading || 'Unique Industry Experience.'}
-      revealSubheading={page?.revealSubheading || 'Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.'}
-      image={heroImage}
-      face={heroFace}
-      faceAlt={page?.heroFaceAlt || 'Portrait of the founder.'}
-    />
+    <>
+      {import.meta.env.DEV && page?.heroCarouselEnabled && (
+        <div class="hero-carousel-dev-notice">
+          Hero carousel is <strong>ON</strong> in Keystatic, but 0 slides resolved — showing the static hero instead.
+          Check Homepage → "Hero carousel — blog articles" / "— events" actually have entries selected, and that
+          those entries aren't marked as drafts. (This notice only shows in dev.)
+        </div>
+      )}
+      <Hero
+        eyebrow={page?.heroEyebrow || 'Now in beta'}
+        heading={page?.heroHeading || 'Ideas that make a difference.'}
+        subheading={page?.heroSubheading || 'We help ambitious teams ship AI products that actually work.'}
+        ctaText={page?.heroCtaText || 'Get started'}
+        ctaHref={page?.heroCtaHref || '/contact'}
+        revealHeading={page?.revealHeading || 'Unique Industry Experience.'}
+        revealSubheading={page?.revealSubheading || 'Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.'}
+        image={heroImage}
+        face={heroFace}
+        faceAlt={page?.heroFaceAlt || 'Portrait of the founder.'}
+      />
+    </>
   )}
 
   <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
@@ -210,6 +217,16 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
 </Layout>
 
 <style>
+  .hero-carousel-dev-notice {
+    background: hsl(38 90% 20%);
+    color: hsl(38 90% 85%);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 12px 20px;
+    text-align: center;
+  }
+
   .widget-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
