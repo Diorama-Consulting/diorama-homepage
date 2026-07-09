@@ -5,7 +5,11 @@ heroCtaText: Get started
 heroCtaHref: /contact
 heroFaceAlt: Portrait of the founder.
 revealHeading: Unique Industry Experience.
-revealSubheading: Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.
+revealSubheading: >-
+  Our team has extensive experience in developing, delivering and evolving AI
+  product software across startups, scale-ups, SMEs and Big Tech. We partner
+  with C-Suite, Boards, Founders and Investors to bridge product strategy,
+  engineering and AI.
 exploreEyebrow: Explore
 exploreHeading: Where to start
 exploreSubheading: A quick map of what's on this site.
@@ -26,3 +30,21 @@ widgetsEyebrow: From the network
 widgetsHeading: More from Diorama
 showCxaiWidget: true
 showCharityWidget: true
+heroCarouselEnabled: true
+heroCarouselBlogPosts:
+  - ai-and-business-transformation
+  - experiments-in-ai-coding
+  - 75-years-of-the-turing-test
+heroCarouselEvents: []
+trustedCompaniesHeading: Companies who trust us too
+trustedCompanies:
+  - name: Amazon
+    logoUrl: >-
+      https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/960px-Amazon_logo.svg.png?_=20250504041148
+  - name: Adobe
+    logoUrl: https://commons.wikimedia.org/wiki/File:Adobe_Corporate_logo.svg
+  - name: Apple
+    logoUrl: https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg
+  - name: Gumtree
+    logoUrl: >-
+      https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN8hej6EcarCuIOD3cmAL1GsWKnGAn3VcpGK_0LOJdFoh6Xiae5KmQmao&s=10
