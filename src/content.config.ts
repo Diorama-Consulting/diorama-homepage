@@ -103,4 +103,24 @@ const charities = defineCollection({
     }),
 });
 
-export const collections = { blog, projects, charities };
+// ---------------------------------------------------------------------------
+// EVENTS  (src/content/events/<slug>/index.mdx + co-located images)
+// Used by the homepage "Upcoming Events" section, and selectable (like blog
+// posts) as a hero-carousel slide source.
+// ---------------------------------------------------------------------------
+const events = defineCollection({
+  loader: glob({ pattern: '*/index.mdx', base: './src/content/events' }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      date: z.coerce.date(),
+      location: z.string().optional(),
+      description: z.string().optional(),
+      ...imageFields('heroImage', image()),
+      href: optionalUrl, // registration page, write-up, etc.
+      linkText: z.string().optional(),
+      draft: z.boolean().default(false),
+    }),
+});
+
+export const collections = { blog, projects, charities, events };

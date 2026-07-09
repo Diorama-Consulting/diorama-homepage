@@ -52,26 +52,52 @@ const exploreItems = exploreCards.map((card) => ({
 }));
 
 // -----------------------------------------------------------------------
-// HERO CAROUSEL — resolve the selected blog-post slugs into full slide
-// data (title/description/hero image straight from each post). Falls back
-// to the classic static Hero if the carousel is off or nothing's selected.
+// HERO CAROUSEL — each selected slide is either a blog article or an
+// event (fields.conditional in Keystatic), resolved here into full slide
+// data. Falls back to the classic static Hero if the carousel is off or
+// nothing's selected — this fallback is unconditional, never dependent on
+// Keystatic content existing.
 // -----------------------------------------------------------------------
-const heroCarouselSlugs = (page?.heroCarouselPosts ?? []).filter(Boolean).slice(0, 4) as string[];
+const heroCarouselRefs = (page?.heroCarouselPosts ?? []).slice(0, 4) as { discriminant: 'blog' | 'event'; value: string | null }[];
 let heroCarouselSlides: { eyebrow: string; title: string; description?: string; image: string; imageAlt: string; href: string; linkText: string }[] = [];
-if (page?.heroCarouselEnabled && heroCarouselSlugs.length > 0) {
-  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-  heroCarouselSlides = heroCarouselSlugs
-    .map((slug) => allPosts.find((p) => p.id === slug))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((post) => ({
-      eyebrow: 'Featured article',
-      title: post.data.title,
-      description: post.data.description,
-      image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
-      imageAlt: post.data.title,
-      href: `/blog/${post.id}/`,
-      linkText: 'Read article',
-    }));
+
+if (page?.heroCarouselEnabled && heroCarouselRefs.length > 0) {
+  const needsBlog = heroCarouselRefs.some((r) => r.discriminant === 'blog');
+  const needsEvents = heroCarouselRefs.some((r) => r.discriminant === 'event');
+  const [allPosts, allEvents] = await Promise.all([
+    needsBlog ? getCollection('blog', ({ data }) => !data.draft) : Promise.resolve([]),
+    needsEvents ? getCollection('events', ({ data }) => !data.draft) : Promise.resolve([]),
+  ]);
+
+  heroCarouselSlides = heroCarouselRefs
+    .map((ref) => {
+      if (!ref.value) return null;
+      if (ref.discriminant === 'blog') {
+        const post = allPosts.find((p) => p.id === ref.value);
+        if (!post) return null;
+        return {
+          eyebrow: 'Featured article',
+          title: post.data.title,
+          description: post.data.description,
+          image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
+          imageAlt: post.data.title,
+          href: `/blog/${post.id}/`,
+          linkText: 'Read article',
+        };
+      }
+      const event = allEvents.find((e) => e.id === ref.value);
+      if (!event) return null;
+      return {
+        eyebrow: 'Upcoming event',
+        title: event.data.title,
+        description: event.data.description,
+        image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl) || defaultHeroPhotoUrl,
+        imageAlt: event.data.title,
+        href: event.data.href || '#events',
+        linkText: event.data.linkText || 'Event details',
+      };
+    })
+    .filter((slide): slide is NonNullable<typeof slide> => Boolean(slide));
 }
 const useHeroCarousel = page?.heroCarouselEnabled && heroCarouselSlides.length > 0;
 
@@ -83,19 +109,21 @@ const trustedCompanies = (page?.trustedCompanies ?? [])
   .filter((c): c is { name: string; logo: string; href?: string } => Boolean(c.logo));
 
 // -----------------------------------------------------------------------
-// UPCOMING EVENTS — only future-dated events are shown on the homepage.
+// UPCOMING EVENTS — sourced from the events collection (see content.config.ts
+// / keystatic.config.ts), so events can also be picked for the hero
+// carousel. Only future-dated, non-draft events are shown here.
 // -----------------------------------------------------------------------
-const allEvents = page?.events ?? [];
-const upcomingEvents = allEvents
-  .filter((e) => new Date(e.date).getTime() >= Date.now() - 1000 * 60 * 60 * 24)
-  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+const allEventEntries = await getCollection('events', ({ data }) => !data.draft);
+const upcomingEvents = allEventEntries
+  .filter((e) => e.data.date.getTime() >= Date.now() - 1000 * 60 * 60 * 24)
+  .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())
   .map((e) => ({
-    title: e.title,
-    date: e.date,
-    location: e.location || undefined,
-    description: e.description || undefined,
-    href: e.href || undefined,
-    linkText: e.linkText || undefined,
+    title: e.data.title,
+    date: e.data.date.toISOString(),
+    location: e.data.location,
+    description: e.data.description,
+    href: e.data.href,
+    linkText: e.data.linkText,
   }));
 
 // Homepage widgets are deliberately standalone content (their own Keystatic
