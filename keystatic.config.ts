@@ -319,24 +319,20 @@ export default config({
           description: 'When on, the hero becomes a full-screen carousel of the featured articles selected below. When off, the static hero above is used.',
           defaultValue: false,
         }),
-        heroCarouselPosts: fields.array(
-          fields.conditional(
-            fields.select({
-              label: 'Source',
-              options: [
-                { label: 'Blog article', value: 'blog' },
-                { label: 'Event', value: 'event' },
-              ],
-              defaultValue: 'blog',
-            }),
-            {
-              blog: fields.relationship({ label: 'Article', collection: 'blog' }),
-              event: fields.relationship({ label: 'Event', collection: 'events' }),
-            },
-          ),
+        heroCarouselBlogPosts: fields.array(
+          fields.relationship({ label: 'Article', collection: 'blog' }),
           {
-            label: 'Hero carousel — featured articles or events (add up to 4, in display order)',
-            itemLabel: (props) => `${props.fields.discriminant.value === 'event' ? 'Event' : 'Article'}: ${props.fields.value.value || '—'}`,
+            label: 'Hero carousel — blog articles',
+            description: 'Combined with the events below (articles first, then events), capped at 4 slides total, in this order.',
+            itemLabel: (props) => props.value || 'Article',
+          },
+        ),
+        heroCarouselEvents: fields.array(
+          fields.relationship({ label: 'Event', collection: 'events' }),
+          {
+            label: 'Hero carousel — events',
+            description: 'Combined with the articles above, capped at 4 slides total.',
+            itemLabel: (props) => props.value || 'Event',
           },
         ),
 
