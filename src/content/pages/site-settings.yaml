@@ -17,7 +17,8 @@ showHostingInfo: true
 showVerificationStatus: true
 showSustainabilityNotes: true
 showMethodologyLink: false
-hostingProvider: DigitalOcean
+hostingProvider: DigitalOcean & Cloudflare
+hostingRegion: LON1
 greenHostingVerified: true
 sustainabilityNotes: >-
   We optimise every image on this site (AVIF/WebP with responsive sizing), use a
