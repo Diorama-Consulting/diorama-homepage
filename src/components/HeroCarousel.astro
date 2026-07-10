@@ -1,14 +1,15 @@
 ---
-// Full-screen hero carousel — the dynamic alternative to the static Hero.
-// Cycles through up to 4 featured articles (picked in Keystatic on the
-// Homepage singleton), each rendered as a full-bleed slide with the
-// ShaderCanvas layered on top in 'screen' blend mode for a subtle moving
-// colour-field over the photography. Desktop: hover-revealed arrows,
-// bottom-right. Mobile: native swipe (CSS scroll-snap) + dot indicators,
-// titles centred with generous padding. Autoplays gently; pauses on
-// hover/focus/touch and respects prefers-reduced-motion.
+// Full-screen hero carousel, styled after a large professional-services
+// site pattern: left-aligned editorial content over a horizontal
+// dark-to-transparent scrim (so the photo stays visible on the right),
+// a small green vertical accent bar beside the body copy, and a
+// persistent (always-visible, not hover-only) bottom bar with text-tab
+// navigation on the left and prev/next/play-pause controls on the right.
+//
+// ShaderCanvas still runs underneath in 'screen' blend mode for the
+// "dynamic feel" — subtle enough not to fight the new, more editorial
+// layout.
 import ShaderCanvas from './ShaderCanvas.astro';
-import Button from './Button.astro';
 
 interface Slide {
   eyebrow?: string;
@@ -18,52 +19,69 @@ interface Slide {
   imageAlt?: string;
   href: string;
   linkText?: string;
+  /** Short label for the bottom tab strip — falls back to a truncated title. */
+  tabLabel?: string;
 }
 
 interface Props {
   slides: Slide[];
-  heading?: string;
-  ctaText?: string;
-  ctaHref?: string;
 }
 
-const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
+const { slides } = Astro.props;
+
+function shortTabLabel(slide: Slide) {
+  if (slide.tabLabel) return slide.tabLabel;
+  const words = slide.title.split(' ');
+  return words.length > 3 ? `${words.slice(0, 3).join(' ')}…` : slide.title;
+}
 ---
 
 <section class="hero-carousel" aria-roledescription="carousel" aria-label="Featured articles">
-  <ShaderCanvas opacity={0.32} class="hero-carousel-shader" />
+  <ShaderCanvas opacity={0.22} class="hero-carousel-shader" />
 
   <div class="hero-carousel-track" id="hero-carousel-track">
     {slides.map((slide, i) => (
       <article class="hero-slide" data-index={i} aria-hidden={i === 0 ? 'false' : 'true'}>
-        <img src={slide.image} alt={slide.imageAlt ?? ''} class="hero-slide-bg" loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : 'low'} />
+        <img src={slide.image} alt={slide.imageAlt ?? ''} class="hero-slide-bg" data-parallax loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : 'low'} />
         <div class="hero-slide-scrim" aria-hidden="true"></div>
         <div class="container hero-slide-content">
           <p class="eyebrow">{slide.eyebrow ?? 'Featured'}</p>
           <h1>{slide.title}</h1>
-          {slide.description && <p class="subheading">{slide.description}</p>}
-          <div class="hero-actions">
-            <a class="hero-slide-link" href={slide.href}>{slide.linkText ?? 'Read article'} →</a>
-            <Button href={ctaHref} variant="secondary">{ctaText}</Button>
-          </div>
+          {slide.description && (
+            <div class="hero-slide-body">
+              <span class="body-accent" aria-hidden="true"></span>
+              <p class="subheading">{slide.description}</p>
+            </div>
+          )}
+          <a class="hero-slide-link" href={slide.href}>{slide.linkText ?? 'Read article'} →</a>
         </div>
       </article>
     ))}
   </div>
 
-  <div class="hero-carousel-controls">
-    <button type="button" class="hero-arrow hero-arrow-prev" aria-label="Previous slide">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-    </button>
-    <button type="button" class="hero-arrow hero-arrow-next" aria-label="Next slide">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-    </button>
-  </div>
+  <div class="hero-carousel-bar">
+    <div class="container hero-carousel-bar-inner">
+      <div class="hero-tabs" role="tablist" aria-label="Slides">
+        {slides.map((slide, i) => (
+          <button type="button" class="hero-tab" data-index={i} aria-selected={i === 0 ? 'true' : 'false'} role="tab">
+            {shortTabLabel(slide)}
+          </button>
+        ))}
+      </div>
 
-  <div class="hero-carousel-dots" role="tablist" aria-label="Slides">
-    {slides.map((_, i) => (
-      <button type="button" class="hero-dot" data-index={i} aria-selected={i === 0 ? 'true' : 'false'} aria-label={`Go to slide ${i + 1}`}></button>
-    ))}
+      <div class="hero-carousel-controls">
+        <button type="button" class="hero-control hero-control-prev" aria-label="Previous slide">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+        <button type="button" class="hero-control hero-control-next" aria-label="Next slide">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+        <button type="button" class="hero-control hero-control-playpause" aria-label="Pause autoplay" data-playing="true">
+          <svg class="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+          <svg class="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        </button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -71,7 +89,7 @@ const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
   .hero-carousel {
     position: relative;
     height: 100vh;
-    min-height: 560px;
+    min-height: 620px;
     overflow: hidden;
     background: var(--canopy);
   }
@@ -100,25 +118,28 @@ const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
     flex: 0 0 100%;
     height: 100%;
     scroll-snap-align: start;
+    overflow: hidden;
   }
 
   .hero-slide-bg {
     position: absolute;
-    inset: 0;
+    inset: -4% 0 0 0;
     width: 100%;
-    height: 100%;
+    height: 108%;
     object-fit: cover;
     object-position: center;
     z-index: 0;
+    will-change: transform;
   }
 
   .hero-slide-scrim {
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: var(--gradient-hero);
+    background: var(--gradient-hero-horizontal), var(--gradient-hero);
   }
 
+  /* ---- Left-aligned editorial content block, sitting above the bottom bar ---- */
   .hero-slide-content {
     position: relative;
     z-index: 2;
@@ -126,145 +147,205 @@ const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    max-width: 680px;
+    padding-bottom: 96px; /* clears the persistent bottom bar */
+    max-width: 700px;
   }
 
   .hero-slide-content .eyebrow {
     font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.08em;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--mint);
-    margin: 0 0 18px;
+    color: var(--signal);
+    margin: 0 0 20px;
   }
 
   .hero-slide-content h1 {
-    font-size: clamp(32px, 4.4vw, 52px);
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-    margin: 0 0 20px;
+    font-size: clamp(34px, 4.6vw, 56px);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    font-weight: 700;
+    margin: 0 0 24px;
     color: #fff;
+  }
+
+  .hero-slide-body {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .body-accent {
+    flex-shrink: 0;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--signal);
   }
 
   .hero-slide-content .subheading {
-    font-size: 17px;
+    font-size: 16.5px;
+    line-height: 1.6;
     color: rgba(255, 255, 255, 0.82);
-    margin: 0 0 32px;
-    max-width: 480px;
-  }
-
-  .hero-actions {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
+    margin: 0;
+    max-width: 520px;
   }
 
   .hero-slide-link {
+    align-self: flex-start;
     font-weight: 600;
+    font-size: 14.5px;
     color: #fff;
     text-decoration: none;
     border-bottom: 1.5px solid var(--signal);
-    padding-bottom: 2px;
+    padding-bottom: 3px;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
   .hero-slide-link:hover {
     color: var(--mint);
     border-color: var(--mint);
   }
 
-  /* ---- Desktop arrows: bottom-right, revealed on hover ---- */
-  .hero-carousel-controls {
-    position: absolute;
-    z-index: 3;
-    right: var(--space-lg);
-    bottom: var(--space-lg);
-    display: flex;
-    gap: 10px;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .hero-carousel:hover .hero-carousel-controls,
-  .hero-carousel:focus-within .hero-carousel-controls {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .hero-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1px solid hsl(0 0% 100% / 0.25);
-    background: hsl(0 0% 0% / 0.25);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-  }
-  .hero-arrow:hover {
-    background: hsl(0 0% 0% / 0.45);
-    border-color: var(--signal);
-  }
-
-  /* ---- Dots: hidden on desktop (arrows do the job), shown on mobile ---- */
-  .hero-carousel-dots {
+  /* ---- Persistent bottom bar: tabs (left) + controls (right), always visible ---- */
+  .hero-carousel-bar {
     position: absolute;
     z-index: 3;
     left: 0;
     right: 0;
-    bottom: var(--space-sm);
+    bottom: 0;
+    background: var(--gradient-hero-bottom-bar);
+    border-top: 1px solid hsl(0 0% 100% / 0.1);
+    padding-top: 12px;
+  }
+
+  .hero-carousel-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 22px;
+  }
+
+  .hero-tabs {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hero-tabs::-webkit-scrollbar {
     display: none;
-    justify-content: center;
-    gap: 8px;
   }
 
-  .hero-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+  .hero-tab {
+    position: relative;
+    flex-shrink: 0;
+    background: none;
     border: none;
-    background: hsl(0 0% 100% / 0.35);
-    padding: 0;
+    padding: 8px 0;
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: color 0.25s ease;
   }
-  .hero-dot[aria-selected='true'] {
+  .hero-tab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
     background: var(--signal);
-    transform: scale(1.3);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+  .hero-tab:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .hero-tab[aria-selected='true'] {
+    color: #fff;
+  }
+  .hero-tab[aria-selected='true']::after {
+    transform: scaleX(1);
   }
 
-  /* ---- Mobile: centred titles, generous padding, swipe + dots, no hover arrows ---- */
+  .hero-carousel-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .hero-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid hsl(0 0% 100% / 0.2);
+    background: hsl(0 0% 0% / 0.3);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .hero-control:hover {
+    background: hsl(0 0% 0% / 0.5);
+    border-color: var(--signal);
+  }
+
+  .hero-control-playpause .icon-play {
+    display: none;
+  }
+  .hero-control-playpause[data-playing='false'] .icon-pause {
+    display: none;
+  }
+  .hero-control-playpause[data-playing='false'] .icon-play {
+    display: block;
+  }
+
+  /* ---- Mobile: centred titles, generous padding, tabs scroll horizontally ---- */
   @media (max-width: 700px) {
-    .hero-carousel-controls {
-      display: none;
-    }
-    .hero-carousel-dots {
-      display: flex;
-    }
     .hero-slide-content {
       text-align: center;
       align-items: center;
       max-width: none;
       padding-inline: var(--space-md);
-      padding-bottom: var(--space-xl);
+    }
+    .hero-slide-body {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .body-accent {
+      width: 28px;
+      height: 3px;
     }
     .hero-slide-content .subheading {
       max-width: 420px;
       margin-inline: auto;
     }
-    .hero-actions {
+    .hero-carousel-bar-inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+    .hero-tabs {
+      justify-content: flex-start;
+    }
+    .hero-carousel-controls {
       justify-content: center;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero-carousel-controls,
-    .hero-dot {
-      transition: none;
+    .hero-slide-bg {
+      transform: none !important;
     }
   }
 </style>
@@ -276,24 +357,50 @@ const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
     if (!track || !carousel) return;
 
     const slides = Array.from(track.querySelectorAll<HTMLElement>('.hero-slide'));
-    const dots = Array.from(carousel.querySelectorAll<HTMLButtonElement>('.hero-dot'));
-    const prevBtn = carousel.querySelector<HTMLButtonElement>('.hero-arrow-prev');
-    const nextBtn = carousel.querySelector<HTMLButtonElement>('.hero-arrow-next');
+    const tabs = Array.from(carousel.querySelectorAll<HTMLButtonElement>('.hero-tab'));
+    const prevBtn = carousel.querySelector<HTMLButtonElement>('.hero-control-prev');
+    const nextBtn = carousel.querySelector<HTMLButtonElement>('.hero-control-next');
+    const playPauseBtn = carousel.querySelector<HTMLButtonElement>('.hero-control-playpause');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     let active = 0;
     let autoplayId: ReturnType<typeof setInterval> | null = null;
+    let playing = !reduceMotion;
 
     function goTo(index: number) {
       active = (index + slides.length) % slides.length;
       slides[active].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
       slides.forEach((s, i) => s.setAttribute('aria-hidden', String(i !== active)));
-      dots.forEach((d, i) => d.setAttribute('aria-selected', String(i === active)));
+      tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === active)));
     }
 
     prevBtn?.addEventListener('click', () => goTo(active - 1));
     nextBtn?.addEventListener('click', () => goTo(active + 1));
-    dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+    tabs.forEach((tab, i) => tab.addEventListener('click', () => goTo(i)));
 
-    // Keep dots/aria in sync when the user swipes on mobile.
+    function startAutoplay() {
+      if (slides.length < 2) return;
+      autoplayId = setInterval(() => goTo(active + 1), 7000);
+    }
+    function stopAutoplay() {
+      if (autoplayId) clearInterval(autoplayId);
+      autoplayId = null;
+    }
+
+    playPauseBtn?.addEventListener('click', () => {
+      playing = !playing;
+      playPauseBtn.dataset.playing = String(playing);
+      playPauseBtn.setAttribute('aria-label', playing ? 'Pause autoplay' : 'Resume autoplay');
+      if (playing) startAutoplay();
+      else stopAutoplay();
+    });
+
+    if (playPauseBtn) {
+      playPauseBtn.dataset.playing = String(playing);
+      playPauseBtn.setAttribute('aria-label', playing ? 'Pause autoplay' : 'Resume autoplay');
+    }
+
+    // Keep tabs/aria in sync when the user swipes on mobile.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -301,7 +408,7 @@ const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
             const idx = Number((entry.target as HTMLElement).dataset.index);
             active = idx;
             slides.forEach((s, i) => s.setAttribute('aria-hidden', String(i !== idx)));
-            dots.forEach((d, i) => d.setAttribute('aria-selected', String(i === idx)));
+            tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === idx)));
           }
         });
       },
@@ -309,18 +416,33 @@ const { slides, ctaText = 'Get started', ctaHref = '/contact' } = Astro.props;
     );
     slides.forEach((s) => observer.observe(s));
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (slides.length > 1 && !reduceMotion) {
-      const start = () => {
-        autoplayId = setInterval(() => goTo(active + 1), 7000);
+    if (playing) {
+      startAutoplay();
+      carousel.addEventListener('mouseenter', stopAutoplay);
+      carousel.addEventListener('mouseleave', () => { if (playing) startAutoplay(); });
+    }
+
+    // ---- Subtle scroll parallax on the background images ----
+    if (!reduceMotion) {
+      let ticking = false;
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const rect = carousel.getBoundingClientRect();
+          // Only move while the hero is at least partially in view.
+          if (rect.bottom > 0 && rect.top < window.innerHeight) {
+            const progress = Math.min(Math.max(-rect.top / rect.height, 0), 1);
+            const offset = progress * 40; // px of drift, subtle
+            track.querySelectorAll<HTMLImageElement>('[data-parallax]').forEach((img) => {
+              img.style.transform = `translateY(${offset}px)`;
+            });
+          }
+          ticking = false;
+        });
       };
-      const stop = () => {
-        if (autoplayId) clearInterval(autoplayId);
-      };
-      start();
-      carousel.addEventListener('mouseenter', stop);
-      carousel.addEventListener('mouseleave', start);
-      carousel.addEventListener('touchstart', stop, { passive: true });
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
     }
   }
 

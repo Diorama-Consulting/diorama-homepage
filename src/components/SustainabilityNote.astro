@@ -72,13 +72,6 @@ const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check
   <details class="sustainability-note">
     <summary class="sustainability-summary">
 
-      {showCarbonBadge && (
-        <div class="carbon-badge-wrap">
-          <div id="wcb" class="carbonbadge wcb-d"></div>
-          <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
-        </div>
-      )}
-
       {showCo2Estimate && (
         <span class="sustainability-metric">
           <svg class="metric-leaf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -96,19 +89,10 @@ const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check
 
       {showGreenBadges && (
         <span class="sustainability-badges">
-            <a
-            href="https://www.cloudflare.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Cloudflare green web hosting"
-          >
-            <img
-              src="https://cdn.kualo.com/website/greenbadges/badge8.png"
-              alt="Kualo Green Hosting"
-              width="82"
-              loading="lazy"
-            />
-          </a>
+          {/* Kualo's badge was removed here — hosting is DigitalOcean & Cloudflare per
+              site-settings.yaml, not Kualo, so that badge no longer matched reality.
+              The Green Web Foundation check below is domain-verified and accurate
+              regardless of which host is behind it. */}
           <a
             href={greenCheckLinkUrl}
             target="_blank"
@@ -163,6 +147,13 @@ const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check
 
       {showSustainabilityNotes && sustainabilityNotes && (
         <p class="sustainability-notes">{sustainabilityNotes}</p>
+      )}
+
+      {showCarbonBadge && (
+        <div class="carbon-badge-wrap">
+          <div id="wcb" class="carbonbadge wcb-d"></div>
+          <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
+        </div>
       )}
 
       {showMethodologyLink && (

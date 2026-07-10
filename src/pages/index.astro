@@ -137,7 +137,7 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
   <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
   {useHeroCarousel ? (
-    <HeroCarousel slides={heroCarouselSlides} ctaText={page?.heroCtaText || 'Get started'} ctaHref={page?.heroCtaHref || '/contact'} />
+    <HeroCarousel slides={heroCarouselSlides} />
   ) : (
     <>
       {import.meta.env.DEV && page?.heroCarouselEnabled && (
@@ -162,14 +162,18 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     </>
   )}
 
-  <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
+  <div data-reveal>
+    <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
+  </div>
 
-  <UpcomingEvents
-    events={upcomingEvents}
-    eyebrow={page?.eventsEyebrow}
-    heading={page?.eventsHeading}
-    subheading={page?.eventsSubheading}
-  />
+  <div data-reveal>
+    <UpcomingEvents
+      events={upcomingEvents}
+      eyebrow={page?.eventsEyebrow}
+      heading={page?.eventsHeading}
+      subheading={page?.eventsSubheading}
+    />
+  </div>
 
   <Section
     id="explore"
@@ -177,7 +181,9 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     heading={page?.exploreHeading || 'Where to start'}
     subheading={page?.exploreSubheading || "A quick map of what's on this site."}
   >
-    <FeatureToggle groupId="explore" items={exploreItems} />
+    <div data-reveal>
+      <FeatureToggle groupId="explore" items={exploreItems} />
+    </div>
   </Section>
 
   <!-- ===================================================================
@@ -189,25 +195,29 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     <Section id="widgets" eyebrow={page?.widgetsEyebrow || 'From the network'} heading={page?.widgetsHeading || 'More from Diorama'}>
       <div class="widget-grid">
         {showCharityWidget && charityWidget && (
-          <LinkCard
-            href={charityWidget.ctaHref}
-            eyebrow="Charities"
-            title={charityWidget.heading}
-            description={charityWidget.body}
-            linkText={charityWidget.ctaText}
-            external={charityWidget.ctaHref?.startsWith('http')}
-          />
+          <div data-reveal>
+            <LinkCard
+              href={charityWidget.ctaHref}
+              eyebrow="Charities"
+              title={charityWidget.heading}
+              description={charityWidget.body}
+              linkText={charityWidget.ctaText}
+              external={charityWidget.ctaHref?.startsWith('http')}
+            />
+          </div>
         )}
 
         {showCxaiWidget && cxaiWidget && (
-          <LinkCard
-            href={cxaiWidget.ctaHref}
-            eyebrow="Newsletter"
-            title={cxaiWidget.heading}
-            description={cxaiWidget.body}
-            linkText={cxaiWidget.ctaText}
-            external={cxaiWidget.ctaHref?.startsWith('http')}
-          />
+          <div data-reveal data-reveal-delay="1">
+            <LinkCard
+              href={cxaiWidget.ctaHref}
+              eyebrow="Newsletter"
+              title={cxaiWidget.heading}
+              description={cxaiWidget.body}
+              linkText={cxaiWidget.ctaText}
+              external={cxaiWidget.ctaHref?.startsWith('http')}
+            />
+          </div>
         )}
       </div>
     </Section>

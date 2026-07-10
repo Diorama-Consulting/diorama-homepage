@@ -46,6 +46,8 @@
 
   /* ---- Gradients (hero scrims, glows, section transitions) ---- */
   --gradient-hero: linear-gradient(180deg, hsl(var(--hue-green) 42% 6% / 0.15) 0%, hsl(var(--hue-green) 42% 6% / 0.6) 65%, hsl(var(--hue-green) 42% 6% / 0.85) 100%);
+  --gradient-hero-horizontal: linear-gradient(100deg, hsl(var(--hue-green) 44% 5% / 0.92) 0%, hsl(var(--hue-green) 44% 5% / 0.72) 30%, hsl(var(--hue-green) 44% 5% / 0.25) 60%, hsl(var(--hue-green) 44% 5% / 0.05) 100%);
+  --gradient-hero-bottom-bar: linear-gradient(0deg, hsl(var(--hue-green) 44% 4% / 0.85) 0%, hsl(var(--hue-green) 44% 4% / 0) 100%);
   --gradient-accent: linear-gradient(135deg, hsl(var(--hue-green) 48% 46% / 0.9), hsl(var(--hue-amber) 74% 58% / 0.55));
   --gradient-surface: linear-gradient(180deg, hsl(var(--hue-green) 34% 15%) 0%, hsl(var(--hue-green) 40% 11%) 100%);
   --gradient-radial-glow: radial-gradient(circle at 30% 20%, hsl(var(--hue-green) 48% 46% / 0.16), transparent 60%);
