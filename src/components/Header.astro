@@ -13,8 +13,6 @@ interface Props {
   links?: NavLink[];
   ctaText?: string;
   ctaHref?: string;
-  /** Set false on pages with no dark hero image directly behind the header (e.g. /about, /blog) */
-  transparentOverHero?: boolean;
 }
 
 const {
@@ -27,13 +25,12 @@ const {
   ],
   ctaText = 'Contact',
   ctaHref = '/contact',
-  transparentOverHero = true,
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
 ---
 
-<header class={`site-header ${transparentOverHero ? 'is-transparent' : ''}`} id="site-header">
+<header class="site-header" id="site-header">
   <div class="container nav">
     <a href="/" class="logo">
       <Image src={dioramaLogo} alt="" class="logo-mark" />
@@ -72,25 +69,19 @@ const currentPath = Astro.url.pathname;
     position: sticky;
     top: 0;
     z-index: 50;
-    background: var(--canopy);
+    background: linear-gradient(180deg, hsl(var(--hue-green) 40% 8%) 0%, hsl(var(--hue-green) 44% 6%) 100%);
     border-bottom: 1px solid var(--hairline);
-    transition: background-color 0.35s ease, backdrop-filter 0.35s ease,
-      border-color 0.35s ease, box-shadow 0.35s ease;
+    transition: padding 0.35s ease, backdrop-filter 0.35s ease,
+      border-color 0.35s ease, box-shadow 0.35s ease, background 0.35s ease;
   }
 
-  /* FIXED: Only floats transparently if NOT scrolled */
-  .site-header.is-transparent:not(.is-scrolled) {
-    background: transparent;
-    border-bottom-color: transparent;
-    box-shadow: none;
-  }
-
-  /* Frosted, condensed state after scrolling past the hero */
+  /* Slightly darker, frosted and condensed once scrolled — same bar, just tightened up */
   .site-header.is-scrolled {
-    background: color-mix(in srgb, var(--canopy) 88%, transparent);
+    background: color-mix(in srgb, hsl(var(--hue-green) 44% 6%) 94%, transparent);
     backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border-bottom-color: var(--hairline);
+    border-bottom-color: var(--hairline-hover);
+    box-shadow: 0 4px 24px hsl(var(--hue-green) 60% 4% / 0.35);
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
   }
 
@@ -145,12 +136,14 @@ const currentPath = Astro.url.pathname;
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: 34px;
     font-size: 14.5px;
+    letter-spacing: 0.01em;
   }
   .nav-links a:not(.btn) {
     position: relative;
     color: var(--mist-muted);
+    font-weight: 500;
     text-decoration: none;
     padding: 4px 0;
     transition: color 0.2s ease;
