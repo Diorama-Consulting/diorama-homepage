@@ -1,0 +1,40 @@
+---
+// 1 of 5 spacer components — pure whitespace. No content, no animation:
+// sometimes the most effective "component" between two dense sections is
+// just confident, deliberate empty space. The optional marker exists so
+// it reads as intentional rather than an accidental gap.
+interface Props {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  showMarker?: boolean;
+}
+
+const { size = 'lg', showMarker = false } = Astro.props;
+
+const heights: Record<string, string> = {
+  sm: 'var(--space-lg)',
+  md: 'var(--space-xl)',
+  lg: 'var(--space-2xl)',
+  xl: 'var(--space-3xl)',
+};
+---
+
+<div class="spacer-blank" style={`--h: ${heights[size]}`} aria-hidden="true">
+  {showMarker && <span class="spacer-marker"></span>}
+</div>
+
+<style>
+  .spacer-blank {
+    height: var(--h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spacer-marker {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--moss);
+    opacity: 0.6;
+  }
+</style>
