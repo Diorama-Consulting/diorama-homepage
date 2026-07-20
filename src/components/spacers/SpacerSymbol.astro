@@ -1,0 +1,85 @@
+---
+// 3 of 5 spacer components — a small animated symbol, centred in open
+// space. Three variants: 'leaf' draws itself in with a stroke animation
+// on scroll reveal, 'orbit' rotates gently forever, 'pulse' breathes.
+// Purely decorative (aria-hidden) — a moment of calm rhythm between
+// dense sections, not another thing to read.
+interface Props {
+  symbol?: 'leaf' | 'orbit' | 'pulse';
+  size?: number;
+}
+
+const { symbol = 'leaf', size = 52 } = Astro.props;
+---
+
+<div class="spacer-symbol" data-reveal aria-hidden="true">
+  {symbol === 'leaf' && (
+    <svg class="symbol-leaf" width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 40C10 20 22 10 40 8C38 26 28 38 10 40Z" />
+      <path d="M10 40C10 30 16 20 26 15" />
+    </svg>
+  )}
+  {symbol === 'orbit' && (
+    <svg class="symbol-orbit" width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="4" fill="currentColor" />
+      <ellipse cx="24" cy="24" rx="20" ry="8" stroke="currentColor" stroke-width="1.4" />
+      <circle cx="44" cy="24" r="2.4" fill="currentColor" />
+    </svg>
+  )}
+  {symbol === 'pulse' && (
+    <svg class="symbol-pulse" width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="24" cy="24" r="16" />
+      <circle cx="24" cy="24" r="6" fill="currentColor" stroke="none" />
+    </svg>
+  )}
+</div>
+
+<style>
+  .spacer-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: var(--space-xl);
+    color: var(--leaf);
+  }
+
+  /* Leaf: draws itself in on scroll reveal (gated behind .js-ready — see
+     global.css SCROLL REVEAL comment). Falls back to a plain static
+     outline if JS never runs, never to nothing. */
+  .js-ready .symbol-leaf path {
+    stroke-dasharray: 140;
+    stroke-dashoffset: 140;
+    transition: stroke-dashoffset 1.6s ease;
+  }
+  .js-ready .spacer-symbol.is-visible .symbol-leaf path {
+    stroke-dashoffset: 0;
+  }
+
+  .symbol-orbit {
+    animation: spacer-spin 14s linear infinite;
+  }
+
+  .symbol-pulse {
+    animation: spacer-pulse 2.6s ease-in-out infinite;
+  }
+
+  @keyframes spacer-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes spacer-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.14); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .symbol-orbit,
+    .symbol-pulse {
+      animation: none;
+    }
+    .js-ready .symbol-leaf path {
+      stroke-dashoffset: 0;
+      transition: none;
+    }
+  }
+</style>

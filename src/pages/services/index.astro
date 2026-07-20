@@ -5,6 +5,7 @@ import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import FeatureToggle from '../../components/FeatureToggle.astro';
 import Footer from '../../components/Footer.astro';
+import SpacerBlank from '../../components/spacers/SpacerBlank.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
@@ -71,6 +72,8 @@ const tileItems = tiles.map((tile) => ({
     <FeatureToggle groupId="services" items={tileItems} />
   </Section>
 
+  <SpacerBlank size="lg" showMarker />
+
   {sectionHtml && (
     <Section heading={page?.sectionHeading}>
       <div class="markdown-body" set:html={sectionHtml} />
@@ -94,7 +97,7 @@ const tileItems = tiles.map((tile) => ({
   .markdown-body :global(h1),
   .markdown-body :global(h2),
   .markdown-body :global(h3) {
-    color: #ffffff;
+    color: var(--text-strong);
     margin: 1.6em 0 0.6em;
   }
 

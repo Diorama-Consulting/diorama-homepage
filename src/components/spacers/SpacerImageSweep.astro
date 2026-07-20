@@ -1,0 +1,67 @@
+---
+// 2 of 5 spacer components — a full-width image band that sweeps in from
+// the left as it scrolls into view (a clip-path wipe, not a fade), then
+// sits still as a breathing-room band between two text-heavy sections.
+//
+// Progressive enhancement: the "hidden until swept" state only applies
+// once html has .js-ready (see Layout.astro) — if JS never runs for any
+// reason, the image is simply visible, never permanently clipped away.
+interface Props {
+  image: string;
+  imageAlt?: string;
+  caption?: string;
+  height?: string;
+}
+
+const { image, imageAlt = '', caption, height = 'clamp(240px, 34vw, 440px)' } = Astro.props;
+---
+
+<div class="spacer-sweep" data-reveal style={`--sweep-h: ${height}`}>
+  <div class="sweep-media">
+    <img src={image} alt={imageAlt} loading="lazy" decoding="async" />
+  </div>
+  {caption && <p class="sweep-caption">{caption}</p>}
+</div>
+
+<style>
+  .spacer-sweep {
+    padding-block: var(--space-xl);
+  }
+
+  .sweep-media {
+    height: var(--sweep-h);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  .sweep-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sweep-caption {
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--mist-muted);
+  }
+
+  /* Hidden-until-swept state is opt-in behind .js-ready — see
+     global.css's SCROLL REVEAL comment for why. */
+  .js-ready .spacer-sweep .sweep-media {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .js-ready .spacer-sweep.is-visible .sweep-media {
+    clip-path: inset(0 0 0 0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js-ready .spacer-sweep .sweep-media {
+      clip-path: inset(0 0 0 0);
+      transition: none;
+    }
+  }
+</style>

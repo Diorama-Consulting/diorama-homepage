@@ -6,6 +6,8 @@ import Footer from '../../components/Footer.astro';
 import QuoteBanner from '../../components/QuoteBanner.astro';
 import LinkCard from '../../components/LinkCard.astro';
 import Profile from '../../components/Profile.astro';
+import SpacerImageSweep from '../../components/spacers/SpacerImageSweep.astro';
+import SpacerTextBox from '../../components/spacers/SpacerTextBox.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
@@ -113,6 +115,10 @@ const team = founder?.team?.length
   </Section>
 
   <div class="container">
+    <SpacerTextBox eyebrow="Our approach" text="Thoughtful strategy, careful execution — we'd rather do fewer things well than everything at once." tone="green" />
+  </div>
+
+  <div class="container">
     <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
   </div>
 
@@ -137,6 +143,10 @@ const team = founder?.team?.length
       ))}
     </div>
   </Section>
+
+  <div class="container">
+    <SpacerImageSweep image={(defaultHeroPhoto as unknown as { src: string }).src} imageAlt="" caption="Building thoughtfully, one project at a time." />
+  </div>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
