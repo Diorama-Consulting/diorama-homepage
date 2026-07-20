@@ -30,7 +30,7 @@ widgetsEyebrow: From the network
 widgetsHeading: More from Diorama
 showCxaiWidget: true
 showCharityWidget: true
-heroCarouselEnabled: true
+heroCarouselEnabled: false
 heroCarouselBlogPosts:
   - ai-and-business-transformation
   - experiments-in-ai-coding
