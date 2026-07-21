@@ -1,0 +1,221 @@
+---
+// Animated component 2/2 — a small narrative sequence, played once when
+// scrolled into view: a pile of leaves catches, burns down, and a tree
+// pops up out of the ash with leaves flying outward — a "renewal" motif.
+//
+// Progressive enhancement, same rule as everywhere else on the site: the
+// safe default (no JS, or reduced motion) is the END state — a fully
+// grown tree — not the starting pile. A broken/missing script means you
+// just don't get the animation; you never get stuck looking at an
+// unresolved pile of leaves with no tree.
+interface Props {
+  eyebrow?: string;
+  heading?: string;
+  text?: string;
+}
+
+const { eyebrow = 'Renewal', heading, text } = Astro.props;
+---
+
+<div class="leaf-burn" data-leaf-burn>
+  <svg class="leaf-burn-scene" viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="120" cy="204" rx="70" ry="8" fill="var(--pine)" />
+
+    <!-- leaf pile: visible only pre-burn -->
+    <g class="leaf-pile">
+      <ellipse cx="98" cy="196" rx="16" ry="9" fill="var(--sand)" transform="rotate(-12 98 196)" />
+      <ellipse cx="120" cy="199" rx="18" ry="10" fill="var(--leaf)" transform="rotate(8 120 199)" />
+      <ellipse cx="142" cy="195" rx="15" ry="9" fill="var(--sage)" transform="rotate(-6 142 195)" />
+      <ellipse cx="110" cy="190" rx="14" ry="8" fill="var(--leaf)" transform="rotate(20 110 190)" />
+      <ellipse cx="132" cy="189" rx="13" ry="8" fill="var(--sand)" transform="rotate(-18 132 189)" />
+    </g>
+
+    <!-- flame: flickers over the pile, then fades -->
+    <g class="flame">
+      <path d="M120 198 C112 186 114 176 120 166 C126 176 128 186 120 198Z" fill="var(--amber)" />
+      <path d="M108 198 C103 190 105 182 110 175 C114 183 115 191 108 198Z" fill="var(--amber)" opacity="0.85" />
+      <path d="M132 198 C127 190 129 182 134 175 C138 183 139 191 132 198Z" fill="var(--amber)" opacity="0.85" />
+    </g>
+
+    <!-- tree: scales up from the same spot once the pile has burned down -->
+    <g class="tree">
+      <rect x="115" y="150" width="10" height="52" rx="3" fill="var(--charcoal)" />
+      <circle cx="120" cy="140" r="30" fill="var(--leaf)" />
+      <circle cx="100" cy="152" r="22" fill="var(--signal)" />
+      <circle cx="140" cy="152" r="22" fill="var(--signal)" />
+    </g>
+
+    <!-- leaves flying outward from the canopy once the tree has appeared -->
+    <g class="flying-leaves">
+      <ellipse class="flying-leaf fl-1" cx="120" cy="135" rx="7" ry="4" fill="var(--leaf)" />
+      <ellipse class="flying-leaf fl-2" cx="120" cy="135" rx="6" ry="3.5" fill="var(--sand)" />
+      <ellipse class="flying-leaf fl-3" cx="120" cy="135" rx="7" ry="4" fill="var(--signal)" />
+      <ellipse class="flying-leaf fl-4" cx="120" cy="135" rx="6" ry="3.5" fill="var(--leaf)" />
+      <ellipse class="flying-leaf fl-5" cx="120" cy="135" rx="6" ry="3.5" fill="var(--sage)" />
+    </g>
+  </svg>
+
+  {(heading || text) && (
+    <div class="leaf-burn-copy" data-reveal>
+      {eyebrow && <p class="leaf-burn-eyebrow">{eyebrow}</p>}
+      {heading && <h3>{heading}</h3>}
+      {text && <p>{text}</p>}
+    </div>
+  )}
+</div>
+
+<style>
+  .leaf-burn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding-block: var(--space-section);
+  }
+
+  .leaf-burn-scene {
+    width: min(340px, 80vw);
+    height: auto;
+  }
+
+  .leaf-burn-copy {
+    text-align: center;
+    max-width: 480px;
+  }
+
+  .leaf-burn-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 12px;
+  }
+
+  .leaf-burn-copy h3 {
+    font-size: clamp(22px, 2.8vw, 30px);
+    margin: 0 0 12px;
+  }
+
+  .leaf-burn-copy p:not(.leaf-burn-eyebrow) {
+    font-size: 15.5px;
+    color: var(--mist-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ---- Safe default: fully grown tree, nothing burning, no pile ----
+     This is what renders with no JS, or with prefers-reduced-motion. */
+  .tree {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transform: scale(1);
+    opacity: 1;
+  }
+  .leaf-pile,
+  .flame,
+  .flying-leaf {
+    opacity: 0;
+  }
+
+  /* ---- JS-enhanced starting pose: pile visible, tree hidden ----
+     Only applied once .js-ready confirms script is actually running. */
+  .js-ready .leaf-burn .tree {
+    transform: scale(0.05);
+    opacity: 0;
+  }
+  .js-ready .leaf-burn .leaf-pile {
+    opacity: 1;
+  }
+
+  /* ---- The sequence, triggered once by .is-active (added by JS on
+     scroll-into-view, never removed — plays once) ---- */
+  .js-ready .leaf-burn.is-active .flame {
+    animation: flame-flicker 1.1s ease-in-out 1;
+    animation-delay: 0.4s;
+    animation-fill-mode: forwards;
+  }
+  .js-ready .leaf-burn.is-active .leaf-pile {
+    animation: pile-burn-away 0.9s ease forwards;
+    animation-delay: 1.1s;
+  }
+  .js-ready .leaf-burn.is-active .tree {
+    animation: tree-pop 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 1.5s;
+  }
+  .js-ready .leaf-burn.is-active .flying-leaf {
+    animation: leaf-fly 1.6s ease-out forwards;
+  }
+  .js-ready .leaf-burn.is-active .fl-1 { animation-delay: 2.1s; --fly-x: -46px; --fly-y: -30px; --fly-r: -40deg; }
+  .js-ready .leaf-burn.is-active .fl-2 { animation-delay: 2.25s; --fly-x: -20px; --fly-y: -58px; --fly-r: 30deg; }
+  .js-ready .leaf-burn.is-active .fl-3 { animation-delay: 2.15s; --fly-x: 8px; --fly-y: -62px; --fly-r: -20deg; }
+  .js-ready .leaf-burn.is-active .fl-4 { animation-delay: 2.35s; --fly-x: 34px; --fly-y: -46px; --fly-r: 45deg; }
+  .js-ready .leaf-burn.is-active .fl-5 { animation-delay: 2.05s; --fly-x: 50px; --fly-y: -20px; --fly-r: -30deg; }
+
+  @keyframes flame-flicker {
+    0% { opacity: 0; transform: scale(0.8); }
+    20% { opacity: 1; transform: scale(1); }
+    45% { opacity: 0.85; transform: scale(1.08); }
+    70% { opacity: 1; transform: scale(0.95); }
+    100% { opacity: 0; transform: scale(1.15); }
+  }
+
+  @keyframes pile-burn-away {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.4) translateY(6px); }
+  }
+
+  @keyframes tree-pop {
+    0% { opacity: 0; transform: scale(0.05); }
+    60% { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes leaf-fly {
+    0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+    15% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--fly-x), var(--fly-y)) rotate(var(--fly-r)) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js-ready .leaf-burn .tree,
+    .js-ready .leaf-burn .leaf-pile,
+    .js-ready .leaf-burn.is-active .flame,
+    .js-ready .leaf-burn.is-active .leaf-pile,
+    .js-ready .leaf-burn.is-active .tree,
+    .js-ready .leaf-burn.is-active .flying-leaf {
+      animation: none;
+      transform: none;
+    }
+    .tree { opacity: 1; }
+    .leaf-pile, .flame, .flying-leaf { opacity: 0; }
+  }
+</style>
+
+<script>
+  function initLeafBurn() {
+    document.querySelectorAll<HTMLElement>('[data-leaf-burn]').forEach((el) => {
+      if (el.dataset.lbInit) return;
+      el.dataset.lbInit = 'true';
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              el.classList.add('is-active');
+              observer.unobserve(el);
+            }
+          });
+        },
+        { threshold: 0.4 },
+      );
+      observer.observe(el);
+    });
+  }
+
+  initLeafBurn();
+  document.addEventListener('astro:page-load', initLeafBurn);
+</script>

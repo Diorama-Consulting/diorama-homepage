@@ -11,7 +11,8 @@ import FeatureToggle from '../components/FeatureToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import Footer from '../components/Footer.astro';
 import SpacerDivider from '../components/spacers/SpacerDivider.astro';
-import SpacerSymbol from '../components/spacers/SpacerSymbol.astro';
+import WindTurbineReveal from '../components/animated/WindTurbineReveal.astro';
+import LeafToTreeReveal from '../components/animated/LeafToTreeReveal.astro';
 import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
 import defaultFounderPortrait from '../assets/hero/MalmCol.png';
@@ -192,7 +193,12 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     </div>
   </Section>
 
-  <SpacerSymbol symbol="leaf" />
+  <div class="container">
+    <WindTurbineReveal
+      heading="Built with the same discipline we bring to client work"
+      text="Fast, static-first architecture and verified green hosting — the site itself is a small proof point for how we work."
+    />
+  </div>
 
   <!-- ===================================================================
        HOMEPAGE WIDGETS
@@ -230,6 +236,14 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
       </div>
     </Section>
   )}
+
+  <div class="container">
+    <LeafToTreeReveal
+      eyebrow="Renewal"
+      heading="Every ending is groundwork for what's next"
+      text="The same principle behind our sustainability work and our approach to client engagements: clear the ground properly, then build something that lasts."
+    />
+  </div>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
