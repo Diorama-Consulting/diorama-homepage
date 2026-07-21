@@ -32,7 +32,7 @@ showCxaiWidget: true
 showCharityWidget: true
 heroCarouselEnabled: true
 heroCarouselBlogPosts:
-  - tech-organisation-design
+  - team-tapestry
   - 75-years-of-the-turing-test
   - experiments-in-ai-coding
 heroCarouselEvents:
@@ -49,3 +49,6 @@ trustedCompanies:
   - name: Gumtree
     logoUrl: >-
       https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN8hej6EcarCuIOD3cmAL1GsWKnGAn3VcpGK_0LOJdFoh6Xiae5KmQmao&s=10
+eventsEyebrow: Stay in the loop
+eventsHeading: Upcoming Events
+eventsSubheading: Discover us through our upcoming organisation and speaking events
