@@ -30,12 +30,13 @@ widgetsEyebrow: From the network
 widgetsHeading: More from Diorama
 showCxaiWidget: true
 showCharityWidget: true
-heroCarouselEnabled: false
+heroCarouselEnabled: true
 heroCarouselBlogPosts:
-  - ai-and-business-transformation
-  - experiments-in-ai-coding
+  - team-tapestry
   - 75-years-of-the-turing-test
-heroCarouselEvents: []
+  - experiments-in-ai-coding
+heroCarouselEvents:
+  - the-london-tech-leaders-leadership-summit-2026
 trustedCompaniesHeading: Companies who trust us too
 trustedCompanies:
   - name: Amazon
@@ -48,3 +49,6 @@ trustedCompanies:
   - name: Gumtree
     logoUrl: >-
       https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN8hej6EcarCuIOD3cmAL1GsWKnGAn3VcpGK_0LOJdFoh6Xiae5KmQmao&s=10
+eventsEyebrow: Stay in the loop
+eventsHeading: Upcoming Events
+eventsSubheading: Discover us through our upcoming organisation and speaking events
