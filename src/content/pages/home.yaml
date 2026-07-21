@@ -30,11 +30,11 @@ widgetsEyebrow: From the network
 widgetsHeading: More from Diorama
 showCxaiWidget: true
 showCharityWidget: true
-heroCarouselEnabled: false
+heroCarouselEnabled: true
 heroCarouselBlogPosts:
   - ai-and-business-transformation
-  - experiments-in-ai-coding
   - 75-years-of-the-turing-test
+  - experiments-in-ai-coding
 heroCarouselEvents: []
 trustedCompaniesHeading: Companies who trust us too
 trustedCompanies:
