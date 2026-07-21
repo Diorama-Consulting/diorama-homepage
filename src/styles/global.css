@@ -2,85 +2,103 @@
 @import '@fontsource/cal-sans';
 
 /* ==========================================================================
-   DESIGN TOKENS
-   Every colour on the site is derived from here. v2: shifted from a
-   teal-leaning corporate green (152°) to a fresher, more "eco" leaf-green
-   (138°) with lighter, less saturated surfaces, plus an expanded palette
-   (leaf / sage / sand / sky) for variety in smaller accents like the
-   spacer components. Still expressed entirely in HSL off two hue anchors
-   so the whole site can be retuned from these few lines.
+   DESIGN TOKENS — v3: LIGHT MODE
+   Flipped from a dark green "novelty" surface to a neutral, near-white
+   page background with dark charcoal text — the same pattern every major
+   consulting site actually uses (EY included): light body, green reduced
+   to a restrained accent (links, buttons, small highlights, underlines),
+   never the dominant surface colour.
+
+   Header/Footer/Hero stay intentionally DARK as bookends (exactly like
+   the EY reference) — that's what --ink-* is for, kept deliberately
+   separate from --canopy (now light) so those three components don't
+   accidentally go light too when you retune the page background.
    ========================================================================== */
 :root {
   /* ---- Hues (colour wheel anchors) ---- */
-  --hue-green: 138;      /* brand green — was 152 (teal-leaning); shifted toward a fresher leaf green */
-  --hue-amber: 42;       /* warm split-complement, for highlights/CTAs — was 38 */
-  --hue-sand: 34;        /* warm light neutral, pairs with green in most "eco/organic" branding */
-  --hue-sky: 189;        /* pale clean-air blue-green, sparing use for variety */
-  --hue-rose: 350;       /* rare use, error/alert states, kept gentle */
+  --hue-green: 132;      /* brand green — kept close to v2's 128, still a natural leaf-green, not teal */
+  --hue-amber: 42;
+  --hue-sand: 34;
+  --hue-sky: 189;
+  --hue-rose: 350;
 
-  /* ---- Surface ramp (lighter + less saturated than v1, still dark-mode) ---- */
-  --canopy:      hsl(var(--hue-green) 34% 12%);   /* page background — was 42% 10% */
-  --forest:      hsl(var(--hue-green) 28% 18%);   /* card/panel surface — was 34% 15% */
-  --pine:        hsl(var(--hue-green) 26% 26%);   /* raised surface / borders — was 32% 22% */
-  --moss:        hsl(var(--hue-green) 22% 44%);   /* secondary text/icons on dark — was 28% 38% */
+  /* ---- Page surfaces: LIGHT now ---- */
+  --canopy:      hsl(var(--hue-green) 14% 98%);   /* page background — near-white, a whisper of green tint. Reduced further this round (was 20% sat) so it reads as neutral paper, not "a green page" */
+  --forest:      hsl(var(--hue-green) 12% 95%);   /* card/panel surface — one step down from page bg */
+  --pine:        hsl(var(--hue-green) 11% 90%);   /* raised surface / borders / hover fills */
+  --moss:        hsl(var(--hue-green) 8% 45%);    /* secondary text/icons — mid-grey, works on light now */
 
-  /* ---- Signal green: brighter, fresher "leaf" accent, not muted sage ---- */
-  --signal:      hsl(var(--hue-green) 54% 54%);   /* primary accent — was 48% 46% */
-  --signal-soft: hsl(var(--hue-green) 54% 54% / 0.14);
-  --mint:        hsl(var(--hue-green) 44% 74%);   /* lighter accent / hover state — was 38% 66% */
+  /* ---- Signal green: the ONE accent colour, used sparingly ---- */
+  --signal:      hsl(var(--hue-green) 46% 32%);   /* darker + more saturated than the old dark-mode value, so it has enough contrast against a light background (WCAG AA on white needs real weight, not the light "leaf" tone) */
+  --signal-soft: hsl(var(--hue-green) 46% 32% / 0.08);
+  --mint:        hsl(var(--hue-green) 40% 26%);   /* hover/active state — slightly darker still, not lighter (lighter would wash out on white) */
 
-  /* ---- Expanded eco palette — new in v2 ---- */
-  --leaf:        hsl(126 58% 60%);                /* brighter, slightly more yellow-green than --signal; icons/illustration accents */
-  --leaf-soft:   hsl(126 58% 60% / 0.14);
-  --sage:        hsl(96 16% 58%);                 /* soft muted grey-green; quiet secondary surfaces/dividers */
-  --sand:        hsl(var(--hue-sand) 46% 80%);    /* warm light neutral — pairs with green, used in spacer text boxes */
-  --sand-soft:   hsl(var(--hue-sand) 46% 80% / 0.12);
-  --sky:         hsl(var(--hue-sky) 38% 72%);     /* pale accent for variety in illustrations/symbols */
+  /* ---- Expanded eco palette — retuned for light backgrounds ---- */
+  --leaf:        hsl(124 50% 34%);                /* was a light pastel for dark bg; now deep enough to read as text/icon colour on white */
+  --leaf-soft:   hsl(124 50% 34% / 0.08);
+  --sage:        hsl(96 12% 42%);                 /* muted grey-green, secondary dividers/labels */
+  --sand:        hsl(var(--hue-sand) 38% 40%);    /* was a pale highlight; now a warm deep tan usable as text/border on white */
+  --sand-soft:   hsl(var(--hue-sand) 60% 92%);    /* the pale version now lives here instead — a background tint, not a text colour */
+  --sky:         hsl(var(--hue-sky) 45% 34%);
 
-  /* ---- Text on dark ---- */
-  --mist:        hsl(var(--hue-green) 38% 93%);   /* primary text — was 45% 92% at old hue */
-  --mist-muted:  hsl(var(--hue-green) 24% 84% / 0.62);
-  --mist-faint:  hsl(var(--hue-green) 24% 84% / 0.4);
-  --text-strong: hsl(0 0% 100%);                  /* headline-weight pure white — was hardcoded #fff/#ffffff in 15+ files */
+  /* ---- Text: dark now, inverted from v2 ---- */
+  --mist:        hsl(var(--hue-green) 14% 18%);   /* primary body text — near-charcoal, not pure black (softer, easier reading) */
+  --mist-muted:  hsl(var(--hue-green) 8% 32% / 0.78);
+  --mist-faint:  hsl(var(--hue-green) 8% 32% / 0.5);
+  --text-strong: hsl(var(--hue-green) 16% 10%);   /* headline weight — near-black. Was pure white; every h1–h4 and the ~20 files using --text-strong flip automatically */
 
-  /* ---- Warm accent (split-complement): lighter gold ---- */
-  --amber:       hsl(var(--hue-amber) 78% 62%);   /* was 74% 58% at hue 38 */
-  --amber-soft:  hsl(var(--hue-amber) 78% 62% / 0.14);
+  --amber:       hsl(var(--hue-amber) 68% 42%);   /* darkened to stay legible on white */
+  --amber-soft:  hsl(var(--hue-amber) 68% 42% / 0.08);
 
-  /* ---- Rare alert/error accent, low-saturation to match the calm palette ---- */
-  --rose:        hsl(var(--hue-rose) 55% 64%);
+  --rose:        hsl(var(--hue-rose) 55% 42%);
 
-  --hairline:       hsl(var(--hue-green) 20% 100% / 0.08);
-  --hairline-hover: hsl(var(--hue-green) 20% 100% / 0.16);
+  --hairline:       hsl(var(--hue-green) 10% 10% / 0.09);   /* was white-on-dark; now dark-on-light */
+  --hairline-hover: hsl(var(--hue-green) 10% 10% / 0.18);
 
-  /* ---- Gradients (hero scrims, glows, section transitions) ---- */
-  --gradient-hero: linear-gradient(180deg, hsl(var(--hue-green) 34% 8% / 0.15) 0%, hsl(var(--hue-green) 34% 8% / 0.6) 65%, hsl(var(--hue-green) 34% 8% / 0.85) 100%);
-  --gradient-hero-horizontal: linear-gradient(100deg, hsl(var(--hue-green) 36% 7% / 0.92) 0%, hsl(var(--hue-green) 36% 7% / 0.72) 30%, hsl(var(--hue-green) 36% 7% / 0.25) 60%, hsl(var(--hue-green) 36% 7% / 0.05) 100%);
-  --gradient-hero-bottom-bar: linear-gradient(0deg, hsl(var(--hue-green) 36% 6% / 0.85) 0%, hsl(var(--hue-green) 36% 6% / 0) 100%);
-  --gradient-accent: linear-gradient(135deg, hsl(var(--hue-green) 54% 54% / 0.9), hsl(var(--hue-amber) 78% 62% / 0.55));
-  --gradient-surface: linear-gradient(180deg, hsl(var(--hue-green) 28% 18%) 0%, hsl(var(--hue-green) 32% 13%) 100%);
-  --gradient-radial-glow: radial-gradient(circle at 30% 20%, hsl(var(--hue-green) 54% 54% / 0.16), transparent 60%);
-  --gradient-eco: linear-gradient(135deg, hsl(126 58% 60% / 0.85), hsl(var(--hue-sand) 46% 80% / 0.65)); /* leaf -> sand, new in v2, used in spacer components */
+  /* ---- DARK CHROME (header / footer / hero scrim) — deliberately NOT
+     derived from --canopy. These stay dark regardless of the page
+     background, same as EY's own header/hero. ---- */
+  --ink-bg:      hsl(var(--hue-green) 30% 9%);
+  --ink-bg-2:    hsl(var(--hue-green) 28% 7%);
+  --ink-text:    hsl(0 0% 100%);
+  --ink-text-muted: hsl(var(--hue-green) 20% 88% / 0.7);
+  --ink-border:  hsl(0 0% 100% / 0.1);
+  --ink-border-hover: hsl(0 0% 100% / 0.18);
+  --ink-accent:  hsl(var(--hue-green) 55% 58%);   /* --signal is tuned dark for use on white; this is its bright counterpart for hover/active states on the dark header/footer, where a dark green would have almost no contrast */
+  --ink-accent-hover: hsl(var(--hue-green) 50% 72%);
 
-  /* ---- Radii / shadow ---- */
+  /* ---- Secondary neutral, new — pairs with green for hierarchy so
+     everything doesn't lean on the accent colour (a common "novelty
+     site" tell is using the brand colour for every single emphasis). ---- */
+  --charcoal:    hsl(var(--hue-green) 12% 22%);
+  --charcoal-soft: hsl(var(--hue-green) 12% 22% / 0.06);
+
+  /* ---- Gradients ---- */
+  /* Hero scrims stay dark (text sits over a photo, same logic as before —
+     this doesn't change just because the page body went light). */
+  --gradient-hero: linear-gradient(180deg, hsl(var(--hue-green) 30% 6% / 0.15) 0%, hsl(var(--hue-green) 30% 6% / 0.6) 65%, hsl(var(--hue-green) 30% 6% / 0.85) 100%);
+  --gradient-hero-horizontal: linear-gradient(100deg, hsl(var(--hue-green) 30% 6% / 0.92) 0%, hsl(var(--hue-green) 30% 6% / 0.72) 30%, hsl(var(--hue-green) 30% 6% / 0.25) 60%, hsl(var(--hue-green) 30% 6% / 0.05) 100%);
+  --gradient-hero-bottom-bar: linear-gradient(0deg, hsl(var(--hue-green) 30% 5% / 0.85) 0%, hsl(var(--hue-green) 30% 5% / 0) 100%);
+  --gradient-accent: linear-gradient(135deg, hsl(var(--hue-green) 46% 32% / 0.92), hsl(var(--hue-amber) 68% 42% / 0.55));
+  --gradient-surface: linear-gradient(180deg, hsl(var(--hue-green) 16% 95%) 0%, hsl(var(--hue-green) 20% 98%) 100%);   /* light now — subtle panel gradient, not a dark one */
+  --gradient-radial-glow: radial-gradient(circle at 30% 20%, hsl(var(--hue-green) 46% 32% / 0.06), transparent 60%);   /* much lower opacity — a glow that reads on dark is a stain on light */
+  --gradient-eco: linear-gradient(135deg, hsl(124 50% 34% / 0.9), hsl(var(--hue-sand) 38% 40% / 0.7));
+
+  /* ---- Radii / shadow — softer for light surfaces ---- */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-xl: 28px;
-  --shadow-sm: 0 2px 10px hsl(var(--hue-green) 50% 4% / 0.35);
-  --shadow-md: 0 12px 32px hsl(var(--hue-green) 50% 4% / 0.4);
-  --shadow-lg: 0 24px 64px hsl(var(--hue-green) 50% 4% / 0.5);
+  --shadow-sm: 0 2px 10px hsl(var(--hue-green) 20% 10% / 0.06);
+  --shadow-md: 0 12px 32px hsl(var(--hue-green) 20% 10% / 0.08);
+  --shadow-lg: 0 24px 64px hsl(var(--hue-green) 20% 10% / 0.12);
 
   /* ---- Type ---- */
   --font-display: 'Geom Variable', sans-serif;
   --font-body: 'Cal Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* ---- Layout / spacing scale ----
-     Used to create generous, consistent whitespace across the site.
-     Section components should use --space-section for block padding and
-     --space-stack for gaps between text elements rather than one-off
-     pixel values. */
+  /* ---- Layout / spacing scale — unchanged ---- */
   --max-width: 1120px;
   --space-3xs: 4px;
   --space-2xs: 8px;
@@ -90,11 +108,11 @@
   --space-lg: 56px;
   --space-xl: 88px;
   --space-2xl: 128px;
-  --space-3xl: 176px; /* new in v2 — used by the blank/pure-space spacer component */
-  --space-section: clamp(80px, 10vw, 148px); /* vertical padding for major sections */
-  --space-stack: 28px; /* default gap between text blocks within a section */
+  --space-3xl: 176px;
+  --space-section: clamp(80px, 10vw, 148px);
+  --space-stack: 28px;
 
-  color-scheme: dark;
+  color-scheme: light;   /* was dark — native form controls/scrollbars now assume light */
 }
 
 *,
@@ -106,15 +124,6 @@
 html {
   scroll-behavior: smooth;
   background: var(--canopy);
-  /* THE HEADER "WHITE BAR" BUG: html had no background set, only body did.
-     On macOS/iOS, flicking past the top of the page triggers elastic
-     overscroll — the browser briefly shows what's "behind" the page,
-     which for a couple of frames is the html element itself. With no
-     background there, that's the browser's default (white), which reads
-     as a jarring bright bar flashing in above a dark site. Setting the
-     same background here removes the bug outright. overscroll-behavior-y
-     additionally stops the bounce/rubber-band gesture happening at all on
-     browsers that support it, as a second layer of defense. */
   overscroll-behavior-y: none;
 }
 
@@ -136,68 +145,27 @@ h1, h2, h3, h4 {
   color: var(--text-strong);
 }
 
-img, svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
+img, svg { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
 
-a {
-  color: inherit;
-}
-
-.container {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 24px;
-}
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 24px; }
 
 @media (max-width: 700px) {
-  :root {
-    --space-section: clamp(56px, 14vw, 96px);
-  }
+  :root { --space-section: clamp(56px, 14vw, 96px); }
 }
 
-/* ==========================================================================
-   SCROLL REVEAL
-   Generic "fade + rise into place" utility. Add data-reveal to any element;
-   ScrollReveal's script (initialised once from Layout.astro) adds
-   .is-visible when the element enters the viewport. data-reveal-delay
-   staggers a group of siblings (e.g. paragraphs, grid items) reveal- by
-   -reveal instead of all at once. Used on the About page and Upcoming
-   Events; safe to reuse anywhere.
-
-   IMPORTANT — progressive enhancement: the hidden (opacity:0) state only
-   applies once html has the .js-ready class, which is added by a tiny
-   is:inline script at the very top of <head> in Layout.astro. That script
-   is never bundled/transformed (is:inline bypasses Vite entirely), so it
-   can't be broken by a build-tool issue. If JS never runs at all for any
-   other reason, .js-ready never gets added and every [data-reveal]
-   element is just... visible, exactly like normal content. This means a
-   scroll-effect bug can, at worst, remove the animation — it can never
-   make content disappear.
-   ========================================================================== */
+/* SCROLL REVEAL — unchanged from before, still safe/progressive */
 .js-ready [data-reveal] {
   opacity: 0;
   transform: translateY(28px);
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--reveal-delay, 0ms);
 }
-
-.js-ready [data-reveal].is-visible {
-  opacity: 1;
-  transform: none;
-}
-
+.js-ready [data-reveal].is-visible { opacity: 1; transform: none; }
 [data-reveal-delay='1'] { --reveal-delay: 90ms; }
 [data-reveal-delay='2'] { --reveal-delay: 180ms; }
 [data-reveal-delay='3'] { --reveal-delay: 270ms; }
 [data-reveal-delay='4'] { --reveal-delay: 360ms; }
-
 @media (prefers-reduced-motion: reduce) {
-  .js-ready [data-reveal] {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
+  .js-ready [data-reveal] { opacity: 1; transform: none; transition: none; }
 }
