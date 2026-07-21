@@ -32,10 +32,11 @@ showCxaiWidget: true
 showCharityWidget: true
 heroCarouselEnabled: true
 heroCarouselBlogPosts:
-  - ai-and-business-transformation
+  - tech-organisation-design
   - 75-years-of-the-turing-test
   - experiments-in-ai-coding
-heroCarouselEvents: []
+heroCarouselEvents:
+  - the-london-tech-leaders-leadership-summit-2026
 trustedCompaniesHeading: Companies who trust us too
 trustedCompanies:
   - name: Amazon
