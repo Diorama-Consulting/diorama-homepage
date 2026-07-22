@@ -319,22 +319,3 @@ src/
 
 keystatic.config.ts            # CMS schema — mirrors content.config.ts
 ```
-
----
-
-## Open decisions for you
-
-A few things flagged during this restructure that are worth a final call:
-
-1. **Should "Team Tapestry" and "Experiments in AI Coding" also appear as
-   Projects?** Both blog posts describe an app Mal built. They're staying
-   as blog posts per the educational-content decision, but nothing stops
-   you adding a matching `projects/` entry too, cross-linked via the
-   `relatedBlogSlug` field.
-2. **FAQ categories are currently "Engagement" and "Charities"** (3 sample
-   entries seeded). Add real content here before launch — these are
-   placeholders to prove the grouping works, not final copy.
-3. **Charities collection has two seeded entries** (Helpforce,
-   Aston-Mansfield) pulled from the existing About page copy. Logos are not
-   set — add them via Keystatic once you have square-ish logo assets for
-   each.
