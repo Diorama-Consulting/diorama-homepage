@@ -1,21 +1,16 @@
 ---
-import { type CollectionEntry, getCollection, render } from 'astro:content';
-import BlogPost from '../../layouts/BlogPost.astro';
-import Iframe from '../../components/Iframe.astro';
+// Individual /blog/<slug> posts now live at /insights/<slug> — see
+// src/pages/insights/[...slug].astro. This redirect preserves old
+// bookmarks/links/search results for every existing post.
+import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
   return posts.map((post) => ({
-    params: { slug: post.id }, // glob loader exposes `.id`, not `.slug`
-    props: post,
+    params: { slug: post.id },
   }));
 }
 
-type Props = CollectionEntry<'blog'>;
-const post = Astro.props;
-const { Content } = await render(post);
+const { slug } = Astro.params;
+return Astro.redirect(`/insights/${slug}/`, 301);
 ---
-
-<BlogPost {...post.data} slug={post.id}>
-  <Content components={{ Iframe }} />
-</BlogPost>

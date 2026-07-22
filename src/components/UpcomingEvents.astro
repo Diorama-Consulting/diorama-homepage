@@ -1,10 +1,11 @@
 ---
-// Upcoming Events section — placed on the homepage directly after the
-// Trusted Companies banner and before "Explore" (high visibility for
-// time-sensitive content, without competing with the hero for attention).
-// Whole-card-clickable per the site's box-link convention; each card leads
-// to an external registration link, a blog write-up, or a plain details
-// href. Content lives on the Homepage singleton in Keystatic.
+// Events grid — used on /events (see src/pages/events/index.astro) for
+// both the "upcoming" and "past" sections (called twice, with different
+// heading/eyebrow props and pre-filtered event lists). Previously lived
+// on the homepage in the #2 position; moved off the homepage entirely —
+// see the comment in src/pages/index.astro for why. Whole-card-clickable
+// per the site's box-link convention; each card leads to an external
+// registration link, a write-up, or a plain details href.
 import Section from './Section.astro';
 
 interface EventItem {
@@ -21,9 +22,10 @@ interface Props {
   eyebrow?: string;
   heading?: string;
   subheading?: string;
+  id?: string;
 }
 
-const { events, eyebrow = 'Upcoming', heading = 'Events', subheading } = Astro.props;
+const { events, eyebrow = 'Upcoming', heading = 'Events', subheading, id = 'events' } = Astro.props;
 
 function formatEventDate(iso: string) {
   const d = new Date(iso);
@@ -36,7 +38,7 @@ function formatEventDate(iso: string) {
 ---
 
 {events.length > 0 && (
-  <Section id="events" eyebrow={eyebrow} heading={heading} subheading={subheading}>
+  <Section id={id} eyebrow={eyebrow} heading={heading} subheading={subheading}>
     <div class="events-grid">
       {events.map((event) => {
         const { day, month, full } = formatEventDate(event.date);

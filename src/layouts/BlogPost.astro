@@ -64,7 +64,7 @@ const articleJsonLd = {
     publisher: siteSettings?.legalName
         ? { '@type': 'Organization', name: siteSettings.legalName }
         : undefined,
-    mainEntityOfPage: { '@type': 'WebPage', '@id': new URL(`/blog/${slug}/`, Astro.site).toString() },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': Astro.url.toString() },
 };
 ---
 
@@ -98,8 +98,8 @@ const articleJsonLd = {
                 z-index: 2;
                 background: linear-gradient(
                     to top,
-                    rgba(15, 40, 24, 1) 0%,
-                    rgba(15, 40, 24, 0.6) 40%,
+                    hsl(var(--hue-green) 30% 9% / 1) 0%,
+                    hsl(var(--hue-green) 30% 9% / 0.6) 40%,
                     transparent 100%
                 );
             }
@@ -111,27 +111,27 @@ const articleJsonLd = {
                 max-width: calc(100% - 2em);
                 margin: 0 auto;
                 padding-bottom: 3rem;
-                color: var(--text-strong);
+                color: var(--ink-text);
             }
 
             .hero-content h1 {
                 font-size: 3rem;
                 margin: 0.2em 0;
                 line-height: 1.1;
-                color: var(--text-strong);
+                color: var(--ink-text);
             }
 
             .date {
                 font-family: var(--font-mono, monospace);
                 font-size: 0.9rem;
-                color: var(--mint);
+                color: var(--ink-accent);
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
             }
 
             .last-updated-on {
                 font-style: italic;
-                color: var(--mist-muted);
+                color: var(--ink-text-muted);
                 margin-top: 0.25rem;
             }
 
@@ -151,7 +151,7 @@ const articleJsonLd = {
                 padding: 12px 18px;
                 border: 1px solid var(--hairline);
                 border-radius: var(--radius-sm, 8px);
-                background: rgba(255, 255, 255, 0.03);
+                background: var(--charcoal-soft);
                 font-family: var(--font-mono, monospace);
                 font-size: 0.85rem;
                 color: var(--mist-muted);
@@ -197,13 +197,13 @@ const articleJsonLd = {
             }
 
             .back-btn {
-                background: rgba(15, 40, 24, 0.8);
-                color: var(--mist);
-                border: 1px solid var(--hairline);
+                background: hsl(var(--hue-green) 30% 9% / 0.8);
+                color: var(--ink-text);
+                border: 1px solid var(--ink-border);
             }
             .back-btn:hover {
-                color: var(--signal);
-                border-color: var(--signal);
+                color: var(--ink-accent);
+                border-color: var(--ink-accent);
             }
 
             .subscribe-btn {

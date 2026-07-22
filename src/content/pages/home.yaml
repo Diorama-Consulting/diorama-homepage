@@ -31,12 +31,6 @@ widgetsHeading: More from Diorama
 showCxaiWidget: true
 showCharityWidget: true
 heroCarouselEnabled: true
-heroCarouselBlogPosts:
-  - team-tapestry
-  - 75-years-of-the-turing-test
-  - experiments-in-ai-coding
-heroCarouselEvents:
-  - the-london-tech-leaders-leadership-summit-2026
 trustedCompaniesHeading: Companies who trust us too
 trustedCompanies:
   - name: Amazon

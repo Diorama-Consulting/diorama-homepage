@@ -1,0 +1,358 @@
+---
+// Scroll-scrubbed 4-step process — the same proven technique as
+// LeafToTreeReveal/Hero.astro (continuous scroll-position -> CSS custom
+// property, not a trigger-once animation), applied to a "how we work"
+// narrative instead of an illustration. A vertical progress rail on the
+// left fills in as you scroll; the active step's title/description
+// crossfades on the right, alongside an abstract per-step visual panel
+// (no stock photography — built from the site's own design tokens and
+// the leaf motif, consistent with the rest of the site).
+//
+// Progressive enhancement: with no JS or prefers-reduced-motion, this
+// renders as a plain stacked list of all 4 steps — nothing pinned, all
+// visible at once, real content either way.
+import FloatingLeaves from './FloatingLeaves.astro';
+
+interface Step {
+  title: string;
+  description: string;
+}
+
+interface Props {
+  steps: Step[];
+}
+
+const { steps } = Astro.props;
+---
+
+<div class="how-we-work" data-how-we-work style={`--step-count:${steps.length}`}>
+  <div class="hww-pin">
+    <div class="hww-rail" aria-hidden="true">
+      {steps.map((step, i) => (
+        <div class="hww-rail-item" data-step={i}>
+          <span class="hww-rail-dot">{i + 1}</span>
+          {i < steps.length - 1 && <span class="hww-rail-line"><span class="hww-rail-line-fill" data-line={i}></span></span>}
+        </div>
+      ))}
+    </div>
+
+    <div class="hww-content">
+      {steps.map((step, i) => (
+        <div class="hww-step" data-step-content={i}>
+          <span class="hww-step-number">0{i + 1}</span>
+          <h3>{step.title}</h3>
+          <p>{step.description}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="hww-visual">
+      {steps.map((step, i) => (
+        <div class="hww-visual-panel" data-visual={i}>
+          <FloatingLeaves count={4} seed={i + 3} maxOpacity={0.5} />
+          <span class="hww-visual-number">0{i + 1}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ---- DEFAULT / SAFE STATE: a plain stacked list, every step fully
+     visible, no pinning, no opacity tricks. This is what renders
+     unconditionally — including if the <script> below never runs at all
+     for any reason. Enhancement is opt-IN (via .hww--enhanced, added by
+     JS), never opt-out — see the SCROLL REVEAL comment in global.css for
+     the same principle applied elsewhere on this site. ---- */
+  .how-we-work {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    padding-block: var(--space-section);
+  }
+
+  .hww-pin {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-2xl) var(--space-xl);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 24px;
+    width: 100%;
+  }
+
+  .hww-rail {
+    display: none;
+  }
+
+  /* .hww-content and .hww-visual are pure grouping wrappers in the
+     markup (needed so the enhanced/crossfade version can absolutely-
+     stack all steps in one box and all visuals in another) — unwrapped
+     here via display:contents so their children become direct grid
+     items of .hww-pin, then explicitly paired by position since DOM
+     order alone would list all 4 steps before all 4 visuals. */
+  .hww-content,
+  .hww-visual {
+    display: contents;
+  }
+
+  .hww-step,
+  .hww-visual-panel {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .hww-step { grid-column: 1; }
+  .hww-visual-panel { grid-column: 2; }
+  .hww-step:nth-of-type(1) { grid-row: 1; }
+  .hww-step:nth-of-type(2) { grid-row: 2; }
+  .hww-step:nth-of-type(3) { grid-row: 3; }
+  .hww-step:nth-of-type(4) { grid-row: 4; }
+  .hww-visual-panel:nth-of-type(1) { grid-row: 1; }
+  .hww-visual-panel:nth-of-type(2) { grid-row: 2; }
+  .hww-visual-panel:nth-of-type(3) { grid-row: 3; }
+  .hww-visual-panel:nth-of-type(4) { grid-row: 4; }
+
+  .hww-visual-panel {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-surface);
+  }
+  .hww-visual-panel:nth-of-type(1) { background: linear-gradient(135deg, var(--signal-soft), var(--gradient-surface)); }
+
+  .hww-step-number {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--signal);
+  }
+
+  .hww-step h3 {
+    font-size: clamp(24px, 2.8vw, 34px);
+    margin: 12px 0 16px;
+  }
+
+  .hww-step p {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--mist-muted);
+    max-width: 440px;
+    margin: 0;
+  }
+
+  .hww-visual-number {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-display);
+    font-size: clamp(64px, 9vw, 120px);
+    font-weight: 700;
+    color: var(--signal-soft);
+    -webkit-text-stroke: 1.5px var(--signal);
+  }
+
+  /* ==========================================================================
+     ENHANCED STATE — opt-in via .hww--enhanced, added by the script below
+     only after it's actually running. Turns the plain list above into the
+     pinned, scroll-scrubbed, crossfading version.
+     ========================================================================== */
+  .how-we-work.hww--enhanced {
+    position: relative;
+    height: calc(var(--step-count) * 90vh);
+    display: block;
+    padding-block: 0;
+  }
+
+  .hww--enhanced .hww-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-xl);
+  }
+
+  .hww--enhanced .hww-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hww--enhanced .hww-rail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hww--enhanced .hww-rail-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid var(--hairline-hover);
+    background: var(--forest);
+    color: var(--mist-muted);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+  }
+
+  .hww--enhanced .hww-rail-line {
+    width: 2px;
+    height: 64px;
+    background: var(--hairline);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hww--enhanced .hww-rail-line-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--signal);
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+
+  .hww--enhanced .hww-rail-item[data-active='true'] .hww-rail-dot {
+    color: var(--canopy);
+    background: var(--signal);
+    border-color: var(--signal);
+    transform: scale(1.1);
+  }
+  .hww--enhanced .hww-rail-item[data-done='true'] .hww-rail-dot {
+    color: var(--signal);
+    border-color: var(--signal);
+    background: var(--signal-soft);
+  }
+
+  .hww--enhanced .hww-content {
+    display: block;
+    position: relative;
+    min-height: 220px;
+  }
+
+  .hww--enhanced .hww-step {
+    position: absolute;
+    inset: 0;
+    display: block;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+  }
+  .hww--enhanced .hww-step[data-active='true'] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .hww--enhanced .hww-visual {
+    display: block;
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hww--enhanced .hww-visual-panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .hww--enhanced .hww-visual-panel[data-active='true'] {
+    opacity: 1;
+  }
+
+  @media (max-width: 900px) {
+    .hww--enhanced .hww-pin {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+    }
+    .hww--enhanced .hww-rail {
+      flex-direction: row;
+    }
+    .hww--enhanced .hww-rail-line {
+      width: 40px;
+      height: 2px;
+    }
+    .hww--enhanced .hww-visual {
+      order: -1;
+    }
+  }
+</style>
+
+<script>
+  function initHowWeWork() {
+    document.querySelectorAll<HTMLElement>('[data-how-we-work]').forEach((wrapper) => {
+      if (wrapper.dataset.hwwInit) return;
+      wrapper.dataset.hwwInit = 'true';
+
+      const stepCount = Number(wrapper.style.getPropertyValue('--step-count')) || 4;
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        // Do nothing — the default, unenhanced markup already shows every
+        // step fully visible as a plain stacked list. No class needed.
+        return;
+      }
+
+      wrapper.classList.add('hww--enhanced');
+
+      const dots = Array.from(wrapper.querySelectorAll<HTMLElement>('.hww-rail-item'));
+      const lines = Array.from(wrapper.querySelectorAll<HTMLElement>('.hww-rail-line-fill'));
+      const stepEls = Array.from(wrapper.querySelectorAll<HTMLElement>('[data-step-content]'));
+      const visualEls = Array.from(wrapper.querySelectorAll<HTMLElement>('[data-visual]'));
+
+      let ticking = false;
+      const update = () => {
+        const rect = wrapper.getBoundingClientRect();
+        const scrollable = wrapper.offsetHeight - window.innerHeight;
+        const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
+        const progress = scrollable > 0 ? scrolled / scrollable : 0;
+
+        const activeIndex = Math.min(stepCount - 1, Math.floor(progress * stepCount));
+
+        dots.forEach((dot, i) => {
+          dot.setAttribute('data-active', String(i === activeIndex));
+          dot.setAttribute('data-done', String(i < activeIndex));
+        });
+        lines.forEach((line, i) => {
+          const lineProgress = Math.min(Math.max(progress * stepCount - i, 0), 1);
+          line.style.transform = `scaleY(${lineProgress})`;
+        });
+        stepEls.forEach((el, i) => el.setAttribute('data-active', String(i === activeIndex)));
+        visualEls.forEach((el, i) => el.setAttribute('data-active', String(i === activeIndex)));
+
+        ticking = false;
+      };
+
+      const onScroll = () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      update();
+    });
+  }
+
+  initHowWeWork();
+  document.addEventListener('astro:page-load', initHowWeWork);
+</script>

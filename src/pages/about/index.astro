@@ -8,6 +8,7 @@ import LinkCard from '../../components/LinkCard.astro';
 import Profile from '../../components/Profile.astro';
 import SpacerImageSweep from '../../components/spacers/SpacerImageSweep.astro';
 import SpacerTextBox from '../../components/spacers/SpacerTextBox.astro';
+import FloatingLeaves from '../../components/FloatingLeaves.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
@@ -90,6 +91,7 @@ const team = founder?.team?.length
     heading={page?.heading || 'We are all in the diorama'}
     subheading={page?.subheading || 'Diorama Consulting Ltd is an AI Technology Advisory practice with a focus on D2C marketplaces and consumer products.'}
   >
+    <FloatingLeaves count={4} seed={5} maxOpacity={0.06} />
     <div class="about-prose" data-reveal>
       {bodyParagraphs.map((paragraph) => <p>{paragraph}</p>)}
     </div>
@@ -115,7 +117,7 @@ const team = founder?.team?.length
   </Section>
 
   <div class="container">
-    <SpacerTextBox eyebrow="Our approach" text="Thoughtful strategy, careful execution — we'd rather do fewer things well than everything at once." tone="green" />
+    <SpacerTextBox eyebrow="Our approach" text="Thoughtful strategy, careful execution — we'd rather do fewer things well than everything at once." tone="sand" />
   </div>
 
   <div class="container">

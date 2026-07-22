@@ -9,7 +9,7 @@ interface Props {
   external?: boolean;
 }
 
-const { title, excerpt, href, date, source = 'Blog', image, external = false } = Astro.props;
+const { title, excerpt, href, date, source = 'Insights', image, external = false } = Astro.props;
 
 const formattedDate = new Date(date).toLocaleDateString('en-GB', {
   day: 'numeric',

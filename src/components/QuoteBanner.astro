@@ -59,8 +59,8 @@ const { quote, author, image, imageAlt = '' } = Astro.props;
   }
 
   .quote-mark {
-    color: var(--signal);
-    opacity: 0.85;
+    color: var(--ink-accent);
+    opacity: 0.9;
     margin-bottom: var(--space-sm);
   }
 
@@ -68,7 +68,7 @@ const { quote, author, image, imageAlt = '' } = Astro.props;
     font-family: var(--font-display);
     font-size: clamp(22px, 3vw, 34px);
     line-height: 1.4;
-    color: var(--text-strong);
+    color: var(--ink-text);
     margin: 0 0 var(--space-sm);
   }
 
@@ -77,7 +77,7 @@ const { quote, author, image, imageAlt = '' } = Astro.props;
     font-size: 13px;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--mint);
+    color: var(--ink-accent-hover);
     font-style: normal;
   }
 

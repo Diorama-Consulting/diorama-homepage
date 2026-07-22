@@ -1,0 +1,145 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
+
+// Formerly /blog — renamed to /insights to read less like a personal blog
+// and more like the firm's thought-leadership hub, matching how the
+// content is actually positioned elsewhere on the site. The underlying
+// Astro/Keystatic collection is still called `blog` internally (moving
+// every content file would be a much higher-risk change for zero reader-
+// facing benefit) — only the route and on-page labels changed.
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const [featured, ...rest] = posts;
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`Insights — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
+      description={siteSettings?.defaultSeoDescription ?? 'Writing on AI, technology strategy, and the occasional side project.'}
+      image={pageImage}
+    />
+  </head>
+  <body>
+    <Header
+      logoText={headerNav?.logoText}
+      links={headerNav?.links}
+      ctaText={headerNav?.ctaText}
+      ctaHref={headerNav?.ctaHref}
+    />
+    <main class="container">
+      <div class="insights-intro">
+        <p class="insights-eyebrow">Insights</p>
+        <h1>Writing on AI, strategy, and the odd side project</h1>
+      </div>
+      <section class="blog-grid">
+        {featured && (
+          <div class="featured">
+            <BlogCard
+              title={featured.data.title}
+              excerpt={featured.data.description ?? ''}
+              href={`/insights/${featured.id}/`}
+              date={featured.data.pubDate.toISOString()}
+              image={resolveImageUrl(featured.data.heroImage, featured.data.heroImageUrl)}
+            />
+          </div>
+        )}
+        {rest.map((post) => (
+          <BlogCard
+            title={post.data.title}
+            excerpt={post.data.description ?? ''}
+            href={`/insights/${post.id}/`}
+            date={post.data.pubDate.toISOString()}
+            image={resolveImageUrl(post.data.heroImage, post.data.heroImageUrl)}
+          />
+        ))}
+      </section>
+    </main>
+    <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+  </body>
+</html>
+
+<style>
+  main.container {
+    padding-top: 56px;
+    padding-bottom: 80px;
+  }
+
+  .insights-intro {
+    max-width: 640px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .insights-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 12px;
+  }
+
+  .insights-intro h1 {
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1.15;
+  }
+
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 32px;
+  }
+
+  .featured {
+    grid-column: 1 / -1;
+  }
+
+  .featured :global(.blog-card) {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+  }
+
+  .featured :global(.blog-image) {
+    height: 100%;
+    min-height: 320px;
+  }
+
+  .featured :global(.blog-body) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .featured :global(h3) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 720px) {
+    .blog-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .featured :global(.blog-card) {
+      grid-template-columns: 1fr;
+    }
+
+    .featured :global(.blog-image) {
+      min-height: 220px;
+    }
+  }
+</style>

@@ -43,8 +43,8 @@
 
   /* ---- Text: dark now, inverted from v2 ---- */
   --mist:        hsl(var(--hue-green) 14% 18%);   /* primary body text — near-charcoal, not pure black (softer, easier reading) */
-  --mist-muted:  hsl(var(--hue-green) 8% 32% / 0.78);
-  --mist-faint:  hsl(var(--hue-green) 8% 32% / 0.5);
+  --mist-muted:  hsl(var(--hue-green) 8% 28% / 0.8);  /* was 32%/0.78 -> measured 4.17:1 on canopy, FAILS WCAG AA (4.5:1) for body text. Now 4.94:1 on canopy / 4.74:1 on forest. */
+  --mist-faint:  hsl(var(--hue-green) 8% 30% / 0.75); /* was 32%/0.5 -> measured 2.3:1, fails even the large-text 3:1 minimum. Now 4.11:1 on canopy / 3.96:1 on forest. */
   --text-strong: hsl(var(--hue-green) 16% 10%);   /* headline weight — near-black. Was pure white; every h1–h4 and the ~20 files using --text-strong flip automatically */
 
   --amber:       hsl(var(--hue-amber) 68% 42%);   /* darkened to stay legible on white */
@@ -66,6 +66,7 @@
   --ink-border-hover: hsl(0 0% 100% / 0.18);
   --ink-accent:  hsl(var(--hue-green) 55% 58%);   /* --signal is tuned dark for use on white; this is its bright counterpart for hover/active states on the dark header/footer, where a dark green would have almost no contrast */
   --ink-accent-hover: hsl(var(--hue-green) 50% 72%);
+  --ink-amber:   hsl(var(--hue-amber) 75% 62%);   /* bright amber for the dark chrome — --amber is tuned dark for text-on-white and would be low-contrast here */
 
   /* ---- Secondary neutral, new — pairs with green for hierarchy so
      everything doesn't lean on the accent colour (a common "novelty

@@ -319,20 +319,27 @@ export default config({
           description: 'When on, the hero becomes a full-screen carousel of the featured articles selected below. When off, the static hero above is used.',
           defaultValue: false,
         }),
-        heroCarouselBlogPosts: fields.array(
-          fields.relationship({ label: 'Article', collection: 'blog' }),
+        heroCarouselItems: fields.array(
+          fields.object({
+            kind: fields.select({
+              label: 'Type',
+              options: [
+                { label: 'Blog article', value: 'blog' },
+                { label: 'Event', value: 'event' },
+              ],
+              defaultValue: 'blog',
+            }),
+            blogPost: fields.relationship({ label: 'Blog article (only used if Type = Blog article)', collection: 'blog' }),
+            event: fields.relationship({ label: 'Event (only used if Type = Event)', collection: 'events' }),
+          }),
           {
-            label: 'Hero carousel — blog articles',
-            description: 'Combined with the events below (articles first, then events), capped at 4 slides total, in this order.',
-            itemLabel: (props) => props.value || 'Article',
-          },
-        ),
-        heroCarouselEvents: fields.array(
-          fields.relationship({ label: 'Event', collection: 'events' }),
-          {
-            label: 'Hero carousel — events',
-            description: 'Combined with the articles above, capped at 4 slides total.',
-            itemLabel: (props) => props.value || 'Event',
+            label: 'Hero carousel items',
+            description: 'Add up to 4. Drag to reorder freely — articles and events can be mixed in any order. Set Type per row, then fill in the matching dropdown below it.',
+            itemLabel: (props) => {
+              const isEvent = props.fields.kind.value === 'event';
+              const ref = isEvent ? props.fields.event.value : props.fields.blogPost.value;
+              return `${isEvent ? 'Event' : 'Article'}: ${ref || '(not set)'}`;
+            },
           },
         ),
 
@@ -720,7 +727,7 @@ export default config({
     // BLOG
     // -------------------------------------------------------------------
     blog: collection({
-      label: 'Blog Posts',
+      label: 'Insights (Blog Posts)',
       slugField: 'title',
       path: 'src/content/blog/*/',
       entryLayout: 'content',

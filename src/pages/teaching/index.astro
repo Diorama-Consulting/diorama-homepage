@@ -82,14 +82,14 @@ const recentPosts = (await getCollection('blog', ({ data }) => !data.draft))
       <section class="blog-teaser">
         <div class="blog-teaser-head">
           <h2>{page?.blogTeaserHeading || 'From the blog'}</h2>
-          <a href="/blog" class="view-all">View all posts →</a>
+          <a href="/insights" class="view-all">View all posts →</a>
         </div>
         <div class="blog-teaser-grid">
           {recentPosts.map((post) => (
             <BlogCard
               title={post.data.title}
               excerpt={post.data.description ?? ''}
-              href={`/blog/${post.id}/`}
+              href={`/insights/${post.id}/`}
               date={post.data.pubDate.toISOString()}
               image={resolveImageUrl(post.data.heroImage, post.data.heroImageUrl)}
             />
