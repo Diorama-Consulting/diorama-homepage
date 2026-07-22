@@ -29,6 +29,7 @@ const { items, groupId } = Astro.props;
         type="button"
         class="feature-option"
         data-index={i}
+        data-href={item.href ?? ''}
         aria-selected={i === 0 ? 'true' : 'false'}
         role="tab"
       >
@@ -37,12 +38,12 @@ const { items, groupId } = Astro.props;
           <span class="feature-option-title">{item.title}</span>
           <span class="feature-option-description">{item.description}</span>
           {item.href && (
-            <a class="feature-option-link" href={item.href} onclick="event.stopPropagation()">
+            <span class="feature-option-link">
               {item.linkText ?? 'Learn more'}
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
-            </a>
+            </span>
           )}
         </span>
       </button>
@@ -96,6 +97,17 @@ const { items, groupId } = Astro.props;
 
   .feature-option:hover {
     background: var(--charcoal-soft);
+  }
+
+  /* Once active, hovering means "click again to open" — cue that with a
+     slightly stronger highlight and the link text brightening, so the
+     click-through behaviour has a visible affordance, not just a tooltip. */
+  .feature-option[aria-selected='true']:hover {
+    background: var(--signal-soft);
+    cursor: pointer;
+  }
+  .feature-option[aria-selected='true']:hover .feature-option-link {
+    color: var(--mint);
   }
 
   .feature-option-index {
@@ -230,6 +242,21 @@ const { items, groupId } = Astro.props;
       options.forEach((btn) => {
         btn.addEventListener('click', () => {
           const index = btn.dataset.index;
+          const wasAlreadyActive = btn.getAttribute('aria-selected') === 'true';
+          const href = btn.dataset.href;
+
+          // The whole block visually looks clickable (hover highlight
+          // covers the full title+description, not just the small
+          // "Learn more" text) — so clicking an option that's ALREADY
+          // active should actually follow through to its link, not just
+          // re-select it again. First click previews; second click (on
+          // the same option) navigates. This matches what the hover
+          // affordance promises instead of only the link text working.
+          if (wasAlreadyActive && href) {
+            window.location.href = href;
+            return;
+          }
+
           options.forEach((o) => o.setAttribute('aria-selected', String(o.dataset.index === index)));
           images.forEach((img) => img.setAttribute('data-active', String(img.dataset.index === index)));
         });

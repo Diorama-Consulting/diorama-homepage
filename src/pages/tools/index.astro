@@ -1,0 +1,167 @@
+---
+// Formerly /projects — renamed to /tools and merged with what used to be
+// on /teaching, since both were really the same category of thing: apps
+// and tools Diorama has built (some with their own detail page here via
+// the `projects` collection, some external links previously listed on
+// the Teaching page). Teaching itself is retired — its tool list lives
+// here now, and its "from the blog" teaser was redundant with /insights.
+// See the conversation that led here for the fuller reasoning.
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import LinkCard from '../../components/LinkCard.astro';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+const page = await reader.singletons.projectsIndex.read();
+const teachingPage = await reader.singletons.teachingPage.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+// The external tool links that used to live on /teaching — same fallback
+// data as before, just relocated. Still editable from the Teaching —
+// Page singleton in Keystatic for now (renaming that singleton is a
+// bigger content-migration step, not needed just to move where it's
+// displayed).
+const externalTools = teachingPage?.tools?.length
+  ? teachingPage.tools
+  : [
+      {
+        title: 'AI Foundations',
+        description: 'A compact, interactive introduction to AI concepts and terminology for smart generalists — no prior technical knowledge assumed.',
+        href: 'https://ai-pathfinder-one.lovable.app/',
+      },
+      {
+        title: 'MNIST Demystifier',
+        description: 'Explore the classic handwritten-digits dataset, train a model to recognise digits, then test its accuracy — the "hello world" of machine learning, made tangible.',
+        href: 'https://dioramaconsulting.co.uk/friendly-digits-explorer',
+      },
+      {
+        title: 'PageRank Playpen',
+        description: "An interactive playground for Google's foundational PageRank algorithm — build link networks and watch authority converge in real time.",
+        href: 'https://pagerank-playpen.lovable.app',
+      },
+      {
+        title: 'Quantum Curious',
+        description: "Explore qubits and run real quantum algorithms via IBM's Qiskit, on both simulator and real quantum hardware.",
+        href: 'https://dioramaconsulting.co.uk/quantum-curious',
+      },
+      {
+        title: 'AI Evolution',
+        description: 'A timeline of key events in AI history, from the Dartmouth Conference to the present day.',
+        href: 'https://ai-chronicle-view.lovable.app/',
+      },
+    ];
+
+const pageTitle = page?.seoTitle || `Tools — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription =
+  page?.seoDescription ||
+  page?.subheading ||
+  'Tools and side projects built with AI coding assistants, and interactive teaching tools for demystifying AI and quantum computing.';
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
+---
+
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <main class="container">
+    <section class="page-intro">
+      <p class="eyebrow">{page?.eyebrow || 'Building'}</p>
+      <h1>{page?.heading || 'Tools'}</h1>
+      <p class="subheading">
+        {page?.subheading || 'Everything Diorama has built — side projects with their own write-up below, and interactive tools for demystifying AI, quantum computing, and search.'}
+      </p>
+    </section>
+
+    {projects.length > 0 && (
+      <section class="tools-block">
+        <h2>Projects</h2>
+        <div class="project-grid">
+          {projects.map((project) => (
+            <BlogCard
+              title={project.data.title}
+              excerpt={project.data.summary}
+              href={`/tools/${project.id}/`}
+              date={new Date().toISOString()}
+              source={project.data.status === 'live' ? 'Live' : project.data.status}
+              image={resolveImageUrl(project.data.heroImage, project.data.heroImageUrl)}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="tools-block">
+      <h2>Interactive tools</h2>
+      <div class="card-grid">
+        {externalTools.map((tool) => (
+          <LinkCard title={tool.title} description={tool.description} href={tool.href} linkText="Try it" external={tool.href?.startsWith('http')} />
+        ))}
+      </div>
+    </section>
+  </main>
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
+
+<style>
+  main.container {
+    padding-top: 56px;
+    padding-bottom: 80px;
+  }
+
+  .page-intro {
+    max-width: 640px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 8px;
+  }
+
+  .subheading {
+    color: var(--mist-muted);
+  }
+
+  .tools-block {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .tools-block h2 {
+    font-size: 1.3rem;
+    margin-bottom: var(--space-md);
+    color: var(--text-strong);
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 32px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  @media (max-width: 860px) {
+    .project-grid,
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

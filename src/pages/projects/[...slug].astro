@@ -1,21 +1,15 @@
 ---
-import { type CollectionEntry, getCollection, render } from 'astro:content';
-import ProjectPage from '../../layouts/ProjectPage.astro';
-import Iframe from '../../components/Iframe.astro';
+// Individual /projects/<slug> pages now live at /tools/<slug> — see
+// src/pages/tools/[...slug].astro.
+import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects', ({ data }) => !data.draft);
   return projects.map((project) => ({
     params: { slug: project.id },
-    props: project,
   }));
 }
 
-type Props = CollectionEntry<'projects'>;
-const project = Astro.props;
-const { Content } = await render(project);
+const { slug } = Astro.params;
+return Astro.redirect(`/tools/${slug}/`, 301);
 ---
-
-<ProjectPage {...project.data} slug={project.id}>
-  <Content components={{ Iframe }} />
-</ProjectPage>

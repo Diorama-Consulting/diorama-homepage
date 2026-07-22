@@ -18,28 +18,19 @@ exploreCards:
     description: Consulting and advisory services we offer, plus our charity work.
     href: /services
     linkText: View Services
-  - title: Projects
-    description: Side projects and tools built with AI coding assistants.
-    href: /projects
-    linkText: View Projects
-  - title: Teaching
-    description: Interactive tools for demystifying AI, plus our blog.
-    href: /teaching
-    linkText: View Teaching
+  - title: Tools
+    description: Side projects, apps, and interactive tools built with AI coding assistants.
+    href: /tools
+    linkText: View Tools
+  - title: Insights
+    description: Articles, talks, and events on AI strategy and technology.
+    href: /insights
+    linkText: View Insights
 widgetsEyebrow: From the network
 widgetsHeading: More from Diorama
 showCxaiWidget: true
 showCharityWidget: true
-heroCarouselEnabled: true
-heroCarouselItems:
-  - kind: event
-    event: the-london-tech-leaders-leadership-summit-2026
-  - kind: blog
-    blogPost: team-tapestry
-  - kind: blog
-    blogPost: 75-years-of-the-turing-test
-  - kind: blog
-    blogPost: experiments-in-ai-coding
+heroCarouselEnabled: false
 trustedCompaniesHeading: Companies who trust us too
 trustedCompanies:
   - name: Amazon
@@ -52,6 +43,3 @@ trustedCompanies:
   - name: Gumtree
     logoUrl: >-
       https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN8hej6EcarCuIOD3cmAL1GsWKnGAn3VcpGK_0LOJdFoh6Xiae5KmQmao&s=10
-eventsEyebrow: Stay in the loop
-eventsHeading: Upcoming Events
-eventsSubheading: Discover us through our upcoming organisation and speaking events

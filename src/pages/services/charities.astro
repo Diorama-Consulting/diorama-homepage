@@ -1,15 +1,35 @@
 ---
-import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
+import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import Footer from '../../components/Footer.astro';
-import { reader, resolveImageSrc, resolveImageUrl } from '../../lib/keystatic';
+import CharityShowcase from '../../components/CharityShowcase.astro';
+import FloatingLeaves from '../../components/FloatingLeaves.astro';
+import FallingLeaves from '../../components/FallingLeaves.astro';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
 
-const charities = (await getCollection('charities')).sort(
+const charityEntries = (await getCollection('charities')).sort(
   (a, b) => a.data.order - b.data.order,
 );
+
+// Render each charity's MDX body once here (Content components can't be
+// generated inside a child component from plain data — they need
+// astro:content's render() at the page level), then hand each one to
+// CharityShowcase via a named slot (content-<index>).
+const rendered = await Promise.all(charityEntries.map((entry) => render(entry)));
+
+const charityItems = charityEntries.map((charity) => ({
+  name: charity.data.name,
+  role: charity.data.role,
+  summary: charity.data.summary,
+  mission: charity.data.mission,
+  logo: resolveImageUrl(charity.data.logo, charity.data.logoUrl),
+  heroImage: resolveImageUrl(charity.data.heroImage, charity.data.heroImageUrl),
+  focusAreas: charity.data.focusAreas,
+  stats: charity.data.stats,
+  externalUrl: charity.data.externalUrl,
+}));
 
 const page = await reader.singletons.servicesCharities.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -34,104 +54,16 @@ const pageImage =
     heading={page?.heading || 'Technology support for mission-led organisations'}
     subheading={page?.subheading || 'Alongside commercial advisory, Diorama supports the charity sector directly through Trustee roles — bringing the same pragmatic, P&L-literate approach to mission impact instead of margin.'}
   >
-    <div class="charity-grid">
-      {charities.map((charity) => {
-        const logo = resolveImageSrc(charity.data.logo, charity.data.logoUrl);
-        return (
-          <div class="charity-card">
-            {logo && (
-              typeof logo === 'string' ? (
-                <img src={logo} alt={charity.data.name} class="charity-logo" />
-              ) : (
-                <Image src={logo} alt={charity.data.name} class="charity-logo" width={64} height={64} />
-              )
-            )}
-            <h3>{charity.data.name}</h3>
-            <p class="charity-role">{charity.data.role}</p>
-            <p class="charity-summary">{charity.data.summary}</p>
-            {charity.data.externalUrl && (
-              <a href={charity.data.externalUrl} target="_blank" rel="noopener noreferrer" class="charity-link">
-                Visit site ↗
-              </a>
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <FloatingLeaves count={5} seed={9} maxOpacity={0.06} />
+    <FallingLeaves count={14} seed={17} maxOpacity={0.09} />
+    <CharityShowcase charities={charityItems}>
+      {rendered.map(({ Content }, i) => (
+        <Fragment slot={`content-${i}`}>
+          <Content />
+        </Fragment>
+      ))}
+    </CharityShowcase>
   </Section>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll<HTMLAnchorElement>('.charity-link[href]').forEach((link) => {
-      link.addEventListener('click', () => {
-        const card = link.closest('.charity-card');
-        const charity_name = card?.querySelector('h3')?.textContent?.trim() ?? '';
-        window.posthog?.capture('charity_link_clicked', { charity_name, charity_href: link.href });
-      });
-    });
-  });
-</script>
-
-<style>
-  .charity-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .charity-card {
-    background: var(--forest);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
-    padding: 28px;
-  }
-
-  .charity-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-sm);
-    object-fit: contain;
-    margin-bottom: 14px;
-    background: #fff;
-  }
-
-  .charity-card h3 {
-    font-size: 1.2rem;
-    margin-bottom: 4px;
-  }
-
-  .charity-role {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--mint);
-    margin-bottom: 12px;
-  }
-
-  .charity-summary {
-    color: var(--mist-muted);
-    font-size: 14.5px;
-    margin-bottom: 14px;
-  }
-
-  .charity-link {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--signal);
-    text-decoration: none;
-  }
-
-  .charity-link:hover {
-    color: var(--mint);
-  }
-
-  @media (max-width: 720px) {
-    .charity-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

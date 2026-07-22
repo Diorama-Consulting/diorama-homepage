@@ -4,12 +4,12 @@ groups:
     links:
       - label: Services
         href: /services
-      - label: Projects
-        href: /projects
-      - label: Teaching
-        href: /teaching
-      - label: Blog
-        href: /blog
+      - label: Tools
+        href: /tools
+      - label: Insights
+        href: /insights
+      - label: Events
+        href: /events
   - heading: Company
     links:
       - label: About

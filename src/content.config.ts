@@ -98,6 +98,18 @@ const charities = defineCollection({
       role: z.string(), // e.g. "Trustee"
       summary: z.string(),
       ...imageFields('logo', image()),
+      ...imageFields('heroImage', image()),
+      mission: z.string().optional(),
+      focusAreas: z.array(z.string()).default([]),
+      stats: z
+        .array(
+          z.object({
+            value: z.number(),
+            suffix: z.string().optional(), // e.g. "%", "k", "+"
+            label: z.string(),
+          }),
+        )
+        .default([]),
       externalUrl: optionalUrl,
       order: z.number().default(0),
     }),

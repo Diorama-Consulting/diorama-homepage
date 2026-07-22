@@ -9,6 +9,7 @@ import Profile from '../../components/Profile.astro';
 import SpacerImageSweep from '../../components/spacers/SpacerImageSweep.astro';
 import SpacerTextBox from '../../components/spacers/SpacerTextBox.astro';
 import FloatingLeaves from '../../components/FloatingLeaves.astro';
+import FallingLeaves from '../../components/FallingLeaves.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
@@ -128,6 +129,7 @@ const team = founder?.team?.length
        TEAM — merged in from the former standalone /about/mal page.
   ==================================================================== -->
   <Section id="team" eyebrow="The team" heading={founder?.heading || 'Meet Mal'} subheading={founder?.teamHeading}>
+    <FallingLeaves count={14} seed={21} maxOpacity={0.08} />
     <div class="founder-block" data-reveal>
       <div class="founder-portrait">
         <img src={portraitUrl} alt="A portrait of Mal smiling in a studio" loading="lazy" />

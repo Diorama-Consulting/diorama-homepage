@@ -1,0 +1,197 @@
+---
+// Unified card for the Insights hub — represents either an article or an
+// event with the same visual language (whole-box-clickable, per the
+// site's box-link convention), differentiated by a small type badge and
+// the meta line (date-only for articles, date+location for events).
+interface Props {
+  type: 'article' | 'event';
+  title: string;
+  excerpt?: string;
+  href?: string;
+  image?: string;
+  date: string; // ISO
+  location?: string;
+  external?: boolean;
+  featured?: boolean;
+}
+
+const { type, title, excerpt, href, image, date, location, external = false, featured = false } = Astro.props;
+
+const d = new Date(date);
+const formattedDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const isLinkable = Boolean(href);
+const Tag = isLinkable ? 'a' : 'div';
+---
+
+<Tag
+  class:list={['insight-card', `insight-card--${type}`, featured && 'insight-card--featured', !isLinkable && 'insight-card--static']}
+  data-type={type}
+  data-title={title.toLowerCase()}
+  href={isLinkable ? href : undefined}
+  target={isLinkable && external ? '_blank' : undefined}
+  rel={isLinkable && external ? 'noopener noreferrer' : undefined}
+>
+  <span class="insight-media">
+    {image ? (
+      <img src={image} alt="" loading="lazy" decoding="async" />
+    ) : (
+      <span class="insight-media-placeholder" aria-hidden="true">{type === 'event' ? '◆' : '✎'}</span>
+    )}
+    <span class:list={['insight-badge', `insight-badge--${type}`]}>{type === 'event' ? 'Event' : 'Article'}</span>
+  </span>
+  <span class="insight-body">
+    <span class="insight-meta">{formattedDate}{location ? ` · ${location}` : ''}</span>
+    <span class="insight-title">{title}</span>
+    {excerpt && <span class="insight-excerpt">{excerpt}</span>}
+    {isLinkable && (
+      <span class="insight-cta">
+        {type === 'event' ? 'Details' : 'Read more'}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </span>
+    )}
+  </span>
+</Tag>
+
+<style>
+  .insight-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease, opacity 0.3s ease, max-height 0.3s ease;
+  }
+  a.insight-card:hover {
+    border-color: var(--moss);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .insight-card--static {
+    opacity: 0.88;
+  }
+
+  .insight-card.is-filtered-out {
+    display: none;
+  }
+
+  .insight-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    background: var(--gradient-surface);
+    overflow: hidden;
+  }
+  .insight-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  a.insight-card:hover .insight-media img {
+    transform: scale(1.05);
+  }
+  .insight-media-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 32px;
+    color: var(--signal);
+    opacity: 0.5;
+  }
+
+  .insight-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: hsl(var(--hue-green) 30% 9% / 0.75);
+    color: var(--ink-text);
+    backdrop-filter: blur(4px);
+  }
+  .insight-badge--event {
+    background: hsl(var(--hue-amber) 55% 20% / 0.8);
+  }
+
+  .insight-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 22px 22px;
+    flex-grow: 1;
+  }
+
+  .insight-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+  }
+
+  .insight-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    line-height: 1.3;
+  }
+
+  .insight-excerpt {
+    font-size: 14px;
+    color: var(--mist-muted);
+    line-height: 1.55;
+    flex-grow: 1;
+  }
+
+  .insight-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--signal);
+  }
+  a.insight-card:hover .insight-cta {
+    color: var(--mint);
+  }
+
+  /* ---- Featured variant: larger, side-by-side ---- */
+  .insight-card--featured {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+  .insight-card--featured .insight-media {
+    flex: 1.1;
+    aspect-ratio: auto;
+  }
+  .insight-card--featured .insight-body {
+    flex: 1;
+    justify-content: center;
+  }
+  .insight-card--featured .insight-title {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 760px) {
+    .insight-card--featured {
+      flex-direction: column;
+    }
+    .insight-card--featured .insight-media {
+      aspect-ratio: 16 / 10;
+    }
+  }
+</style>
