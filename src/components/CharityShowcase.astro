@@ -96,7 +96,18 @@ const { charities } = Astro.props;
           <details class="cs-readmore">
             <summary>Read more about this work</summary>
             <div class="cs-readmore-body">
-              <slot name={`content-${i}`} />
+              {i === 0 && <slot name="content-0" />}
+              {i === 1 && <slot name="content-1" />}
+              {i === 2 && <slot name="content-2" />}
+              {i === 3 && <slot name="content-3" />}
+              {i === 4 && <slot name="content-4" />}
+              {i === 5 && <slot name="content-5" />}
+              {i === 6 && <slot name="content-6" />}
+              {i === 7 && <slot name="content-7" />}
+              {i === 8 && <slot name="content-8" />}
+              {i === 9 && <slot name="content-9" />}
+              {i === 10 && <slot name="content-10" />}
+              {i === 11 && <slot name="content-11" />}
             </div>
           </details>
         </div>

@@ -19,6 +19,22 @@ const charityEntries = (await getCollection('charities')).sort(
 // CharityShowcase via a named slot (content-<index>).
 const rendered = await Promise.all(charityEntries.map((entry) => render(entry)));
 
+// Astro requires slot names to be static strings, not computed ones — see
+// CharityShowcase.astro. Pulling each Content component out into its own
+// named binding (up to a bounded max) is the standard workaround.
+const Content0 = rendered[0]?.Content;
+const Content1 = rendered[1]?.Content;
+const Content2 = rendered[2]?.Content;
+const Content3 = rendered[3]?.Content;
+const Content4 = rendered[4]?.Content;
+const Content5 = rendered[5]?.Content;
+const Content6 = rendered[6]?.Content;
+const Content7 = rendered[7]?.Content;
+const Content8 = rendered[8]?.Content;
+const Content9 = rendered[9]?.Content;
+const Content10 = rendered[10]?.Content;
+const Content11 = rendered[11]?.Content;
+
 const charityItems = charityEntries.map((charity) => ({
   name: charity.data.name,
   role: charity.data.role,
@@ -57,11 +73,18 @@ const pageImage =
     <FloatingLeaves count={5} seed={9} maxOpacity={0.06} />
     <FallingLeaves count={14} seed={17} maxOpacity={0.09} />
     <CharityShowcase charities={charityItems}>
-      {rendered.map(({ Content }, i) => (
-        <Fragment slot={`content-${i}`}>
-          <Content />
-        </Fragment>
-      ))}
+      {Content0 && <Fragment slot="content-0"><Content0 /></Fragment>}
+      {Content1 && <Fragment slot="content-1"><Content1 /></Fragment>}
+      {Content2 && <Fragment slot="content-2"><Content2 /></Fragment>}
+      {Content3 && <Fragment slot="content-3"><Content3 /></Fragment>}
+      {Content4 && <Fragment slot="content-4"><Content4 /></Fragment>}
+      {Content5 && <Fragment slot="content-5"><Content5 /></Fragment>}
+      {Content6 && <Fragment slot="content-6"><Content6 /></Fragment>}
+      {Content7 && <Fragment slot="content-7"><Content7 /></Fragment>}
+      {Content8 && <Fragment slot="content-8"><Content8 /></Fragment>}
+      {Content9 && <Fragment slot="content-9"><Content9 /></Fragment>}
+      {Content10 && <Fragment slot="content-10"><Content10 /></Fragment>}
+      {Content11 && <Fragment slot="content-11"><Content11 /></Fragment>}
     </CharityShowcase>
   </Section>
 
