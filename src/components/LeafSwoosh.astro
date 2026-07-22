@@ -1,20 +1,27 @@
 ---
-// Scroll-linked variant of the leaf motif — leaves sweep left-to-right as
-// the host section scrolls through the viewport (not a pinned/scroll-
-// jacked section like LeafToTreeReveal; this just reads its own natural
-// scroll position, same scroll-scrubbing principle as everywhere else on
-// the site — see LeafToTreeReveal.astro for the fuller explanation of why
-// this mechanism is preferred over trigger-once animations).
+// Leaf-clear transition — REBUILT as a pinned scroll-scrubbed moment
+// (same proven technique as LeafToTreeReveal/HowWeWork), not a
+// "read the host section's natural scroll position" effect like the
+// previous version. That version's problem: the sweep played out across
+// the section's ENTIRE scroll-through distance (from "about to enter
+// view" to "fully scrolled past"), so most of it happened while the
+// section was only partially visible — described as "you can see it for
+// a blip at the top before scrolling too far below to see it." Pinning
+// the panel while the sweep plays guarantees it's fully visible the
+// whole time it's happening, the same fix that made the tree animation
+// and How We Work actually work reliably.
 //
-// Usage: drop as a child of any `position: relative` container — fills
-// it via `position: absolute; inset: 0`.
+// A dense wall of leaves starts covering the screen, sweeps clear to the
+// right as you scroll, revealing a centred heading/subheading — then
+// holds briefly before unpinning and continuing to the next section.
 interface Props {
+  heading: string;
+  subheading?: string;
   count?: number;
   seed?: number;
-  maxOpacity?: number;
 }
 
-const { count = 10, seed = 7, maxOpacity = 0.16 } = Astro.props;
+const { heading, subheading, count = 26, seed = 7 } = Astro.props;
 
 function mulberry32(seedValue: number) {
   return function () {
@@ -27,7 +34,7 @@ function mulberry32(seedValue: number) {
 }
 
 const VARIANTS = ['pointed', 'rounded', 'narrow'] as const;
-const COLORS = ['var(--leaf)', 'var(--ink-accent)', 'var(--signal)', 'var(--amber)'];
+const COLORS = ['var(--leaf)', 'var(--ink-accent)', 'var(--signal)'];
 
 const rand = mulberry32(seed * 131 + 7);
 const leaves = Array.from({ length: count }, () => {
@@ -37,64 +44,120 @@ const leaves = Array.from({ length: count }, () => {
   const r4 = rand();
   const r5 = rand();
   const r6 = rand();
-  const r7 = rand();
   return {
-    top: (r1 * 80 + 4).toFixed(1),
-    size: (16 + r2 * 20).toFixed(0),
-    rotStart: Math.round(r3 * 360),
-    rotDelta: Math.round((r7 - 0.5) * 200),
-    variant: VARIANTS[Math.floor(r4 * VARIANTS.length)],
-    color: COLORS[Math.floor(r5 * COLORS.length)],
-    dx: Math.round(220 + r6 * 260), // px swept left-to-right
-    delay: Math.min(r2 * 0.5, 0.45), // clamped, same reasoning as LeafToTreeReveal
+    top: (r1 * 100).toFixed(1),
+    left: (r2 * 90 - 5).toFixed(1), // starts scattered across the covered screen
+    size: (28 + r3 * 32).toFixed(0), // bigger than the ambient variants — this wall needs to actually cover the screen
+    rotStart: Math.round(r4 * 360),
+    variant: VARIANTS[Math.floor(r5 * VARIANTS.length)],
+    color: COLORS[Math.floor(r6 * COLORS.length)],
+    dx: Math.round(140 + r3 * 90), // vw swept, staggered so the clear-away has texture rather than moving as one flat sheet
+    delay: Math.min(r2 * 0.4, 0.35),
   };
 });
 ---
 
-<div class="leaf-swoosh" data-leaf-swoosh aria-hidden="true">
-  <svg width="0" height="0" style="position:absolute">
-    <defs>
-      <symbol id="leaf-swoosh-pointed" viewBox="0 0 40 60">
-        <path d="M20 2C29 12 34 24 34 36C34 48 28 56 20 58C12 56 6 48 6 36C6 24 11 12 20 2Z" fill="currentColor" />
-      </symbol>
-      <symbol id="leaf-swoosh-rounded" viewBox="0 0 40 60">
-        <path d="M20 6C30 10 36 20 36 32C36 46 29 56 20 58C11 56 4 46 4 32C4 20 10 10 20 6Z" fill="currentColor" />
-      </symbol>
-      <symbol id="leaf-swoosh-narrow" viewBox="0 0 40 60">
-        <path d="M20 2C25 10 28 20 28 34C28 48 25 56 20 59C15 56 12 48 12 34C12 20 15 10 20 2Z" fill="currentColor" />
-      </symbol>
-    </defs>
-  </svg>
-
-  {leaves.map((leaf) => (
-    <svg
-      class="swoosh-leaf"
-      viewBox="0 0 40 60"
-      style={`top:${leaf.top}%; left:-8%; width:${leaf.size}px; height:${leaf.size}px; color:${leaf.color}; --d:${leaf.delay.toFixed(3)}; --dx:${leaf.dx}px; --rot0:${leaf.rotStart}deg; --rotd:${leaf.rotDelta}deg; --max-opacity:${maxOpacity};`}
-    >
-      <use href={`#leaf-swoosh-${leaf.variant}`} width="40" height="60" />
+<div class="leaf-swoosh" data-leaf-swoosh>
+  <div class="ls-pin">
+    <svg width="0" height="0" style="position:absolute">
+      <defs>
+        <symbol id="leaf-swoosh-pointed" viewBox="0 0 40 60">
+          <path d="M20 2C29 12 34 24 34 36C34 48 28 56 20 58C12 56 6 48 6 36C6 24 11 12 20 2Z" fill="currentColor" />
+        </symbol>
+        <symbol id="leaf-swoosh-rounded" viewBox="0 0 40 60">
+          <path d="M20 6C30 10 36 20 36 32C36 46 29 56 20 58C11 56 4 46 4 32C4 20 10 10 20 6Z" fill="currentColor" />
+        </symbol>
+        <symbol id="leaf-swoosh-narrow" viewBox="0 0 40 60">
+          <path d="M20 2C25 10 28 20 28 34C28 48 25 56 20 59C15 56 12 48 12 34C12 20 15 10 20 2Z" fill="currentColor" />
+        </symbol>
+      </defs>
     </svg>
-  ))}
+
+    <div class="ls-leaves">
+      {leaves.map((leaf) => (
+        <svg
+          class="ls-leaf"
+          viewBox="0 0 40 60"
+          style={`top:${leaf.top}%; left:${leaf.left}%; width:${leaf.size}px; height:${leaf.size}px; color:${leaf.color}; --d:${leaf.delay.toFixed(3)}; --dx:${leaf.dx}vw; --rot0:${leaf.rotStart}deg;`}
+        >
+          <use href={`#leaf-swoosh-${leaf.variant}`} width="40" height="60" />
+        </svg>
+      ))}
+    </div>
+
+    <div class="ls-copy">
+      <h2>{heading}</h2>
+      {subheading && <p>{subheading}</p>}
+    </div>
+  </div>
 </div>
 
 <style>
   .leaf-swoosh {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 0;
+    position: relative;
+    height: 200vh;
   }
 
-  .swoosh-leaf {
+  .ls-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--canopy);
+  }
+
+  .ls-leaves {
     position: absolute;
-    --leaf-t: clamp(0, calc((var(--swoosh-t, 0) - var(--d, 0)) / (1 - var(--d, 0))), 1);
-    transform: translateX(calc(var(--leaf-t) * var(--dx))) rotate(calc(var(--rot0) + var(--leaf-t) * var(--rotd)));
-    opacity: calc(var(--max-opacity, 0.16) * sin(var(--leaf-t) * 3.14159));
+    inset: 0;
+  }
+
+  .ls-leaf {
+    position: absolute;
+    opacity: 0.95;
+    --leaf-t: clamp(0, calc((var(--swoosh-t, 1) - var(--d, 0)) / (1 - var(--d, 0))), 1);
+    transform: translateX(calc(var(--leaf-t) * var(--dx))) rotate(calc(var(--rot0) + var(--leaf-t) * 90deg));
+    transition: none;
+  }
+
+  /* Safe default (no JS / reduced motion): --swoosh-t defaults to 1, i.e.
+     fully cleared — leaves already swept away, text already visible.
+     Never stuck mid-cover with text hidden. */
+  .ls-copy {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 640px;
+    padding: 0 24px;
+    opacity: var(--copy-opacity, 1);
+    transform: translateY(calc((1 - var(--copy-opacity, 1)) * 12px));
+  }
+
+  .ls-copy h2 {
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.15;
+    margin: 0 0 14px;
+  }
+
+  .ls-copy p {
+    font-size: 16px;
+    color: var(--mist-muted);
+    line-height: 1.6;
+    margin: 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .swoosh-leaf {
+    .leaf-swoosh {
+      height: auto;
+    }
+    .ls-pin {
+      position: relative;
+      height: auto;
+      padding-block: var(--space-section);
+    }
+    .ls-leaves {
       display: none;
     }
   }
@@ -102,20 +165,30 @@ const leaves = Array.from({ length: count }, () => {
 
 <script>
   function initLeafSwoosh() {
-    document.querySelectorAll<HTMLElement>('[data-leaf-swoosh]').forEach((el) => {
-      if (el.dataset.lsInit) return;
-      el.dataset.lsInit = 'true';
+    document.querySelectorAll<HTMLElement>('[data-leaf-swoosh]').forEach((wrapper) => {
+      if (wrapper.dataset.lsInit) return;
+      wrapper.dataset.lsInit = 'true';
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       let ticking = false;
       const update = () => {
-        const rect = el.getBoundingClientRect();
-        const total = rect.height + window.innerHeight;
-        const progress = total > 0 ? (window.innerHeight - rect.top) / total : 0;
-        el.style.setProperty('--swoosh-t', Math.min(Math.max(progress, 0), 1).toFixed(3));
+        const rect = wrapper.getBoundingClientRect();
+        const scrollable = wrapper.offsetHeight - window.innerHeight;
+        const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
+        // Reach fully-cleared (1) at 70% of the way through the pinned
+        // scroll distance, holding clear for the remaining 30% — a
+        // deliberate pause so the revealed text has time to actually be
+        // read before the section unpins.
+        const rawProgress = scrollable > 0 ? scrolled / scrollable : 1;
+        const progress = Math.min(rawProgress / 0.7, 1);
+
+        wrapper.style.setProperty('--swoosh-t', progress.toFixed(3));
+        wrapper.style.setProperty('--copy-opacity', Math.min(progress * 1.6, 1).toFixed(3));
+
         ticking = false;
       };
+
       const onScroll = () => {
         if (!ticking) {
           ticking = true;

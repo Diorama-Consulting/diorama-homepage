@@ -40,7 +40,7 @@ const projectJsonLd = {
   name: title,
   description: pageDescription,
   image: heroImageUrl ? [heroImageUrl] : undefined,
-  url: new URL(`/projects/${slug}/`, Astro.site).toString(),
+  url: Astro.url.toString(),
   creator: siteSettings?.founderName
     ? { '@type': 'Person', name: siteSettings.founderName }
     : undefined,

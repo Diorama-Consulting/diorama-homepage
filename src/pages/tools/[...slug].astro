@@ -1,0 +1,25 @@
+---
+// Formerly /projects/<slug> — see src/pages/tools/index.astro for why
+// this moved. Underlying content collection is still called `projects`
+// internally (renaming content files was unnecessary risk for zero
+// reader-facing benefit — same reasoning as the blog -> insights rename).
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import ProjectPage from '../../layouts/ProjectPage.astro';
+import Iframe from '../../components/Iframe.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', ({ data }) => !data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: project,
+  }));
+}
+
+type Props = CollectionEntry<'projects'>;
+const project = Astro.props;
+const { Content } = await render(project);
+---
+
+<ProjectPage {...project.data} slug={project.id}>
+  <Content components={{ Iframe }} />
+</ProjectPage>

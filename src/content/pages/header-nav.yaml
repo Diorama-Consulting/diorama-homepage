@@ -1,11 +1,11 @@
 logoText: Diorama
 links:
+  - label: Insights
+    href: /insights
   - label: Services
     href: /services
-  - label: Projects
-    href: /projects
-  - label: Teaching
-    href: /teaching
+  - label: Tools
+    href: /tools
   - label: About
     href: /about
 ctaText: Contact

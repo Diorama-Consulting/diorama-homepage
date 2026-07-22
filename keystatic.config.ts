@@ -498,7 +498,7 @@ export default config({
     // `projects` collection below.
     // -------------------------------------------------------------------
     projectsIndex: singleton({
-      label: 'Projects — Page',
+      label: 'Tools — Page (was Projects)',
       path: 'src/content/pages/projects-index',
       schema: {
         ...seoFields('src/content/pages/projects-index'),
@@ -516,7 +516,7 @@ export default config({
     // TEACHING
     // -------------------------------------------------------------------
     teachingPage: singleton({
-      label: 'Teaching — Page',
+      label: 'Tools — Interactive tools (was Teaching)',
       path: 'src/content/pages/teaching',
       schema: {
         ...seoFields('src/content/pages/teaching'),
@@ -761,7 +761,7 @@ export default config({
     // PROJECTS
     // -------------------------------------------------------------------
     projects: collection({
-      label: 'Projects',
+      label: 'Tools — Projects list',
       slugField: 'title',
       path: 'src/content/projects/*/',
       entryLayout: 'content',
@@ -805,11 +805,34 @@ export default config({
       schema: {
         name: fields.slug({ name: { label: 'Charity name', validation: { isRequired: true } } }),
         role: fields.text({ label: 'Role', description: 'e.g. "Trustee"' }),
-        summary: fields.text({ label: 'Summary', multiline: true }),
-        ...heroImageFields('logo', 'Logo'),
+        summary: fields.text({ label: 'Summary (shown on the card)', multiline: true }),
+        ...heroImageFields('logo', 'Logo (small, square-ish — shown in the tab list)'),
+        ...heroImageFields('heroImage', 'Hero image (large — shown behind the charity\'s detail panel)'),
+        mission: fields.text({
+          label: 'Mission statement (short, shown prominently in the detail panel)',
+          multiline: true,
+        }),
+        focusAreas: fields.array(
+          fields.text({ label: 'Focus area' }),
+          {
+            label: 'Focus areas (tags, e.g. "Volunteering", "Data strategy")',
+            itemLabel: (props) => props.value || 'Tag',
+          },
+        ),
+        stats: fields.array(
+          fields.object({
+            value: fields.number({ label: 'Number', validation: { isRequired: true } }),
+            suffix: fields.text({ label: 'Suffix (optional)', description: 'e.g. "%", "k", "+"' }),
+            label: fields.text({ label: 'Label', description: 'e.g. "Volunteers trained"', validation: { isRequired: true } }),
+          }),
+          {
+            label: 'Impact stats (animate as count-up numbers on the charities page)',
+            itemLabel: (props) => `${props.fields.value.value ?? '—'}${props.fields.suffix.value ?? ''} ${props.fields.label.value ?? ''}`,
+          },
+        ),
         externalUrl: fields.url({ label: 'Charity website' }),
         order: fields.integer({ label: 'Sort order', defaultValue: 0 }),
-        content: fields.mdx({ label: 'Details' }),
+        content: fields.mdx({ label: 'Full story (expandable "Read more" on the charities page)' }),
       },
     }),
     // -------------------------------------------------------------------

@@ -1,0 +1,409 @@
+---
+// Interactive charity showcase — a tab list (name + logo) on the left,
+// and a detail panel on the right: hero image, mission statement, focus
+// area tags, animated count-up stats, and an expandable "read more" for
+// the full story (rendered MDX, passed in via named slots from the
+// page — see services/charities.astro).
+//
+// Stat counters animate on two triggers, both simple/robust (not a
+// multi-stage timing chain like earlier animated components on this
+// site — see LeafToTreeReveal's history for why that matters):
+//   1. Whenever a tab is clicked (a real, guaranteed-to-fire event)
+//   2. Once on load, for whichever charity starts active
+// Safe default: every stat's final value is what's in the HTML from the
+// start (Astro renders the real number server-side) — JS enhancement
+// only replaces it with a count-up-from-zero animation. If JS never
+// runs, the correct numbers are simply there already, never stuck at 0.
+interface Stat {
+  value: number;
+  suffix?: string;
+  label: string;
+}
+
+interface CharityItem {
+  name: string;
+  role?: string;
+  summary?: string;
+  mission?: string;
+  logo?: string;
+  heroImage?: string;
+  focusAreas?: string[];
+  stats?: Stat[];
+  externalUrl?: string;
+}
+
+interface Props {
+  charities: CharityItem[];
+}
+
+const { charities } = Astro.props;
+---
+
+<div class="charity-showcase" data-charity-showcase>
+  <div class="cs-tabs" role="tablist" aria-label="Charities">
+    {charities.map((charity, i) => (
+      <button type="button" class="cs-tab" data-index={i} aria-selected={i === 0 ? 'true' : 'false'} role="tab">
+        {charity.logo ? (
+          <img src={charity.logo} alt="" class="cs-tab-logo" loading="lazy" />
+        ) : (
+          <span class="cs-tab-logo cs-tab-logo--placeholder" aria-hidden="true">{charity.name.charAt(0)}</span>
+        )}
+        <span class="cs-tab-text">
+          <span class="cs-tab-name">{charity.name}</span>
+          {charity.role && <span class="cs-tab-role">{charity.role}</span>}
+        </span>
+      </button>
+    ))}
+  </div>
+
+  <div class="cs-panels">
+    {charities.map((charity, i) => (
+      <div class="cs-panel" data-panel={i} aria-hidden={i === 0 ? 'false' : 'true'}>
+        <div class="cs-panel-hero">
+          {charity.heroImage && <img src={charity.heroImage} alt="" loading={i === 0 ? 'eager' : 'lazy'} />}
+          <div class="cs-panel-hero-scrim"></div>
+          <div class="cs-panel-hero-copy">
+            {charity.role && <p class="cs-eyebrow">{charity.role}</p>}
+            <h3>{charity.name}</h3>
+          </div>
+        </div>
+
+        {charity.mission && <p class="cs-mission">{charity.mission}</p>}
+
+        {charity.focusAreas && charity.focusAreas.length > 0 && (
+          <ul class="cs-tags">
+            {charity.focusAreas.map((tag) => <li>{tag}</li>)}
+          </ul>
+        )}
+
+        {charity.stats && charity.stats.length > 0 && (
+          <div class="cs-stats">
+            {charity.stats.map((stat) => (
+              <div class="cs-stat">
+                <span class="cs-stat-value" data-count-to={stat.value} data-suffix={stat.suffix ?? ''}>{stat.value}{stat.suffix ?? ''}</span>
+                <span class="cs-stat-label">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div class="cs-actions">
+          {charity.externalUrl && (
+            <a href={charity.externalUrl} target="_blank" rel="noopener noreferrer" class="cs-visit">
+              Visit site ↗
+            </a>
+          )}
+          <details class="cs-readmore">
+            <summary>Read more about this work</summary>
+            <div class="cs-readmore-body">
+              <slot name={`content-${i}`} />
+            </div>
+          </details>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .charity-showcase {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  /* ---- Tabs ---- */
+  .cs-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: 96px;
+  }
+
+  .cs-tab {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .cs-tab:hover {
+    background: var(--charcoal-soft);
+  }
+  .cs-tab[aria-selected='true'] {
+    background: var(--forest);
+    border-color: var(--hairline-hover);
+  }
+
+  .cs-tab-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .cs-tab-logo--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--signal-soft);
+    color: var(--signal);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .cs-tab-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .cs-tab-name {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .cs-tab-role {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+  }
+
+  /* ---- Panels ---- */
+  .cs-panels {
+    position: relative;
+    min-height: 460px;
+  }
+
+  .cs-panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .cs-panel[aria-hidden='false'] {
+    position: relative;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .cs-panel-hero {
+    position: relative;
+    height: 220px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--space-md);
+    background: var(--gradient-surface);
+  }
+  .cs-panel-hero img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cs-panel-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, hsl(var(--hue-green) 30% 9% / 0.75) 0%, hsl(var(--hue-green) 30% 9% / 0.15) 60%);
+  }
+  .cs-panel-hero-copy {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px 24px;
+  }
+  .cs-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-accent);
+    margin: 0 0 6px;
+  }
+  .cs-panel-hero-copy h3 {
+    font-size: 1.6rem;
+    color: var(--ink-text);
+  }
+
+  .cs-mission {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--mist);
+    max-width: 620px;
+    margin: 0 0 var(--space-sm);
+  }
+
+  .cs-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-md);
+  }
+  .cs-tags li {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.03em;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--signal-soft);
+    color: var(--signal);
+  }
+
+  /* ---- Stats ---- */
+  .cs-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-md);
+  }
+  .cs-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cs-stat-value {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 700;
+    color: var(--signal);
+  }
+  .cs-stat-label {
+    font-size: 12.5px;
+    color: var(--mist-muted);
+  }
+
+  /* ---- Actions / read more ---- */
+  .cs-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .cs-visit {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--signal);
+    text-decoration: none;
+  }
+  .cs-visit:hover {
+    color: var(--mint);
+  }
+
+  .cs-readmore {
+    width: 100%;
+    border-top: 1px solid var(--hairline);
+    padding-top: 12px;
+  }
+  .cs-readmore summary {
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--mist-muted);
+    list-style: none;
+  }
+  .cs-readmore summary::-webkit-details-marker { display: none; }
+  .cs-readmore summary::before {
+    content: '+ ';
+    color: var(--signal);
+  }
+  .cs-readmore[open] summary::before {
+    content: '– ';
+  }
+  .cs-readmore-body {
+    padding-top: 14px;
+    color: var(--mist-muted);
+    font-size: 14.5px;
+    line-height: 1.7;
+    max-width: 640px;
+  }
+  .cs-readmore-body :global(p) {
+    margin: 0 0 1em;
+  }
+
+  @media (max-width: 860px) {
+    .charity-showcase {
+      grid-template-columns: 1fr;
+    }
+    .cs-tabs {
+      position: static;
+      flex-direction: row;
+      overflow-x: auto;
+    }
+    .cs-tab {
+      flex-shrink: 0;
+    }
+  }
+</style>
+
+<script>
+  function animateCount(el: HTMLElement) {
+    const target = Number(el.dataset.countTo || '0');
+    const suffix = el.dataset.suffix || '';
+    const duration = 900;
+    const start = performance.now();
+    const from = 0;
+
+    function tick(now: number) {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const current = Math.round(from + (target - from) * eased);
+      el.textContent = `${current}${suffix}`;
+      if (t < 1) requestAnimationFrame(tick);
+      else el.textContent = `${target}${suffix}`;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function initCharityShowcase() {
+    document.querySelectorAll<HTMLElement>('[data-charity-showcase]').forEach((root) => {
+      if (root.dataset.csInit) return;
+      root.dataset.csInit = 'true';
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('.cs-tab'));
+      const panels = Array.from(root.querySelectorAll<HTMLElement>('.cs-panel'));
+
+      function activate(index: number) {
+        tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === index)));
+        panels.forEach((p, i) => p.setAttribute('aria-hidden', String(i !== index)));
+        if (!reduceMotion) {
+          const activePanel = panels[index];
+          activePanel.querySelectorAll<HTMLElement>('.cs-stat-value').forEach((el) => animateCount(el));
+        }
+      }
+
+      tabs.forEach((tab, i) => tab.addEventListener('click', () => activate(i)));
+
+      // Animate the initially-active panel's stats once on load too —
+      // not just on click — so the count-up happens even if the visitor
+      // never touches a tab.
+      if (!reduceMotion) {
+        panels[0]?.querySelectorAll<HTMLElement>('.cs-stat-value').forEach((el) => animateCount(el));
+      }
+    });
+  }
+
+  initCharityShowcase();
+  document.addEventListener('astro:page-load', initCharityShowcase);
+</script>

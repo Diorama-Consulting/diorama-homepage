@@ -6,6 +6,7 @@ import Section from '../../components/Section.astro';
 import FeatureToggle from '../../components/FeatureToggle.astro';
 import HowWeWork from '../../components/HowWeWork.astro';
 import FloatingLeaves from '../../components/FloatingLeaves.astro';
+import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
 import SpacerBlank from '../../components/spacers/SpacerBlank.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
@@ -71,6 +72,7 @@ const tileItems = tiles.map((tile) => ({
     heading={page?.heading || 'Two practices, one disciplined approach'}
     subheading={page?.subheading || 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'}
   >
+    <FallingLeaves count={16} seed={13} maxOpacity={0.1} />
     <FeatureToggle groupId="services" items={tileItems} />
   </Section>
 

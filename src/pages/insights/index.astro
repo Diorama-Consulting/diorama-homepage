@@ -1,27 +1,61 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
-import BlogCard from '../../components/BlogCard.astro';
+import InsightCard from '../../components/InsightCard.astro';
+import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
-// Formerly /blog — renamed to /insights to read less like a personal blog
-// and more like the firm's thought-leadership hub, matching how the
-// content is actually positioned elsewhere on the site. The underlying
-// Astro/Keystatic collection is still called `blog` internally (moving
-// every content file would be a much higher-risk change for zero reader-
-// facing benefit) — only the route and on-page labels changed.
-const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+// The Insights hub — articles and events combined into one feed, the way
+// EY/McKinsey/BCG/Deloitte structure their own "Insights"/"Our Thinking"
+// hubs (one content category, differentiated by a type filter, not two
+// separate sections competing for attention).
+//
+// Laid out like a news homepage (NYT-style), reskinned in the site's own
+// theme: one spotlighted story full-width at the top, a "more to explore"
+// rail on the right, and the full searchable/filterable listing in the
+// centre below. The spotlight and rail items are deliberately excluded
+// from the centre grid — no item appears twice on the page.
+const posts = await getCollection('blog', ({ data }) => !data.draft);
+const events = await getCollection('events', ({ data }) => !data.draft);
 
-const [featured, ...rest] = posts;
+const items = [
+  ...posts.map((post) => ({
+    type: 'article' as const,
+    title: post.data.title,
+    excerpt: post.data.description,
+    date: post.data.pubDate.toISOString(),
+    image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl),
+    href: `/insights/${post.id}/`,
+    external: false,
+  })),
+  ...events.map((event) => ({
+    type: 'event' as const,
+    title: event.data.title,
+    excerpt: event.data.description,
+    date: event.data.date.toISOString(),
+    image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl),
+    href: event.data.href || '/events/',
+    external: Boolean(event.data.href?.startsWith('http')),
+    location: event.data.location,
+  })),
+].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+// Spotlight: the single most current item. Rail: the next handful,
+// shown compact. Grid: everything else, searchable/filterable.
+const [spotlight, ...remaining] = items;
+const railItems = remaining.slice(0, 4);
+const gridItems = remaining.slice(4);
 
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
 const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 ---
 
 <!doctype html>
@@ -29,7 +63,7 @@ const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.d
   <head>
     <BaseHead
       title={`Insights — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
-      description={siteSettings?.defaultSeoDescription ?? 'Writing on AI, technology strategy, and the occasional side project.'}
+      description={siteSettings?.defaultSeoDescription ?? 'Writing, talks, and events on AI strategy, technology, and the occasional side project.'}
       image={pageImage}
     />
   </head>
@@ -43,30 +77,91 @@ const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.d
     <main class="container">
       <div class="insights-intro">
         <p class="insights-eyebrow">Insights</p>
-        <h1>Writing on AI, strategy, and the odd side project</h1>
+        <h1>Writing, talks, and events — in one place</h1>
       </div>
-      <section class="blog-grid">
-        {featured && (
-          <div class="featured">
-            <BlogCard
-              title={featured.data.title}
-              excerpt={featured.data.description ?? ''}
-              href={`/insights/${featured.id}/`}
-              date={featured.data.pubDate.toISOString()}
-              image={resolveImageUrl(featured.data.heroImage, featured.data.heroImageUrl)}
-            />
+
+      {spotlight && (
+        <a
+          class:list={['spotlight', `spotlight--${spotlight.type}`]}
+          href={spotlight.href}
+          target={spotlight.external ? '_blank' : undefined}
+          rel={spotlight.external ? 'noopener noreferrer' : undefined}
+        >
+          <span class="spotlight-media">
+            {spotlight.image && <img src={spotlight.image} alt="" loading="eager" fetchpriority="high" />}
+            <span class="spotlight-scrim"></span>
+          </span>
+          <span class="spotlight-copy">
+            <span class="spotlight-badge">{spotlight.type === 'event' ? 'Featured event' : 'Featured article'}</span>
+            <span class="spotlight-title">{spotlight.title}</span>
+            {spotlight.excerpt && <span class="spotlight-excerpt">{spotlight.excerpt}</span>}
+            <span class="spotlight-meta">
+              {formatDate(spotlight.date)}
+              {'location' in spotlight && spotlight.location ? ` · ${spotlight.location}` : ''}
+            </span>
+          </span>
+        </a>
+      )}
+
+      <div class="insights-layout">
+        <div class="insights-main">
+          <div class="insights-controls">
+            <div class="insights-filter" role="tablist" aria-label="Filter by type">
+              <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" class="filter-btn" data-filter="article" aria-pressed="false">Articles</button>
+              <button type="button" class="filter-btn" data-filter="event" aria-pressed="false">Events</button>
+            </div>
+            <div class="insights-search">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+              </svg>
+              <input type="search" id="insights-search-input" placeholder="Search titles…" aria-label="Search insights by title" />
+            </div>
           </div>
+
+          <div class="insights-grid" id="insights-grid" style="position: relative;">
+            <FallingLeaves count={14} seed={31} maxOpacity={0.06} />
+            {gridItems.map((item) => (
+              <InsightCard
+                type={item.type}
+                title={item.title}
+                excerpt={item.excerpt}
+                date={item.date}
+                image={item.image}
+                href={item.href}
+                external={item.external}
+                location={'location' in item ? item.location : undefined}
+              />
+            ))}
+            <p class="insights-empty" id="insights-empty" hidden>Nothing matches that search — try a different term.</p>
+          </div>
+        </div>
+
+        {railItems.length > 0 && (
+          <aside class="insights-rail">
+            <h2>More to explore</h2>
+            <ul>
+              {railItems.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    target={item.external ? '_blank' : undefined}
+                    rel={item.external ? 'noopener noreferrer' : undefined}
+                    class:list={['rail-item', `rail-item--${item.type}`]}
+                  >
+                    <span class="rail-badge">{item.type === 'event' ? 'Event' : 'Article'}</span>
+                    <span class="rail-title">{item.title}</span>
+                    <span class="rail-meta">
+                      {formatDate(item.date)}
+                      {'location' in item && item.location ? ` · ${item.location}` : ''}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </aside>
         )}
-        {rest.map((post) => (
-          <BlogCard
-            title={post.data.title}
-            excerpt={post.data.description ?? ''}
-            href={`/insights/${post.id}/`}
-            date={post.data.pubDate.toISOString()}
-            image={resolveImageUrl(post.data.heroImage, post.data.heroImageUrl)}
-          />
-        ))}
-      </section>
+      </div>
     </main>
     <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
   </body>
@@ -96,50 +191,323 @@ const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.d
   .insights-intro h1 {
     font-size: clamp(28px, 3.6vw, 40px);
     line-height: 1.15;
+    margin: 0;
   }
 
-  .blog-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 32px;
+  /* ---- Spotlight ---- */
+  .spotlight {
+    position: relative;
+    display: block;
+    height: 440px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: var(--space-2xl);
+    text-decoration: none;
+    box-shadow: var(--shadow-lg);
   }
-
-  .featured {
-    grid-column: 1 / -1;
+  .spotlight-media {
+    position: absolute;
+    inset: 0;
   }
-
-  .featured :global(.blog-card) {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-  }
-
-  .featured :global(.blog-image) {
+  .spotlight-media img {
+    width: 100%;
     height: 100%;
-    min-height: 320px;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
-
-  .featured :global(.blog-body) {
+  .spotlight:hover .spotlight-media img {
+    transform: scale(1.04);
+  }
+  .spotlight-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, hsl(var(--hue-green) 30% 9% / 0.92) 0%, hsl(var(--hue-green) 30% 9% / 0.4) 55%, hsl(var(--hue-green) 30% 9% / 0.15) 100%);
+  }
+  .spotlight-copy {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    gap: 10px;
+    padding: 40px 44px;
+    max-width: 720px;
+  }
+  .spotlight-badge {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-accent);
+  }
+  .spotlight--event .spotlight-badge {
+    color: var(--ink-amber);
+  }
+  .spotlight-title {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3.6vw, 40px);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink-text);
+  }
+  .spotlight-excerpt {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--ink-text-muted);
+    max-width: 560px;
+  }
+  .spotlight-meta {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ink-text-muted);
+    margin-top: 4px;
   }
 
-  .featured :global(h3) {
-    font-size: 1.6rem;
+  /* ---- Layout: main + rail ---- */
+  .insights-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+    gap: var(--space-2xl);
+    align-items: start;
+  }
+
+  /* ---- Controls: segmented filter + search ---- */
+  .insights-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .insights-filter {
+    display: inline-flex;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .filter-btn {
+    background: none;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--mist-muted);
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .filter-btn:hover {
+    color: var(--text-strong);
+  }
+  .filter-btn[aria-pressed='true'] {
+    background: var(--signal);
+    color: var(--canopy);
+  }
+
+  .insights-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 8px 16px;
+    color: var(--mist-faint);
+    min-width: 220px;
+  }
+  .insights-search input {
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--mist);
+    font-size: 13.5px;
+    width: 100%;
+  }
+  .insights-search input::placeholder {
+    color: var(--mist-faint);
+  }
+
+  /* ---- Grid ---- */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 28px;
+  }
+
+  .insights-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--mist-muted);
+    font-size: 14.5px;
+    padding: 40px 0;
+  }
+
+  .insight-card[data-hidden='true'] {
+    display: none;
+  }
+
+  .insights-grid.is-refreshing :global(.insight-card:not([data-hidden='true'])) {
+    animation: insight-settle 0.35s ease both;
+  }
+  @keyframes insight-settle {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- Rail ---- */
+  .insights-rail {
+    position: sticky;
+    top: 96px;
+  }
+  .insights-rail h2 {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+    margin: 0 0 var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .insights-rail ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .rail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--hairline);
+    text-decoration: none;
+  }
+  .insights-rail li:last-child .rail-item {
+    border-bottom: none;
+  }
+  .rail-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--signal);
+  }
+  .rail-item--event .rail-badge {
+    color: var(--amber);
+  }
+  .rail-title {
+    font-family: var(--font-display);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-strong);
+    line-height: 1.35;
+    transition: color 0.2s ease;
+  }
+  .rail-item:hover .rail-title {
+    color: var(--signal);
+  }
+  .rail-meta {
+    font-size: 11.5px;
+    color: var(--mist-faint);
+  }
+
+  @media (max-width: 900px) {
+    .insights-layout {
+      grid-template-columns: 1fr;
+    }
+    .insights-rail {
+      position: static;
+      order: -1;
+    }
+    .spotlight {
+      height: 340px;
+    }
+    .spotlight-copy {
+      padding: 28px 24px;
+    }
   }
 
   @media (max-width: 720px) {
-    .blog-grid {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-
-    .featured :global(.blog-card) {
+    .insights-grid {
       grid-template-columns: 1fr;
     }
+    .insights-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .insights-search {
+      min-width: 0;
+    }
+  }
 
-    .featured :global(.blog-image) {
-      min-height: 220px;
+  @media (prefers-reduced-motion: reduce) {
+    .insights-grid.is-refreshing :global(.insight-card) {
+      animation: none;
     }
   }
 </style>
+
+<script>
+  function initInsightsHub() {
+    const grid = document.getElementById('insights-grid');
+    const searchInput = document.getElementById('insights-search-input') as HTMLInputElement | null;
+    const filterBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.filter-btn'));
+    const emptyMessage = document.getElementById('insights-empty');
+    if (!grid || !searchInput) return;
+    if (grid.dataset.hubInit) return;
+    grid.dataset.hubInit = 'true';
+
+    let activeType = 'all';
+
+    function applyFilters() {
+      const cards = Array.from(grid!.querySelectorAll<HTMLElement>('.insight-card'));
+      const query = searchInput!.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const matchesType = activeType === 'all' || card.dataset.type === activeType;
+        const matchesQuery = !query || (card.dataset.title || '').includes(query);
+        const show = matchesType && matchesQuery;
+        card.setAttribute('data-hidden', String(!show));
+        if (show) visibleCount++;
+      });
+
+      if (emptyMessage) emptyMessage.hidden = visibleCount > 0;
+
+      grid!.classList.remove('is-refreshing');
+      void grid!.offsetWidth;
+      grid!.classList.add('is-refreshing');
+    }
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeType = btn.dataset.filter || 'all';
+        filterBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        applyFilters();
+      });
+    });
+
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+    searchInput.addEventListener('input', () => {
+      if (debounceId) clearTimeout(debounceId);
+      debounceId = setTimeout(applyFilters, 120);
+    });
+  }
+
+  initInsightsHub();
+  document.addEventListener('astro:page-load', initInsightsHub);
+</script>

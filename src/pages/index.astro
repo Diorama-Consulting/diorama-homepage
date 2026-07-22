@@ -13,6 +13,8 @@ import SpacerDivider from '../components/spacers/SpacerDivider.astro';
 import WindTurbineReveal from '../components/animated/WindTurbineReveal.astro';
 import LeafToTreeReveal from '../components/animated/LeafToTreeReveal.astro';
 import FloatingLeaves from '../components/FloatingLeaves.astro';
+import FallingLeaves from '../components/FallingLeaves.astro';
+import LeafSwoosh from '../components/LeafSwoosh.astro';
 import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
 import defaultFounderPortrait from '../assets/hero/MalmCol.png';
@@ -41,8 +43,8 @@ const exploreCards = page?.exploreCards?.length
   ? page.exploreCards
   : [
       { title: 'Services', description: 'Consulting and advisory services we offer, plus our charity work.', href: '/services', linkText: 'View Services' },
-      { title: 'Projects', description: 'Side projects and tools built with AI coding assistants.', href: '/projects', linkText: 'View Projects' },
-      { title: 'Teaching', description: 'Interactive tools for demystifying AI, plus our blog.', href: '/teaching', linkText: 'View Teaching' },
+      { title: 'Tools', description: 'Side projects, apps, and interactive tools built with AI coding assistants.', href: '/tools', linkText: 'View Tools' },
+      { title: 'Insights', description: 'Articles, talks, and events on AI strategy and technology.', href: '/insights', linkText: 'View Insights' },
     ];
 
 const defaultHeroPhotoUrl = (defaultHeroPhoto as unknown as { src: string }).src;
@@ -163,7 +165,8 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     </>
   )}
 
-  <div data-reveal>
+  <div data-reveal style="position: relative;">
+    <FallingLeaves count={20} seed={11} maxOpacity={0.14} />
     <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
   </div>
 
@@ -184,6 +187,11 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
       </div>
     </div>
   </Section>
+
+  <LeafSwoosh
+    heading="Clearing space for what's next"
+    subheading="The same principle behind how we scope an engagement — clear the ground first, then build."
+  />
 
   <div class="container">
     <WindTurbineReveal
