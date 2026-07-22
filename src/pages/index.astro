@@ -5,7 +5,6 @@ import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import HeroCarousel from '../components/HeroCarousel.astro';
 import TrustedCompanies from '../components/TrustedCompanies.astro';
-import UpcomingEvents from '../components/UpcomingEvents.astro';
 import Section from '../components/Section.astro';
 import FeatureToggle from '../components/FeatureToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
@@ -13,6 +12,7 @@ import Footer from '../components/Footer.astro';
 import SpacerDivider from '../components/spacers/SpacerDivider.astro';
 import WindTurbineReveal from '../components/animated/WindTurbineReveal.astro';
 import LeafToTreeReveal from '../components/animated/LeafToTreeReveal.astro';
+import FloatingLeaves from '../components/FloatingLeaves.astro';
 import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
 import defaultFounderPortrait from '../assets/hero/MalmCol.png';
@@ -55,50 +55,56 @@ const exploreItems = exploreCards.map((card) => ({
 }));
 
 // -----------------------------------------------------------------------
-// HERO CAROUSEL — blog slugs and event slugs come from two separate,
-// plain relationship arrays (deliberately not a single conditional field —
-// see keystatic.config.ts for why), concatenated (articles first, then
-// events) and capped at 4 slides total. Falls back to the classic static
-// Hero if the carousel is off or nothing resolves — this fallback is
-// unconditional, never dependent on Keystatic content existing.
+// HERO CAROUSEL — a single ordered list (heroCarouselItems) where each
+// row is tagged blog/event and can be freely reordered/mixed in
+// Keystatic (drag-to-reorder on the array field), resolved here in that
+// exact order. Falls back to the classic static Hero if the carousel is
+// off or nothing resolves — this fallback is unconditional, never
+// dependent on Keystatic content existing.
 // -----------------------------------------------------------------------
-const heroBlogSlugs = ((page?.heroCarouselBlogPosts ?? []).filter(Boolean) as string[]);
-const heroEventSlugs = ((page?.heroCarouselEvents ?? []).filter(Boolean) as string[]);
+const heroCarouselRefs = (page?.heroCarouselItems ?? []).slice(0, 4);
 let heroCarouselSlides: { eyebrow: string; title: string; description?: string; image: string; imageAlt: string; href: string; linkText: string }[] = [];
 
-if (page?.heroCarouselEnabled && (heroBlogSlugs.length > 0 || heroEventSlugs.length > 0)) {
+if (page?.heroCarouselEnabled && heroCarouselRefs.length > 0) {
+  const needsBlog = heroCarouselRefs.some((r) => r.kind !== 'event' && r.blogPost);
+  const needsEvents = heroCarouselRefs.some((r) => r.kind === 'event' && r.event);
   const [allPosts, allEvents] = await Promise.all([
-    heroBlogSlugs.length > 0 ? getCollection('blog', ({ data }) => !data.draft) : Promise.resolve([]),
-    heroEventSlugs.length > 0 ? getCollection('events', ({ data }) => !data.draft) : Promise.resolve([]),
+    needsBlog ? getCollection('blog', ({ data }) => !data.draft) : Promise.resolve([]),
+    needsEvents ? getCollection('events', ({ data }) => !data.draft) : Promise.resolve([]),
   ]);
 
-  const blogSlides = heroBlogSlugs
-    .map((slug) => allPosts.find((p) => p.id === slug))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((post) => ({
-      eyebrow: 'Featured article',
-      title: post.data.title,
-      description: post.data.description,
-      image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
-      imageAlt: post.data.title,
-      href: `/blog/${post.id}/`,
-      linkText: 'Read article',
-    }));
-
-  const eventSlides = heroEventSlugs
-    .map((slug) => allEvents.find((e) => e.id === slug))
-    .filter((e): e is NonNullable<typeof e> => Boolean(e))
-    .map((event) => ({
-      eyebrow: 'Upcoming event',
-      title: event.data.title,
-      description: event.data.description,
-      image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl) || defaultHeroPhotoUrl,
-      imageAlt: event.data.title,
-      href: event.data.href || '#events',
-      linkText: event.data.linkText || 'Event details',
-    }));
-
-  heroCarouselSlides = [...blogSlides, ...eventSlides].slice(0, 4);
+  heroCarouselSlides = heroCarouselRefs
+    .map((ref) => {
+      if (ref.kind === 'event') {
+        if (!ref.event) return null;
+        const event = allEvents.find((e) => e.id === ref.event);
+        if (!event) return null;
+        return {
+          eyebrow: 'Upcoming event',
+          kind: 'event' as const,
+          title: event.data.title,
+          description: event.data.description,
+          image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl) || defaultHeroPhotoUrl,
+          imageAlt: event.data.title,
+          href: event.data.href || '/events/',
+          linkText: event.data.linkText || 'Event details',
+        };
+      }
+      if (!ref.blogPost) return null;
+      const post = allPosts.find((p) => p.id === ref.blogPost);
+      if (!post) return null;
+      return {
+        eyebrow: 'Featured article',
+        kind: 'article' as const,
+        title: post.data.title,
+        description: post.data.description,
+        image: resolveImageUrl(post.data.heroImage, post.data.heroImageUrl) || defaultHeroPhotoUrl,
+        imageAlt: post.data.title,
+        href: `/insights/${post.id}/`,
+        linkText: 'Read article',
+      };
+    })
+    .filter((slide): slide is NonNullable<typeof slide> => Boolean(slide));
 }
 const useHeroCarousel = page?.heroCarouselEnabled && heroCarouselSlides.length > 0;
 
@@ -110,22 +116,14 @@ const trustedCompanies = (page?.trustedCompanies ?? [])
   .filter((c): c is { name: string; logo: string; href?: string } => Boolean(c.logo));
 
 // -----------------------------------------------------------------------
-// UPCOMING EVENTS — sourced from the events collection (see content.config.ts
-// / keystatic.config.ts), so events can also be picked for the hero
-// carousel. Only future-dated, non-draft events are shown here.
+// EVENTS ARE DELIBERATELY NOT ON THE HOMEPAGE.
+// They used to sit in the #2 position (right after Trusted Companies),
+// which was a default from when the section was first built, not an
+// actual decision — see the site audit. Events are tertiary,
+// intermittent content for a practice this size; they now live at
+// /events (see src/pages/events/index.astro) and are reachable from the
+// footer nav, not competing with Services/Explore for homepage attention.
 // -----------------------------------------------------------------------
-const allEventEntries = await getCollection('events', ({ data }) => !data.draft);
-const upcomingEvents = allEventEntries
-  .filter((e) => e.data.date.getTime() >= Date.now() - 1000 * 60 * 60 * 24)
-  .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())
-  .map((e) => ({
-    title: e.data.title,
-    date: e.data.date.toISOString(),
-    location: e.data.location,
-    description: e.data.description,
-    href: e.data.href,
-    linkText: e.data.linkText,
-  }));
 
 // Homepage widgets are deliberately standalone content (their own Keystatic
 // singletons) rather than teasers pulled live from /services/charities or
@@ -146,8 +144,8 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
       {import.meta.env.DEV && page?.heroCarouselEnabled && (
         <div class="hero-carousel-dev-notice">
           Hero carousel is <strong>ON</strong> in Keystatic, but 0 slides resolved — showing the static hero instead.
-          Check Homepage → "Hero carousel — blog articles" / "— events" actually have entries selected, and that
-          those entries aren't marked as drafts. (This notice only shows in dev.)
+          Check Homepage → "Hero carousel items" actually have entries with Type + the matching Article/Event
+          dropdown filled in, and that those entries aren't marked as drafts. (This notice only shows in dev.)
         </div>
       )}
       <Hero
@@ -169,15 +167,6 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
   </div>
 
-  <div data-reveal>
-    <UpcomingEvents
-      events={upcomingEvents}
-      eyebrow={page?.eventsEyebrow}
-      heading={page?.eventsHeading}
-      subheading={page?.eventsSubheading}
-    />
-  </div>
-
   <div class="container">
     <SpacerDivider label="Where to start" />
   </div>
@@ -188,8 +177,11 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     heading={page?.exploreHeading || 'Where to start'}
     subheading={page?.exploreSubheading || "A quick map of what's on this site."}
   >
-    <div data-reveal>
-      <FeatureToggle groupId="explore" items={exploreItems} />
+    <div style="position: relative;">
+      <FloatingLeaves count={5} seed={2} maxOpacity={0.07} />
+      <div data-reveal>
+        <FeatureToggle groupId="explore" items={exploreItems} />
+      </div>
     </div>
   </Section>
 
@@ -237,13 +229,11 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     </Section>
   )}
 
-  <div class="container">
-    <LeafToTreeReveal
-      eyebrow="Renewal"
-      heading="Every ending is groundwork for what's next"
-      text="The same principle behind our sustainability work and our approach to client engagements: clear the ground properly, then build something that lasts."
-    />
-  </div>
+  <LeafToTreeReveal
+    eyebrow="Renewal"
+    heading="Every ending is groundwork for what's next"
+    text="The same principle behind our sustainability work and our approach to client engagements: clear the ground properly, then build something that lasts."
+  />
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>

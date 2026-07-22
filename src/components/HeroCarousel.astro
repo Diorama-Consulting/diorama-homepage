@@ -21,6 +21,8 @@ interface Slide {
   linkText?: string;
   /** Short label for the bottom tab strip — falls back to a truncated title. */
   tabLabel?: string;
+  /** Colours the eyebrow/accent amber instead of green for events, so the two content types read distinctly. */
+  kind?: 'article' | 'event';
 }
 
 interface Props {
@@ -41,7 +43,7 @@ function shortTabLabel(slide: Slide) {
 
   <div class="hero-carousel-track" id="hero-carousel-track">
     {slides.map((slide, i) => (
-      <article class="hero-slide" data-index={i} aria-hidden={i === 0 ? 'false' : 'true'}>
+      <article class="hero-slide" data-index={i} data-kind={slide.kind ?? 'article'} aria-hidden={i === 0 ? 'false' : 'true'}>
         <img src={slide.image} alt={slide.imageAlt ?? ''} class="hero-slide-bg" data-parallax loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : 'low'} />
         <div class="hero-slide-scrim" aria-hidden="true"></div>
         <div class="container hero-slide-content">
@@ -89,9 +91,10 @@ function shortTabLabel(slide: Slide) {
   .hero-carousel {
     position: relative;
     height: 100vh;
+    max-height: 100vh;
     min-height: 620px;
     overflow: hidden;
-    background: var(--canopy);
+    background: var(--ink-bg);
   }
 
   .hero-carousel-shader {
@@ -123,9 +126,10 @@ function shortTabLabel(slide: Slide) {
 
   .hero-slide-bg {
     position: absolute;
-    inset: -4% 0 0 0;
+    top: -6%;
+    left: 0;
     width: 100%;
-    height: 108%;
+    height: 112%;
     object-fit: cover;
     object-position: center;
     z-index: 0;
@@ -157,8 +161,18 @@ function shortTabLabel(slide: Slide) {
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--signal);
+    color: var(--ink-accent);
     margin: 0 0 20px;
+  }
+
+  .hero-slide[data-kind='event'] .eyebrow {
+    color: var(--ink-amber);
+  }
+  .hero-slide[data-kind='event'] .body-accent {
+    background: var(--ink-accent); /* swap the accent bar colours the opposite way round for events vs articles */
+  }
+  .hero-slide[data-kind='event'] .hero-slide-link {
+    border-bottom-color: var(--ink-amber);
   }
 
   .hero-slide-content h1 {
@@ -167,7 +181,7 @@ function shortTabLabel(slide: Slide) {
     letter-spacing: -0.015em;
     font-weight: 700;
     margin: 0 0 24px;
-    color: var(--text-strong);
+    color: var(--ink-text);
   }
 
   .hero-slide-body {
@@ -180,7 +194,7 @@ function shortTabLabel(slide: Slide) {
     flex-shrink: 0;
     width: 3px;
     border-radius: 2px;
-    background: var(--signal);
+    background: var(--amber); /* deliberately not green here — a second accent colour so the hero isn't monochrome */
   }
 
   .hero-slide-content .subheading {
@@ -195,15 +209,15 @@ function shortTabLabel(slide: Slide) {
     align-self: flex-start;
     font-weight: 600;
     font-size: 14.5px;
-    color: var(--text-strong);
+    color: var(--ink-text);
     text-decoration: none;
-    border-bottom: 1.5px solid var(--signal);
+    border-bottom: 1.5px solid var(--ink-accent);
     padding-bottom: 3px;
     transition: color 0.2s ease, border-color 0.2s ease;
   }
   .hero-slide-link:hover {
-    color: var(--mint);
-    border-color: var(--mint);
+    color: var(--ink-accent-hover);
+    border-color: var(--ink-accent-hover);
   }
 
   /* ---- Persistent bottom bar: tabs (left) + controls (right), always visible ---- */
@@ -259,7 +273,7 @@ function shortTabLabel(slide: Slide) {
     right: 0;
     bottom: 0;
     height: 2px;
-    background: var(--signal);
+    background: var(--ink-accent);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
@@ -268,7 +282,7 @@ function shortTabLabel(slide: Slide) {
     color: rgba(255, 255, 255, 0.8);
   }
   .hero-tab[aria-selected='true'] {
-    color: var(--text-strong);
+    color: var(--ink-text);
   }
   .hero-tab[aria-selected='true']::after {
     transform: scaleX(1);
@@ -290,13 +304,13 @@ function shortTabLabel(slide: Slide) {
     border-radius: 50%;
     border: 1px solid hsl(0 0% 100% / 0.2);
     background: hsl(0 0% 0% / 0.3);
-    color: var(--text-strong);
+    color: var(--ink-text);
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
   }
   .hero-control:hover {
     background: hsl(0 0% 0% / 0.5);
-    border-color: var(--signal);
+    border-color: var(--ink-accent);
   }
 
   .hero-control-playpause .icon-play {
@@ -369,7 +383,12 @@ function shortTabLabel(slide: Slide) {
 
     function goTo(index: number) {
       active = (index + slides.length) % slides.length;
-      slides[active].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      // Deliberately NOT slides[active].scrollIntoView() — scrollIntoView
+      // considers the whole scroll chain up to the document, and despite
+      // block:'nearest' it was intermittently scrolling the main page
+      // back to the top too. Scrolling the track's own scrollLeft
+      // directly can only ever affect this one horizontal container.
+      track.scrollTo({ left: active * track.clientWidth, behavior: 'smooth' });
       slides.forEach((s, i) => s.setAttribute('aria-hidden', String(i !== active)));
       tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === active)));
     }
@@ -433,7 +452,7 @@ function shortTabLabel(slide: Slide) {
           // Only move while the hero is at least partially in view.
           if (rect.bottom > 0 && rect.top < window.innerHeight) {
             const progress = Math.min(Math.max(-rect.top / rect.height, 0), 1);
-            const offset = progress * 40; // px of drift, subtle
+            const offset = progress * 24; // px of drift, subtle — kept comfortably inside the 6% overscan buffer even at min-height
             track.querySelectorAll<HTMLImageElement>('[data-parallax]').forEach((img) => {
               img.style.transform = `translateY(${offset}px)`;
             });

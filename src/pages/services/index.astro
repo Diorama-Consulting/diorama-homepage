@@ -4,6 +4,8 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import FeatureToggle from '../../components/FeatureToggle.astro';
+import HowWeWork from '../../components/HowWeWork.astro';
+import FloatingLeaves from '../../components/FloatingLeaves.astro';
 import Footer from '../../components/Footer.astro';
 import SpacerBlank from '../../components/spacers/SpacerBlank.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
@@ -70,6 +72,32 @@ const tileItems = tiles.map((tile) => ({
     subheading={page?.subheading || 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'}
   >
     <FeatureToggle groupId="services" items={tileItems} />
+  </Section>
+
+  <Section eyebrow="How we work" heading="Four steps, every engagement" subheading="Scroll through — the same shape whether it's a six-week fractional CTO sprint or a pro-bono charity project.">
+    <div style="position: relative;">
+      <FloatingLeaves count={5} seed={4} maxOpacity={0.08} />
+      <HowWeWork
+        steps={[
+          {
+            title: 'Discover',
+            description: 'Understand the problem, the stakeholders, and the real constraints — technical, commercial, or organisational — before proposing anything.',
+          },
+          {
+            title: 'Design',
+            description: "Shape the approach with the client, not for them: agree scope, sequencing, and what success actually looks like before work starts.",
+          },
+          {
+            title: 'Build',
+            description: 'Ship in focused increments with visibility throughout — no black-box months, no surprise scope creep.',
+          },
+          {
+            title: 'Embed',
+            description: 'Hand over cleanly, measure the impact against what we agreed at the start, and stay reachable after the engagement ends.',
+          },
+        ]}
+      />
+    </div>
   </Section>
 
   <SpacerBlank size="lg" showMarker />

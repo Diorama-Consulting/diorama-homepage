@@ -1,0 +1,75 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import UpcomingEvents from '../../components/UpcomingEvents.astro';
+import Section from '../../components/Section.astro';
+import { getCollection } from 'astro:content';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
+
+// Events used to live in the homepage's #2 position by default, not by
+// decision — see the comment in src/pages/index.astro. This is their
+// dedicated home now, reachable from the footer nav.
+const allEvents = await getCollection('events', ({ data }) => !data.draft);
+const now = Date.now() - 1000 * 60 * 60 * 24;
+
+const upcoming = allEvents
+  .filter((e) => e.data.date.getTime() >= now)
+  .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())
+  .map((e) => ({
+    title: e.data.title,
+    date: e.data.date.toISOString(),
+    location: e.data.location,
+    description: e.data.description,
+    href: e.data.href,
+    linkText: e.data.linkText,
+  }));
+
+const past = allEvents
+  .filter((e) => e.data.date.getTime() < now)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .map((e) => ({
+    title: e.data.title,
+    date: e.data.date.toISOString(),
+    location: e.data.location,
+    description: e.data.description,
+    href: e.data.href,
+    linkText: e.data.linkText,
+  }));
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
+---
+
+<Layout
+  title={`Events — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
+  description="Talks, workshops, and things we're part of."
+  image={pageImage}
+>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <Section eyebrow="Events" heading="Talks, workshops, and things we're part of" subheading="Managed independently from the blog/insights — add new ones any time in Keystatic, and pick any of them for the homepage hero carousel." />
+
+  {upcoming.length > 0 ? (
+    <UpcomingEvents events={upcoming} eyebrow="Upcoming" heading="What's next" id="events-upcoming" />
+  ) : (
+    <Section>
+      <p class="events-empty">Nothing on the calendar right now — check back soon.</p>
+    </Section>
+  )}
+
+  {past.length > 0 && (
+    <UpcomingEvents events={past} eyebrow="Archive" heading="Past events" id="events-past" />
+  )}
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
+
+<style>
+  .events-empty {
+    color: var(--mist-muted);
+    font-size: 15px;
+  }
+</style>

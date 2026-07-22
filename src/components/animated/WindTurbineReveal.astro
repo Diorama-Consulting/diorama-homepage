@@ -25,16 +25,27 @@ const { eyebrow = 'Renewable by design', heading, text } = Astro.props;
       <ellipse cx="100" cy="252" rx="46" ry="6" fill="var(--pine)" />
       <!-- tower -->
       <path d="M96 250 L104 250 L112 92 L88 92 Z" fill="var(--moss)" />
-      <!-- nacelle (housing behind the hub) -->
-      <rect x="88" y="82" width="36" height="16" rx="6" fill="var(--charcoal)" />
-      <!-- blades: drawn in local space around (0,0), then translated to the hub.
-           Rotated as a whole group via CSS for a smooth continuous spin. -->
-      <g class="turbine-blades" transform="translate(107 90)">
-        <path class="blade" d="M0 0 L-7 -76 Q0 -86 7 -76 Z" fill="var(--signal)" />
-        <path class="blade" d="M0 0 L-7 -76 Q0 -86 7 -76 Z" fill="var(--signal)" transform="rotate(120)" />
-        <path class="blade" d="M0 0 L-7 -76 Q0 -86 7 -76 Z" fill="var(--signal)" transform="rotate(240)" />
+      <!-- nacelle (housing behind the hub) — centred on the new hub position (112),
+           which lines up with the tower's right edge (112) rather than its centre (100) -->
+      <rect x="84" y="82" width="36" height="16" rx="6" fill="var(--charcoal)" />
+      <!-- Blades drawn directly in the SVG's own coordinate space, each
+           one as a spoke radiating from the hub at (112, 90) — moved
+           right from the previous (107, 90) so the rotation centre lines
+           up with the tower's right edge instead of sitting between the
+           tower's centre and edge. Rotated as a whole group via CSS using
+           transform-box:view-box, which pins the rotation origin to an
+           EXACT coordinate rather than the element's bounding-box centre.
+           A 3-blade "Y" shape's bounding box centroid isn't the same
+           point as where the blades actually meet — using it as the
+           rotation origin (as an earlier version of this component did)
+           is what caused the visible off-centre wobble.
+           transform-box:view-box fixes that categorically. -->
+      <g class="turbine-blades">
+        <path class="blade" d="M112 90 L105 14 Q112 4 119 14 Z" fill="var(--signal)" />
+        <path class="blade" d="M112 90 L105 14 Q112 4 119 14 Z" fill="var(--signal)" transform="rotate(120 112 90)" />
+        <path class="blade" d="M112 90 L105 14 Q112 4 119 14 Z" fill="var(--signal)" transform="rotate(240 112 90)" />
       </g>
-      <circle cx="107" cy="90" r="8" fill="var(--charcoal)" />
+      <circle cx="112" cy="90" r="8" fill="var(--charcoal)" />
     </svg>
   </div>
 </div>
@@ -83,8 +94,8 @@ const { eyebrow = 'Renewable by design', heading, text } = Astro.props;
   }
 
   .turbine-blades {
-    transform-box: fill-box;
-    transform-origin: center;
+    transform-box: view-box;
+    transform-origin: 112px 90px;
     animation: spin-turbine 5s linear infinite;
     animation-play-state: paused;
   }
@@ -94,8 +105,8 @@ const { eyebrow = 'Renewable by design', heading, text } = Astro.props;
   }
 
   @keyframes spin-turbine {
-    to { transform: translate(107px, 90px) rotate(360deg); }
-    from { transform: translate(107px, 90px) rotate(0deg); }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   @media (max-width: 760px) {
