@@ -33,7 +33,17 @@ const currentPath = Astro.url.pathname;
 <header class="site-header" id="site-header">
   <div class="container nav">
     <a href="/" class="logo">
-      <Image src={dioramaLogo} alt="" class="logo-mark" />
+      <span class="logo-mark-wrap">
+        <!-- Solid white silhouette, cut from the same SVG via CSS mask.
+             This is more reliable than a filter() stack for guaranteeing
+             true white — masks don't depend on the source colours at all. -->
+        <span
+          class="logo-mark logo-mark-mono"
+          style={`--logo-svg: url(${dioramaLogo.src})`}
+          aria-hidden="true"
+        ></span>
+        <Image src={dioramaLogo} alt="" class="logo-mark logo-mark-colour" />
+      </span>
       <span class="logo-text">{logoText}</span>
     </a>
 
@@ -112,7 +122,7 @@ const currentPath = Astro.url.pathname;
   .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px; /* More breathing room between mark and wordmark */
     text-decoration: none;
     transform-origin: left center;
     /* Adds a nice bouncy feel to the hover enlargement */
@@ -123,13 +133,56 @@ const currentPath = Astro.url.pathname;
     transform: scale(1.08);
   }
 
-  .logo-mark {
+  .logo-mark-wrap {
+    position: relative;
+    display: inline-flex;
     height: 48px; /* Increased from 34px */
-    width: auto;
     transition: height 0.35s ease;
   }
-  .site-header.is-scrolled .logo-mark {
+  .site-header.is-scrolled .logo-mark-wrap {
     height: 34px; /* Condenses down nicely */
+  }
+
+  .logo-mark {
+    height: 100%;
+    width: auto;
+    transform-origin: center;
+    transition: opacity 0.3s ease,
+      transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* White silhouette: a solid white box cut to the logo's shape via
+     mask, so it's guaranteed flat white regardless of the source
+     colours — no dependence on filter() interactions. Sits on top by
+     default. */
+  .logo-mark-mono {
+    position: absolute;
+    inset: 0;
+    background-color: #fff;
+    -webkit-mask-image: var(--logo-svg);
+    mask-image: var(--logo-svg);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+  }
+
+  /* Full-colour version underneath, revealed on hover. */
+  .logo-mark-colour {
+    position: relative;
+    opacity: 0;
+  }
+
+  .logo:hover .logo-mark-mono {
+    opacity: 0;
+  }
+  .logo:hover .logo-mark-colour {
+    opacity: 1;
+  }
+  .logo:hover .logo-mark {
+    transform: scale(1.15);
   }
 
   .logo-text {
@@ -255,12 +308,16 @@ const currentPath = Astro.url.pathname;
     .site-header,
     .nav,
     .logo,
+    .logo-mark-wrap,
     .logo-mark,
     .logo-text,
     .mobile-menu {
       transition: none;
     }
     .logo:hover {
+      transform: none;
+    }
+    .logo:hover .logo-mark {
       transform: none;
     }
   }
