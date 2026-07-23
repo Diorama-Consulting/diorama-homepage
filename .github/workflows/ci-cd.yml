@@ -1,102 +1,93 @@
+# .github/workflows/ci-cd.yml — Docker/GHCR version
+#
+# Replaces the rsync+PM2 pipeline. Flow:
+#   push to main (or Keystatic save) → typecheck → build Docker image on the
+#   runner → push to GitHub Container Registry → SSH to droplet →
+#   `docker compose pull && up -d diorama` (a few seconds of work; the 2 GB
+#   droplet never compiles anything).
+#
+# One-time setup on the droplet (lets it pull from GHCR):
+#   1. Create a GitHub PAT (classic) with ONLY the read:packages scope
+#   2. On the droplet: echo "PAT" | docker login ghcr.io -u YOUR_GH_USERNAME --password-stdin
+#
+# Repo secrets needed (Settings → Secrets → Actions):
+#   DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_USER          (same as before)
+#   PUBLIC_POSTHOG_PROJECT_TOKEN, PUBLIC_POSTHOG_HOST (same as before)
+#   SITE_DOMAIN                                       (same as before)
+# DEPLOY_PATH is no longer needed — the app lives in the image, not on disk.
+
 name: CI / CD
 
-# Runs on every push (this is also what fires when Keystatic saves an edit —
-# GitHub-mode Keystatic commits straight to `main` via the GitHub API, which
-# is indistinguishable from a normal `git push` as far as Actions is
-# concerned) and on every pull request, so feature-branch work gets the same
-# build/typecheck signal before it's merged.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch: {} # lets you re-run a deploy manually from the Actions tab
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  IMAGE: ghcr.io/dioramaconsulting/diorama-homepage
+
 jobs:
-  # ---------------------------------------------------------------------
-  # CHECKS — this is the "subject to checks" gate. It runs identically
-  # whether the push came from `git push`, a merged PR, or Keystatic. The
-  # deploy job below only runs if this one succeeds (`needs: build`), so a
-  # commit that fails to typecheck or build simply never reaches the server
-  # — it sits in git history same as any other bad commit would.
-  # ---------------------------------------------------------------------
-  build:
-    name: Typecheck & build
+  # ------------------------------------------------------------- checks --
+  check:
+    name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: '22' # Astro 6 requires Node 22.12+
+          node-version: '24'
           cache: 'npm'
+      - run: npm ci
+      - run: npx astro check
 
-      - name: Install dependencies
-        run: npm ci
+  # -------------------------------------------------------- build image --
+  build:
+    name: Build & push image
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write        # allows pushing to ghcr.io with GITHUB_TOKEN
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Typecheck (Astro + TypeScript)
-        run: npx astro check
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Build
-        run: npm run build
-        env:
-          # astro build does NOT need real secrets for server-only vars:
-          # ANTHROPIC_API_KEY / RESEND_API_KEY / the Google Sheets vars are
-          # read from process.env at RUNTIME by the @astrojs/node output,
-          # not inlined at build time — placeholders are fine for these,
-          # purely so nothing throws on an undefined var.
-          ANTHROPIC_API_KEY: build-placeholder
-          RESEND_API_KEY: build-placeholder
-          # PUBLIC_-prefixed vars are the opposite: anything referenced in
-          # client-side code (like the posthog.astro snippet, included on
-          # every statically-prerendered page) gets its VALUE baked directly
-          # into the shipped HTML at build time, here, on this runner — not
-          # read from the server's .env at request time. Confirmed directly:
-          # without the real value here, every page ships with a literal
-          # `const apiKey = undefined`, and PostHog never actually receives
-          # any client-side events no matter what the server's .env has.
-          # These need to be the real values, not placeholders.
-          PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.PUBLIC_POSTHOG_PROJECT_TOKEN }}
-          PUBLIC_POSTHOG_HOST: ${{ secrets.PUBLIC_POSTHOG_HOST }}
-          # Drives astro.config.mjs's `site` field (sitemap, RSS, canonical
-          # URLs) — genuinely needed at build time, same reasoning as the
-          # PostHog vars above. Not sensitive, but kept as a secret for
-          # consistency with how everything else here is already set up.
-          SITE_DOMAIN: ${{ secrets.SITE_DOMAIN }}
-
-      # Only needed on the runs that might actually deploy.
-      - name: Upload build output
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: site-build
-          path: |
-            dist/
-            package.json
-            package-lock.json
-            deploy/ecosystem.config.cjs
-          retention-days: 3
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  # ---------------------------------------------------------------------
-  # DEPLOY — only runs after `build` succeeds, and only for pushes to main.
-  # Ships the artifact built above (not a fresh clone+build on the server),
-  # so the production box never needs devDependencies or the full toolchain.
-  # ---------------------------------------------------------------------
+      - name: Build (and push on main)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PUBLIC_POSTHOG_PROJECT_TOKEN=${{ secrets.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+            PUBLIC_POSTHOG_HOST=${{ secrets.PUBLIC_POSTHOG_HOST }}
+            SITE_DOMAIN=${{ secrets.SITE_DOMAIN }}
+
+  # -------------------------------------------------------------- deploy --
   deploy:
-    name: Deploy to server
+    name: Deploy to droplet
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: site-build
-          path: build-output
-
       - name: Load deploy SSH key
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -107,33 +98,12 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Rsync build output to the server
-        run: |
-          rsync -az --delete --exclude='.env' \
-            build-output/dist/ \
-            build-output/package.json \
-            build-output/package-lock.json \
-            build-output/deploy/ecosystem.config.cjs \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
-
-      - name: Install production deps and restart
+      - name: Pull new image and restart the service
         run: |
           ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" '
             set -e
-            cd "${{ secrets.DEPLOY_PATH }}"
-            npm ci --omit=dev
-            pm2 reload ecosystem.config.cjs --update-env
+            cd /opt/apps
+            docker compose pull diorama
+            docker compose up -d diorama
+            docker image prune -f
           '
-          # Passing the FILE (not just the process name) forces PM2 to
-          # re-require ecosystem.config.cjs — which is what actually re-runs
-          # the dotenv.config() call at its top — and --update-env tells PM2
-          # to apply the freshly-loaded values to the process. Confirmed by
-          # direct testing that BOTH parts are required: `pm2 reload
-          # diorama-homepage` (by name only, no flag) silently keeps
-          # whatever env existed at the process's original `pm2 start`,
-          # even across repeated reloads — new .env entries never reach the
-          # running app without this. `--update-env` alone (still by name)
-          # isn't sufficient either; it has to be the file.
-          #
-          # systemd instead of PM2? Swap the two lines above for:
-          #   sudo systemctl restart diorama-homepage
