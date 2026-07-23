@@ -34,16 +34,17 @@ const currentPath = Astro.url.pathname;
   <div class="container nav">
     <a href="/" class="logo">
       <span class="logo-mark-wrap">
-        <!-- Solid white silhouette, cut from the same SVG via CSS mask.
-             This is more reliable than a filter() stack for guaranteeing
-             true white — masks don't depend on the source colours at all. -->
-        <span
-          class="logo-mark logo-mark-mono"
-          style={`--logo-svg: url(${dioramaLogo.src})`}
-          aria-hidden="true"
-        ></span>
+        <!-- Solid white silhouette via CSS filter stack. 
+            This bypasses the low-res rasterization bug caused by nested SVG masks, 
+            and brightness(0) invert(1) is mathematically guaranteed to yield true white. -->
+        <Image 
+          src={dioramaLogo} 
+          alt="" 
+          class="logo-mark logo-mark-mono" 
+          aria-hidden="true" 
+        />
         <Image src={dioramaLogo} alt="" class="logo-mark logo-mark-colour" />
-      </span>
+      </span>                         
       <span class="logo-text">{logoText}</span>
     </a>
 
@@ -126,7 +127,7 @@ const currentPath = Astro.url.pathname;
     text-decoration: none;
     transform-origin: left center;
     /* Adds a nice bouncy feel to the hover enlargement */
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   
   .logo:hover {
@@ -136,7 +137,7 @@ const currentPath = Astro.url.pathname;
   .logo-mark-wrap {
     position: relative;
     display: inline-flex;
-    height: 48px; /* Increased from 34px */
+    height: 72px; /* Increased from 34px */
     transition: height 0.35s ease;
   }
   .site-header.is-scrolled .logo-mark-wrap {
@@ -158,15 +159,8 @@ const currentPath = Astro.url.pathname;
   .logo-mark-mono {
     position: absolute;
     inset: 0;
-    background-color: #fff;
-    -webkit-mask-image: var(--logo-svg);
-    mask-image: var(--logo-svg);
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
+    filter: brightness(0) invert(1);
+    -webkit-filter: brightness(0) invert(1);
   }
 
   /* Full-colour version underneath, revealed on hover. */
