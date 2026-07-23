@@ -1,9 +1,26 @@
 ---
 title: "AI News Agent"
-summary: "An end-to-end AI agent for retrieving, summarising and clustering AI news from curated sources."
+tagline: "The AI news, retrieved, summarised, clustered."
+summary: "An end-to-end AI agent for retrieving, summarising and clustering AI news from curated sources — browse the field's developments as organised topic indexes rather than a raw firehose."
+category: "application"
+accent: "sky"
+monogram: "NA"
+featured: false
 status: "live"
-externalUrl: "https://dioramaconsulting.co.uk/ai-newsagent"
-order: 1
+externalUrl: "/ai-newsagent"
+techStack:
+  - "React"
+  - "FastAPI"
+  - "Supabase"
+  - "Perplexity"
+features:
+  - title: "Curated source retrieval"
+    description: "Fetches from a maintained set of RSS sources rather than scraping the open web — signal over noise by construction."
+  - title: "Automatic summarisation"
+    description: "Each article gets a generated summary via Perplexity, so scanning a day's developments takes minutes."
+  - title: "Topic clustering"
+    description: "Content is clustered into topic indexes, turning a stream of articles into a navigable map of what's moving."
+order: 2
 ---
 
 A React frontend paired with a FastAPI backend. The frontend handles retrieval,
@@ -12,4 +29,4 @@ generates article summaries via Perplexity MCP, and clusters content into topic
 indexes. Articles are stored in Supabase.
 
 Learnings from this project — particularly around article topic modelling — fed
-directly into the build of [CxAI](/teaching).
+directly into the build of AI Scout, its fully-automated successor.

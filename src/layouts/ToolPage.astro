@@ -1,0 +1,387 @@
+---
+// ToolPage — layout for /tools/<slug>.
+//
+// Structure: dark ink hero band (consistent with the site's dark
+// header/footer bookends) carrying the monogram tile, title, tagline,
+// status and the primary "Open <tool>" action; then the mdx write-up as
+// prose; an optional feature grid; and a closing full-width launch band so
+// the call to action is present at both ends of the page.
+//
+// Replaces ProjectPage.astro for this route. ProjectPage can be deleted
+// once nothing else imports it.
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Badge from '../components/Badge.astro';
+import { reader, resolveImageUrl } from '../lib/keystatic';
+
+type Props = CollectionEntry<'projects'>['data'] & { slug: string };
+
+const {
+  title,
+  tagline,
+  summary,
+  accent,
+  monogram,
+  heroImage,
+  heroImageUrl: heroImageUrlField,
+  status,
+  externalUrl,
+  repoUrl,
+  techStack = [],
+  features = [],
+  seoTitle,
+  seoDescription,
+  slug,
+} = Astro.props;
+
+const statusVariant = status === 'live' ? 'accent' : status === 'in-progress' ? 'outline' : 'default';
+const statusLabel = status === 'live' ? 'Live' : status === 'in-progress' ? 'In progress' : 'Archived';
+
+const heroUrl = resolveImageUrl(heroImage, heroImageUrlField);
+const isExternal = !!externalUrl && /^https?:\/\//.test(externalUrl);
+
+const initials = title
+  .split(/\s+/)
+  .map((w) => w[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase();
+
+const siteSettings = await reader.singletons.siteSettings.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+
+const pageTitle = seoTitle || `${title} — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription = seoDescription || summary;
+
+const toolJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: title,
+  description: pageDescription,
+  applicationCategory: 'WebApplication',
+  image: heroUrl ? [heroUrl] : undefined,
+  url: Astro.url.toString(),
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'GBP' },
+  creator: siteSettings?.founderName
+    ? { '@type': 'Person', name: siteSettings.founderName }
+    : undefined,
+};
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={pageTitle} description={pageDescription} image={heroUrl} jsonLd={toolJsonLd} />
+  </head>
+  <body data-accent={accent}>
+    <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+    <section class="tool-hero">
+      {heroUrl && <div class="hero-bg" style={`background-image:url('${heroUrl}')`} />}
+      <div class="hero-inner container">
+        <a class="crumb" href="/tools/">← All tools</a>
+        <div class="hero-row">
+          <span class="tile" aria-hidden="true">{monogram || initials}</span>
+          <div class="hero-text">
+            <div class="title-line">
+              <h1>{title}</h1>
+              <Badge variant={statusVariant}>{statusLabel}</Badge>
+            </div>
+            {tagline && <p class="tagline">{tagline}</p>}
+          </div>
+        </div>
+        <p class="hero-summary">{summary}</p>
+        {techStack.length > 0 && <p class="hero-stack">{techStack.join(' · ')}</p>}
+        <div class="hero-actions">
+          {externalUrl && (
+            <a
+              class="action action-primary"
+              href={externalUrl}
+              target="_blank"
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+            >
+              Open {title}<span class="arrow">→</span>
+            </a>
+          )}
+          {repoUrl && (
+            <a class="action action-quiet" href={repoUrl} target="_blank" rel="noopener noreferrer">
+              View source
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
+
+    <main>
+      <article class="prose">
+        <slot />
+      </article>
+
+      {features.length > 0 && (
+        <section class="features container">
+          <h2>What it does</h2>
+          <div class="feature-grid">
+            {features.map((f) => (
+              <div class="feature">
+                <h3>{f.title}</h3>
+                {f.description && <p>{f.description}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {externalUrl && (
+        <section class="launch-band">
+          <div class="container launch-inner">
+            <p class="launch-copy">
+              {title} runs live — no sign-up needed to look around.
+            </p>
+            <a
+              class="action action-primary"
+              href={externalUrl}
+              target="_blank"
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+            >
+              Open {title}<span class="arrow">→</span>
+            </a>
+          </div>
+        </section>
+      )}
+    </main>
+
+    <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+
+    <style>
+      body[data-accent='green'] { --tool-accent: var(--signal); --tool-accent-bright: var(--ink-accent); }
+      body[data-accent='leaf']  { --tool-accent: var(--leaf);   --tool-accent-bright: hsl(124 55% 62%); }
+      body[data-accent='amber'] { --tool-accent: var(--amber);  --tool-accent-bright: var(--ink-amber); }
+      body[data-accent='sky']   { --tool-accent: var(--sky);    --tool-accent-bright: hsl(var(--hue-sky) 55% 62%); }
+      body[data-accent='sand']  { --tool-accent: var(--sand);   --tool-accent-bright: hsl(var(--hue-sand) 55% 62%); }
+      body[data-accent='rose']  { --tool-accent: var(--rose);   --tool-accent-bright: hsl(var(--hue-rose) 60% 68%); }
+
+      /* ---- Hero band: dark ink, consistent with header/footer ---- */
+      .tool-hero {
+        position: relative;
+        background: linear-gradient(180deg, var(--ink-bg) 0%, var(--ink-bg-2) 100%);
+        color: var(--ink-text);
+        overflow: hidden;
+      }
+
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        opacity: 0.14;
+      }
+
+      .hero-inner {
+        position: relative;
+        padding-top: 64px;
+        padding-bottom: 64px;
+      }
+
+      .crumb {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--ink-text-muted);
+        text-decoration: none;
+        margin-bottom: 28px;
+      }
+      .crumb:hover {
+        color: var(--ink-text);
+      }
+
+      .hero-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .tile {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        height: 64px;
+        flex: 0 0 auto;
+        border-radius: 17px;
+        font-family: var(--font-mono);
+        font-size: 20px;
+        font-weight: 700;
+        color: hsl(0 0% 100%);
+        background: linear-gradient(150deg, var(--tool-accent-bright),
+          color-mix(in srgb, var(--tool-accent-bright) 55%, hsl(var(--hue-green) 30% 8%)));
+        box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.25), var(--shadow-md);
+      }
+
+      .title-line {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .title-line h1 {
+        font-family: var(--font-display);
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        color: var(--ink-text);
+        margin: 0;
+      }
+
+      .tagline {
+        font-size: 16px;
+        color: var(--tool-accent-bright);
+        margin: 4px 0 0;
+      }
+
+      .hero-summary {
+        max-width: 62ch;
+        font-size: 16.5px;
+        line-height: 1.7;
+        color: var(--ink-text-muted);
+        margin: 0 0 14px;
+      }
+
+      .hero-stack {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: var(--ink-text-muted);
+        margin: 0 0 26px;
+      }
+
+      .hero-actions,
+      .launch-inner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14.5px;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 12px 22px;
+        border-radius: var(--radius-sm);
+        transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+      }
+
+      .action-primary {
+        background: var(--tool-accent-bright);
+        color: hsl(var(--hue-green) 30% 8%);
+      }
+      .action-primary:hover {
+        transform: translateY(-1px);
+      }
+      .action-primary .arrow {
+        transition: transform 0.2s ease;
+      }
+      .action-primary:hover .arrow {
+        transform: translateX(3px);
+      }
+
+      .action-quiet {
+        color: var(--ink-text);
+        border: 1px solid var(--ink-border);
+      }
+      .action-quiet:hover {
+        border-color: var(--ink-border-hover);
+      }
+
+      /* ---- Prose ---- */
+      .prose {
+        width: 860px;
+        max-width: calc(100% - 2em);
+        margin: 0 auto;
+        padding: 3.2rem 0 1rem;
+        color: var(--mist);
+      }
+
+      /* ---- Feature grid ---- */
+      .features {
+        padding-top: var(--space-md);
+        padding-bottom: var(--space-lg);
+      }
+
+      .features h2 {
+        font-size: 1.3rem;
+        color: var(--text-strong);
+        margin-bottom: var(--space-sm);
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+      }
+
+      .feature {
+        border: 1px solid var(--hairline);
+        border-left: 3px solid var(--tool-accent);
+        border-radius: var(--radius-md);
+        background: var(--forest);
+        padding: 20px 22px;
+      }
+
+      .feature h3 {
+        font-size: 15px;
+        color: var(--text-strong);
+        margin: 0 0 6px;
+      }
+
+      .feature p {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--mist-muted);
+        margin: 0;
+      }
+
+      /* ---- Launch band ---- */
+      .launch-band {
+        background: linear-gradient(180deg, var(--ink-bg) 0%, var(--ink-bg-2) 100%);
+        padding: 44px 0;
+      }
+
+      .launch-inner {
+        justify-content: space-between;
+      }
+
+      .launch-copy {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        color: var(--ink-text);
+        margin: 0;
+      }
+
+      @media (max-width: 640px) {
+        .hero-inner {
+          padding-top: 44px;
+          padding-bottom: 44px;
+        }
+        .hero-row {
+          align-items: flex-start;
+        }
+        .launch-inner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .action,
+        .action-primary .arrow {
+          transition: none;
+        }
+      }
+    </style>
+  </body>
+</html>
