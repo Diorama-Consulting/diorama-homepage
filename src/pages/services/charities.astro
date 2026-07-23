@@ -1,0 +1,80 @@
+---
+// /services/charities — restored (this file was lost somewhere along the
+// way, which is why the route 404'd) and modernised while rebuilding:
+//
+// The old version rendered each charity's MDX body at the page level via
+// astro:content's render(), then had to hand each Content component down
+// to CharityShowcase through a NAMED SLOT — and because Astro slot names
+// must be static strings, that meant a hardcoded content-0..content-11
+// chain in both this file and the component, silently capping the page
+// at 12 charities with no error if a 13th was ever added in Keystatic.
+//
+// Fix: Astro lets a component reference be stored as a plain object
+// property and invoked directly (`<item.Content />`). So each charity's
+// rendered Content component now travels inside the same object as its
+// other fields — no slots, no index-matching, no cap. Add a 50th charity
+// in Keystatic and it just works.
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Section from '../../components/Section.astro';
+import Footer from '../../components/Footer.astro';
+import CharityShowcase from '../../components/CharityShowcase.astro';
+import FloatingLeaves from '../../components/FloatingLeaves.astro';
+import FallingLeaves from '../../components/FallingLeaves.astro';
+import { reader, resolveImageUrl } from '../../lib/keystatic';
+
+const charityEntries = (await getCollection('charities')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+// One pass: render each entry's MDX body and fold the resulting Content
+// component into the same object as its display fields.
+const charityItems = await Promise.all(
+  charityEntries.map(async (charity) => {
+    const { Content } = await render(charity);
+    return {
+      name: charity.data.name,
+      role: charity.data.role,
+      summary: charity.data.summary,
+      mission: charity.data.mission,
+      logo: resolveImageUrl(charity.data.logo, charity.data.logoUrl),
+      heroImage: resolveImageUrl(charity.data.heroImage, charity.data.heroImageUrl),
+      focusAreas: charity.data.focusAreas,
+      stats: charity.data.stats,
+      externalUrl: charity.data.externalUrl,
+      Content,
+    };
+  }),
+);
+
+const page = await reader.singletons.servicesCharities.read();
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const pageTitle = page?.seoTitle || `Charities — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+const pageDescription =
+  page?.seoDescription ||
+  page?.subheading ||
+  'Practical Digital and AI strategy support for UK charities, delivered through Trustee and advisory roles.';
+const pageImage =
+  resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
+  resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
+---
+
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <Section
+    eyebrow={page?.eyebrow || 'For UK Charities'}
+    heading={page?.heading || 'Technology support for mission-led organisations'}
+    subheading={page?.subheading || 'Alongside commercial advisory, Diorama supports the charity sector directly through Trustee roles — bringing the same pragmatic, P&L-literate approach to mission impact instead of margin.'}
+  >
+    <FloatingLeaves count={5} seed={9} maxOpacity={0.06} />
+    <FallingLeaves count={14} seed={17} maxOpacity={0.09} />
+    <CharityShowcase charities={charityItems} />
+  </Section>
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
