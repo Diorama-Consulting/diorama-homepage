@@ -14,9 +14,13 @@ import { reader, resolveImageUrl } from '../../lib/keystatic';
 //
 // Laid out like a news homepage (NYT-style), reskinned in the site's own
 // theme: one spotlighted story full-width at the top, a "more to explore"
-// rail on the right, and the full searchable/filterable listing in the
-// centre below. The spotlight and rail items are deliberately excluded
-// from the centre grid — no item appears twice on the page.
+// rail on the right, and the full chronological listing in the centre
+// below. The spotlight and rail are a featured glance at the newest
+// items — the grid is the complete archive and intentionally repeats
+// whatever's already featured above, rather than excluding it. That
+// matters most with only a handful of posts (subtracting the spotlight/
+// rail left the grid nearly empty); as more articles are published the
+// repeated items become a small fraction of the full listing.
 const posts = await getCollection('blog', ({ data }) => !data.draft);
 const events = await getCollection('events', ({ data }) => !data.draft);
 
@@ -42,11 +46,19 @@ const items = [
   })),
 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-// Spotlight: the single most current item. Rail: the next handful,
-// shown compact. Grid: everything else, searchable/filterable.
-const [spotlight, ...remaining] = items;
-const railItems = remaining.slice(0, 4);
-const gridItems = remaining.slice(4);
+// Spotlight: the single most current item, shown big up top. Rail: the
+// next handful, shown compact, as an editorial "more to explore" glance.
+// Grid: EVERY item, in full chronological order — deliberately including
+// whatever's already in the spotlight/rail. With few items (a handful of
+// posts), subtracting the spotlight+rail from the grid emptied it almost
+// entirely; the grid is the site's actual archive and should show
+// everything, the same way the spotlight/rail repeat the newest items as
+// a highlight, not a partition. As more articles are published the rail
+// becomes a small, ever-shrinking fraction of the total — exactly the
+// intended feel of a proper insights hub.
+const [spotlight, ...afterSpotlight] = items;
+const railItems = afterSpotlight.slice(0, 4);
+const gridItems = items;
 
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
