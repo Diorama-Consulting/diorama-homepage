@@ -2,8 +2,12 @@
 // Interactive charity showcase — a tab list (name + logo) on the left,
 // and a detail panel on the right: hero image, mission statement, focus
 // area tags, animated count-up stats, and an expandable "read more" for
-// the full story (rendered MDX, passed in via named slots from the
-// page — see services/charities.astro).
+// the full story. Each charity's rendered MDX body arrives as a Content
+// component on the charity object itself (see services/charities.astro)
+// and is invoked directly as <charity.Content /> — no named slots, no
+// index limit. (An earlier version threaded Content components through
+// content-0..content-11 named slots, since Astro slot names must be
+// static strings; that silently capped the page at 12 charities.)
 //
 // Stat counters animate on two triggers, both simple/robust (not a
 // multi-stage timing chain like earlier animated components on this
@@ -30,6 +34,11 @@ interface CharityItem {
   focusAreas?: string[];
   stats?: Stat[];
   externalUrl?: string;
+  // The charity's rendered MDX body, supplied as a component reference by
+  // the page (see services/charities.astro) — Astro allows invoking a
+  // component stored on a plain object directly (`<charity.Content />`),
+  // which is what removes the old per-index slot limit below.
+  Content?: any;
 }
 
 interface Props {
@@ -96,18 +105,7 @@ const { charities } = Astro.props;
           <details class="cs-readmore">
             <summary>Read more about this work</summary>
             <div class="cs-readmore-body">
-              {i === 0 && <slot name="content-0" />}
-              {i === 1 && <slot name="content-1" />}
-              {i === 2 && <slot name="content-2" />}
-              {i === 3 && <slot name="content-3" />}
-              {i === 4 && <slot name="content-4" />}
-              {i === 5 && <slot name="content-5" />}
-              {i === 6 && <slot name="content-6" />}
-              {i === 7 && <slot name="content-7" />}
-              {i === 8 && <slot name="content-8" />}
-              {i === 9 && <slot name="content-9" />}
-              {i === 10 && <slot name="content-10" />}
-              {i === 11 && <slot name="content-11" />}
+              {charity.Content && <charity.Content />}
             </div>
           </details>
         </div>
