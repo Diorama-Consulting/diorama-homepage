@@ -1,0 +1,434 @@
+---
+// ToolRack — the /tools signature element.
+//
+// A horizontal rack of "spines": each tool collapses to a narrow slat
+// showing its monogram tile and vertically-set name, like manuals on a
+// workshop shelf. One slat (the featured tool, or the first) sits open by
+// default; hovering / focusing / tapping another expands it while the rest
+// compress — flex-grow does the "sliding away".
+//
+// Pure CSS handles hover + keyboard focus growth; a tiny inline script only
+// manages which slat holds the persistent .is-open state (so exactly one
+// stays expanded when the pointer leaves, and tap-to-open works on touch).
+// Below 860px the rack becomes a vertical accordion with the same state
+// model. prefers-reduced-motion collapses the transition to a snap.
+//
+// Accent colours are declared per tool in Keystatic and mapped here onto
+// the site's existing palette tokens — no colours exist in this component
+// that don't already exist in global.css.
+import { resolveImageUrl } from '../lib/keystatic';
+
+interface Tool {
+  id: string;
+  title: string;
+  tagline?: string;
+  summary: string;
+  accent: string;
+  monogram?: string;
+  status: string;
+  externalUrl?: string;
+  repoUrl?: string;
+  techStack: string[];
+  heroImage?: ImageMetadata | null;
+  heroImageUrl?: string | null;
+  open: boolean;
+}
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  label: string;
+  tools: Tool[];
+}
+
+const { label, tools } = Astro.props;
+
+const initials = (title: string) =>
+  title
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+const isExternal = (url?: string) => !!url && /^https?:\/\//.test(url);
+---
+
+<div class="rack" role="list" aria-label={label}>
+  {tools.map((tool) => {
+    const heroUrl = resolveImageUrl(tool.heroImage, tool.heroImageUrl);
+    return (
+      <article
+        class:list={['slat', { 'is-open': tool.open }]}
+        data-accent={tool.accent}
+        role="listitem"
+      >
+        <button
+          class="slat-hit"
+          type="button"
+          aria-expanded={tool.open ? 'true' : 'false'}
+          aria-label={`Focus ${tool.title}`}
+        />
+
+        {/* Collapsed spine */}
+        <div class="spine" aria-hidden="true">
+          <span class="tile">{tool.monogram || initials(tool.title)}</span>
+          <span class="spine-title">{tool.title}</span>
+          <span class:list={['status-dot', `status-${tool.status}`]} />
+        </div>
+
+        {/* Expanded panel */}
+        <div class="panel">
+          {heroUrl && <div class="panel-bg" style={`background-image:url('${heroUrl}')`} />}
+          <div class="panel-inner">
+            <header class="panel-head">
+              <span class="tile tile-lg">{tool.monogram || initials(tool.title)}</span>
+              <div>
+                <h3>{tool.title}</h3>
+                <p class="panel-tagline">{tool.tagline || tool.summary}</p>
+              </div>
+            </header>
+            <p class="panel-summary">{tool.summary}</p>
+            {tool.techStack.length > 0 && (
+              <p class="panel-stack">{tool.techStack.join(' · ')}</p>
+            )}
+            <div class="panel-actions">
+              {tool.externalUrl && (
+                <a
+                  class="action action-primary"
+                  href={tool.externalUrl}
+                  target="_blank"
+                  rel={isExternal(tool.externalUrl) ? 'noopener noreferrer' : undefined}
+                >
+                  Open tool<span class="arrow">→</span>
+                </a>
+              )}
+              <a class="action action-quiet" href={`/tools/${tool.id}/`}>About this tool</a>
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  })}
+</div>
+
+<script>
+  // One rack instance per <div.rack>; exactly one slat holds .is-open.
+  document.querySelectorAll<HTMLElement>('.rack').forEach((rack) => {
+    const slats = Array.from(rack.querySelectorAll<HTMLElement>('.slat'));
+
+    const openSlat = (target: HTMLElement) => {
+      slats.forEach((s) => {
+        const open = s === target;
+        s.classList.toggle('is-open', open);
+        s.querySelector('.slat-hit')?.setAttribute('aria-expanded', String(open));
+      });
+    };
+
+    slats.forEach((slat) => {
+      // Pointer: hover moves the persistent focus (desktop).
+      slat.addEventListener('mouseenter', () => {
+        if (window.matchMedia('(hover: hover)').matches) openSlat(slat);
+      });
+      // Tap / click / keyboard on the hit area (touch + a11y).
+      slat.querySelector('.slat-hit')?.addEventListener('click', () => openSlat(slat));
+      // Keyboard focus landing anywhere inside a closed slat opens it.
+      slat.addEventListener('focusin', () => {
+        if (!slat.classList.contains('is-open')) openSlat(slat);
+      });
+    });
+  });
+</script>
+
+<style>
+  /* Map the Keystatic accent choice onto existing palette tokens. */
+  .slat[data-accent='green'] { --tool-accent: var(--signal); }
+  .slat[data-accent='leaf']  { --tool-accent: var(--leaf); }
+  .slat[data-accent='amber'] { --tool-accent: var(--amber); }
+  .slat[data-accent='sky']   { --tool-accent: var(--sky); }
+  .slat[data-accent='sand']  { --tool-accent: var(--sand); }
+  .slat[data-accent='rose']  { --tool-accent: var(--rose); }
+
+  .rack {
+    display: flex;
+    gap: 10px;
+    height: 480px;
+  }
+
+  .slat {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 64px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+    overflow: hidden;
+    transition: flex-grow 0.45s cubic-bezier(0.32, 0.72, 0.24, 1), background-color 0.3s ease,
+      border-color 0.3s ease;
+    cursor: pointer;
+  }
+
+  .slat.is-open {
+    flex-grow: 4.6;
+    background: color-mix(in srgb, var(--tool-accent) 5%, var(--canopy));
+    border-color: color-mix(in srgb, var(--tool-accent) 30%, var(--hairline));
+    cursor: default;
+  }
+
+  .slat:not(.is-open):hover {
+    background: var(--pine);
+    border-color: var(--hairline-hover);
+  }
+
+  /* Full-slat invisible hit target for tap/keyboard */
+  .slat-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .slat.is-open .slat-hit {
+    pointer-events: none;
+  }
+  .slat-hit:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: -2px;
+    border-radius: var(--radius-lg);
+  }
+
+  /* ---- Collapsed spine ---- */
+  .spine {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 0;
+    gap: 16px;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+  }
+  .slat.is-open .spine {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .tile {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: hsl(0 0% 100%);
+    background:
+      linear-gradient(150deg, color-mix(in srgb, var(--tool-accent) 100%, transparent),
+        color-mix(in srgb, var(--tool-accent) 72%, hsl(var(--hue-green) 30% 12%)));
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.25), var(--shadow-sm);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+  .slat:hover .tile {
+    transform: rotate(-4deg) scale(1.06);
+  }
+
+  .spine-title {
+    flex: 1;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--mist);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .status-live { background: var(--leaf); }
+  .status-in-progress { background: var(--amber); }
+  .status-archived { background: var(--mist-faint); }
+
+  /* ---- Expanded panel ---- */
+  .panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease 0.12s;
+    pointer-events: none;
+  }
+  .slat.is-open .panel {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .panel-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.1;
+  }
+
+  .panel-inner {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 32px 26px;
+    min-width: 340px; /* keeps text from reflowing mid-transition */
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .tile-lg {
+    width: 54px;
+    height: 54px;
+    font-size: 17px;
+    border-radius: 15px;
+  }
+
+  .panel-head h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--text-strong);
+    margin: 0 0 2px;
+  }
+
+  .panel-tagline {
+    font-size: 14px;
+    color: color-mix(in srgb, var(--tool-accent) 80%, var(--mist));
+    margin: 0;
+  }
+
+  .panel-summary {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--mist-muted);
+    max-width: 52ch;
+    margin: 0 0 auto;
+  }
+
+  .panel-stack {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--mist-faint);
+    margin: 18px 0 14px;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .action-primary {
+    background: var(--tool-accent);
+    color: hsl(0 0% 100%);
+  }
+  .action-primary:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--tool-accent) 88%, hsl(0 0% 0%));
+  }
+  .action-primary .arrow {
+    transition: transform 0.2s ease;
+  }
+  .action-primary:hover .arrow {
+    transform: translateX(3px);
+  }
+
+  .action-quiet {
+    color: var(--mist);
+    border: 1px solid var(--hairline);
+    background: transparent;
+  }
+  .action-quiet:hover {
+    border-color: var(--hairline-hover);
+    background: var(--charcoal-soft);
+  }
+
+  /* ---- Mobile: vertical accordion ---- */
+  @media (max-width: 860px) {
+    .rack {
+      flex-direction: column;
+      height: auto;
+      gap: 8px;
+    }
+
+    .slat {
+      flex: 0 0 auto;
+      min-width: 0;
+      height: 64px;
+      transition: height 0.4s cubic-bezier(0.32, 0.72, 0.24, 1), background-color 0.3s ease,
+        border-color 0.3s ease;
+    }
+    .slat.is-open {
+      flex-grow: 0;
+      height: 420px;
+    }
+
+    .spine {
+      flex-direction: row;
+      align-items: center;
+      padding: 0 16px;
+      gap: 14px;
+    }
+    .spine-title {
+      writing-mode: horizontal-tb;
+      transform: none;
+      flex: 1;
+      text-align: left;
+    }
+
+    .panel-inner {
+      min-width: 0;
+      padding: 22px 20px 20px;
+    }
+    .panel-summary {
+      font-size: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slat,
+    .panel,
+    .spine,
+    .tile,
+    .action,
+    .action-primary .arrow {
+      transition: none;
+    }
+    .slat:hover .tile {
+      transform: none;
+    }
+  }
+</style>

@@ -64,18 +64,48 @@ const blog = defineCollection({
 });
 
 // ---------------------------------------------------------------------------
-// PROJECTS  (src/content/projects/<slug>/index.mdx + co-located images)
+// PROJECTS / TOOLS  (src/content/projects/<slug>/index.mdx + co-located images)
+// The collection keeps its internal name `projects` (see the note in
+// src/pages/tools/index.astro for why renames were skipped) but its schema
+// now describes the /tools rack: category, accent, monogram, tagline,
+// featured flag, tech stack and feature highlights. Every added field is
+// optional or defaulted, so pre-existing entries stay valid untouched.
 // ---------------------------------------------------------------------------
+
+// Like optionalUrl, but also accepts site-relative paths ("/invoice-forge")
+// — the normal case now that the tools are served from this same domain.
+const optionalLink = z
+  .string()
+  .optional()
+  .transform((val) => (val === '' ? undefined : val))
+  .pipe(
+    z
+      .string()
+      .regex(/^\/[^\s]*$|^https?:\/\/[^\s]+$/, {
+        message: 'Must be a site-relative path starting with / or a full http(s):// URL',
+      })
+      .optional(),
+  );
+
 const projects = defineCollection({
   loader: glob({ pattern: '*/index.mdx', base: './src/content/projects' }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
+      tagline: z.string().optional(),
       summary: z.string(),
+      category: z.enum(['application', 'learning']).default('application'),
+      accent: z.enum(['green', 'leaf', 'amber', 'sky', 'sand', 'rose']).default('green'),
+      monogram: z.string().optional(),
+      featured: z.boolean().default(false),
       ...imageFields('heroImage', image()),
       status: z.enum(['live', 'in-progress', 'archived']).default('live'),
-      externalUrl: optionalUrl,
+      externalUrl: optionalLink,
       repoUrl: optionalUrl,
+      techStack: z.array(z.string()).default([]),
+      features: z
+        .array(z.object({ title: z.string(), description: z.string().optional() }))
+        .default([]),
       // Lets a project page cross-reference an educational write-up
       // without duplicating content into two collections.
       relatedBlogSlug: z.string().optional(),

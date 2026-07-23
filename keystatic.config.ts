@@ -761,14 +761,49 @@ export default config({
     // PROJECTS
     // -------------------------------------------------------------------
     projects: collection({
-      label: 'Tools — Projects list',
+      label: 'Tools',
       slugField: 'title',
       path: 'src/content/projects/*/',
       entryLayout: 'content',
       format: { contentField: 'content' },
       schema: {
         title: fields.slug({ name: { label: 'Title', validation: { isRequired: true } } }),
+        tagline: fields.text({
+          label: 'Tagline',
+          description: 'One short line shown in the rack when the tool is in focus — e.g. "Invoices, forged in seconds." Falls back to the summary if blank.',
+        }),
         summary: fields.text({ label: 'Summary', multiline: true }),
+        category: fields.select({
+          label: 'Category',
+          description: 'Which rack this tool appears in on /tools.',
+          options: [
+            { label: 'Application — a working product', value: 'application' },
+            { label: 'Learning — an interactive teaching tool', value: 'learning' },
+          ],
+          defaultValue: 'application',
+        }),
+        accent: fields.select({
+          label: 'Accent colour',
+          description: 'Drives the monogram tile and focus tint. All options come from the site palette.',
+          options: [
+            { label: 'Green (signal)', value: 'green' },
+            { label: 'Leaf', value: 'leaf' },
+            { label: 'Amber', value: 'amber' },
+            { label: 'Sky', value: 'sky' },
+            { label: 'Sand', value: 'sand' },
+            { label: 'Rose', value: 'rose' },
+          ],
+          defaultValue: 'green',
+        }),
+        monogram: fields.text({
+          label: 'Monogram',
+          description: '2–3 characters shown on the tool\u2019s tile, e.g. "IF" for Invoice Forge. Falls back to the title\u2019s initials.',
+        }),
+        featured: fields.checkbox({
+          label: 'Featured (open by default in its rack)',
+          description: 'Tick for at most one tool per category — the rack opens on this one.',
+          defaultValue: false,
+        }),
         ...heroImageFields('heroImage', 'Hero image'),
         status: fields.select({
           label: 'Status',
@@ -779,8 +814,31 @@ export default config({
           ],
           defaultValue: 'live',
         }),
-        externalUrl: fields.url({ label: 'Live / demo URL' }),
+        externalUrl: fields.text({
+          label: 'Live tool URL',
+          description: 'Where "Open tool" points. Use a site-relative path (e.g. /invoice-forge) for tools hosted on this domain, or a full https:// URL for external ones.',
+          validation: {
+            pattern: {
+              regex: /^$|^\/[^\s]*$|^https?:\/\/[^\s]+$/,
+              message: 'Must be a site-relative path starting with / or a full http(s):// URL',
+            },
+          },
+        }),
         repoUrl: fields.url({ label: 'Source code URL' }),
+        techStack: fields.array(fields.text({ label: 'Technology' }), {
+          label: 'Tech stack (short chips, e.g. "React", "FastAPI")',
+          itemLabel: (props) => props.value || 'Technology',
+        }),
+        features: fields.array(
+          fields.object({
+            title: fields.text({ label: 'Feature', validation: { isRequired: true } }),
+            description: fields.text({ label: 'Description', multiline: true }),
+          }),
+          {
+            label: 'Feature highlights (shown as a grid on the tool\u2019s page)',
+            itemLabel: (props) => props.fields.title.value || 'Feature',
+          },
+        ),
         relatedBlogSlug: fields.text({ label: 'Related blog post slug' }),
         order: fields.integer({ label: 'Sort order', defaultValue: 0 }),
         draft: fields.checkbox({ label: 'Draft (hide from site)', defaultValue: false }),

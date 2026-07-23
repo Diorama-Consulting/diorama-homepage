@@ -1,10 +1,26 @@
 ---
 title: "Invoice Forge"
-summary: "A web app for generating PDF or DOCX invoices from a form, complete with calculation logic."
+tagline: "Invoices, forged in seconds."
+summary: "Generate polished PDF or DOCX invoices from a simple form, with calculation logic built in — the tool Diorama actually uses to invoice its own clients."
+category: "application"
+accent: "amber"
+monogram: "IF"
+featured: false
 status: "live"
-externalUrl: "https://dioramaconsulting.co.uk/invoice-forge"
+externalUrl: "/invoice-forge"
 repoUrl: "https://github.com/malminhas/invoice-forge/"
-order: 2
+techStack:
+  - "React"
+  - "FastAPI"
+  - "Docker"
+features:
+  - title: "PDF and DOCX output"
+    description: "One form, two professional document formats — pick whichever your client's accounts team prefers."
+  - title: "Built-in calculation logic"
+    description: "Line items, rates, totals and tax handled automatically, so the arithmetic is never the thing you get wrong."
+  - title: "Local storage of drafts"
+    description: "Invoice details persist in the browser between sessions — return and re-issue without retyping."
+order: 1
 ---
 
 A React frontend manages invoice input and local storage; a FastAPI backend handles

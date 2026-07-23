@@ -1,69 +1,61 @@
 ---
-// Formerly /projects — renamed to /tools and merged with what used to be
-// on /teaching, since both were really the same category of thing: apps
-// and tools Diorama has built (some with their own detail page here via
-// the `projects` collection, some external links previously listed on
-// the Teaching page). Teaching itself is retired — its tool list lives
-// here now, and its "from the blog" teaser was redundant with /insights.
-// See the conversation that led here for the fuller reasoning.
+// /tools — redesigned around the ToolRack.
+//
+// Everything shown here is driven by the `projects` collection (labelled
+// "Tools" in Keystatic). To add a new tool: deploy its container + Caddy
+// route on the droplet, then create one entry in Keystatic (title, tagline,
+// summary, category, accent, monogram, live URL) — it appears in the right
+// rack automatically, with its own /tools/<slug> page. No code changes.
+//
+// The collection keeps its internal name `projects` (renaming content
+// files was unnecessary risk for zero reader-facing benefit — same
+// reasoning as the blog -> insights rename).
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import BlogCard from '../../components/BlogCard.astro';
-import LinkCard from '../../components/LinkCard.astro';
+import ToolRack from '../../components/ToolRack.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
-const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order,
 );
 
 const page = await reader.singletons.projectsIndex.read();
-const teachingPage = await reader.singletons.teachingPage.read();
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
 
-// The external tool links that used to live on /teaching — same fallback
-// data as before, just relocated. Still editable from the Teaching —
-// Page singleton in Keystatic for now (renaming that singleton is a
-// bigger content-migration step, not needed just to move where it's
-// displayed).
-const externalTools = teachingPage?.tools?.length
-  ? teachingPage.tools
-  : [
-      {
-        title: 'AI Foundations',
-        description: 'A compact, interactive introduction to AI concepts and terminology for smart generalists — no prior technical knowledge assumed.',
-        href: 'https://ai-pathfinder-one.lovable.app/',
-      },
-      {
-        title: 'MNIST Demystifier',
-        description: 'Explore the classic handwritten-digits dataset, train a model to recognise digits, then test its accuracy — the "hello world" of machine learning, made tangible.',
-        href: 'https://dioramaconsulting.co.uk/friendly-digits-explorer',
-      },
-      {
-        title: 'PageRank Playpen',
-        description: "An interactive playground for Google's foundational PageRank algorithm — build link networks and watch authority converge in real time.",
-        href: 'https://pagerank-playpen.lovable.app',
-      },
-      {
-        title: 'Quantum Curious',
-        description: "Explore qubits and run real quantum algorithms via IBM's Qiskit, on both simulator and real quantum hardware.",
-        href: 'https://dioramaconsulting.co.uk/quantum-curious',
-      },
-      {
-        title: 'AI Evolution',
-        description: 'A timeline of key events in AI history, from the Dartmouth Conference to the present day.',
-        href: 'https://ai-chronicle-view.lovable.app/',
-      },
-    ];
+// Split into the two racks; within each, the featured entry (or the first)
+// starts open. `open` is per-rack, exactly one true.
+function toRack(category: 'application' | 'learning') {
+  const entries = all.filter((e) => e.data.category === category);
+  const featuredIdx = Math.max(0, entries.findIndex((e) => e.data.featured));
+  return entries.map((e, i) => ({
+    id: e.id,
+    title: e.data.title,
+    tagline: e.data.tagline,
+    summary: e.data.summary,
+    accent: e.data.accent,
+    monogram: e.data.monogram,
+    status: e.data.status,
+    externalUrl: e.data.externalUrl,
+    repoUrl: e.data.repoUrl,
+    techStack: e.data.techStack,
+    heroImage: e.data.heroImage ?? null,
+    heroImageUrl: e.data.heroImageUrl ?? null,
+    open: i === featuredIdx,
+  }));
+}
+
+const applications = toRack('application');
+const learning = toRack('learning');
 
 const pageTitle = page?.seoTitle || `Tools — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
 const pageDescription =
   page?.seoDescription ||
   page?.subheading ||
-  'Tools and side projects built with AI coding assistants, and interactive teaching tools for demystifying AI and quantum computing.';
+  'Working applications and interactive learning tools, built by Diorama with AI coding assistants. Every one of them runs live — open any and try it.';
 const pageImage =
   resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
   resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
@@ -77,36 +69,30 @@ const pageImage =
       <p class="eyebrow">{page?.eyebrow || 'Building'}</p>
       <h1>{page?.heading || 'Tools'}</h1>
       <p class="subheading">
-        {page?.subheading || 'Everything Diorama has built — side projects with their own write-up below, and interactive tools for demystifying AI, quantum computing, and search.'}
+        {page?.subheading ||
+          'Everything here runs live. Working applications Diorama built and actually uses, and interactive tools for demystifying AI, quantum computing and search. Hover a spine to bring it into focus; open any tool and try it.'}
       </p>
     </section>
 
-    {projects.length > 0 && (
-      <section class="tools-block">
-        <h2>Projects</h2>
-        <div class="project-grid">
-          {projects.map((project) => (
-            <BlogCard
-              title={project.data.title}
-              excerpt={project.data.summary}
-              href={`/tools/${project.id}/`}
-              date={new Date().toISOString()}
-              source={project.data.status === 'live' ? 'Live' : project.data.status}
-              image={resolveImageUrl(project.data.heroImage, project.data.heroImageUrl)}
-            />
-          ))}
+    {applications.length > 0 && (
+      <section class="rack-block">
+        <div class="rack-heading">
+          <h2>Applications</h2>
+          <p>Working products — built with AI coding assistants, running in production on this site.</p>
         </div>
+        <ToolRack label="Applications" tools={applications} />
       </section>
     )}
 
-    <section class="tools-block">
-      <h2>Interactive tools</h2>
-      <div class="card-grid">
-        {externalTools.map((tool) => (
-          <LinkCard title={tool.title} description={tool.description} href={tool.href} linkText="Try it" external={tool.href?.startsWith('http')} />
-        ))}
-      </div>
-    </section>
+    {learning.length > 0 && (
+      <section class="rack-block">
+        <div class="rack-heading">
+          <h2>Learning tools</h2>
+          <p>Interactive introductions to the ideas underneath the applications — no prior technical knowledge assumed.</p>
+        </div>
+        <ToolRack label="Learning tools" tools={learning} />
+      </section>
+    )}
   </main>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
@@ -115,7 +101,7 @@ const pageImage =
 <style>
   main.container {
     padding-top: 56px;
-    padding-bottom: 80px;
+    padding-bottom: 96px;
   }
 
   .page-intro {
@@ -136,32 +122,27 @@ const pageImage =
     color: var(--mist-muted);
   }
 
-  .tools-block {
-    margin-bottom: var(--space-2xl);
+  .rack-block {
+    margin-bottom: var(--space-xl);
   }
 
-  .tools-block h2 {
-    font-size: 1.3rem;
-    margin-bottom: var(--space-md);
-    color: var(--text-strong);
-  }
-
-  .project-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 32px;
-  }
-
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+  .rack-heading {
+    display: flex;
+    align-items: baseline;
     gap: 18px;
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
   }
 
-  @media (max-width: 860px) {
-    .project-grid,
-    .card-grid {
-      grid-template-columns: 1fr;
-    }
+  .rack-heading h2 {
+    font-size: 1.3rem;
+    color: var(--text-strong);
+    margin: 0;
+  }
+
+  .rack-heading p {
+    font-size: 14px;
+    color: var(--mist-faint);
+    margin: 0;
   }
 </style>

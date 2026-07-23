@@ -1,10 +1,10 @@
 ---
-// Formerly /projects/<slug> — see src/pages/tools/index.astro for why
-// this moved. Underlying content collection is still called `projects`
-// internally (renaming content files was unnecessary risk for zero
-// reader-facing benefit — same reasoning as the blog -> insights rename).
+// /tools/<slug> — now rendered by the ToolPage layout (dark hero band,
+// feature grid, launch band). Underlying content collection is still
+// called `projects` internally (renaming content files was unnecessary
+// risk for zero reader-facing benefit).
 import { type CollectionEntry, getCollection, render } from 'astro:content';
-import ProjectPage from '../../layouts/ProjectPage.astro';
+import ToolPage from '../../layouts/ToolPage.astro';
 import Iframe from '../../components/Iframe.astro';
 
 export async function getStaticPaths() {
@@ -20,6 +20,6 @@ const project = Astro.props;
 const { Content } = await render(project);
 ---
 
-<ProjectPage {...project.data} slug={project.id}>
+<ToolPage {...project.data} slug={project.id}>
   <Content components={{ Iframe }} />
-</ProjectPage>
+</ToolPage>
