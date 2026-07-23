@@ -1,0 +1,60 @@
+---
+// /legal/accessibility — written about THIS site specifically: the claims
+// below describe real, implemented behaviours (reduced-motion guards on
+// every animated component, keyboard operability of the tool rack and
+// charity tabs, token-based contrast, CMS alt-text fields), not template
+// boilerplate. If a claim stops being true, edit this page.
+import LegalPage from '../../layouts/LegalPage.astro';
+
+const toc = [
+  { id: 'commitment', label: 'Our commitment' },
+  { id: 'measures', label: 'What this site does' },
+  { id: 'motion', label: 'Motion & animation' },
+  { id: 'limitations', label: 'Known limitations' },
+  { id: 'feedback', label: 'Feedback' },
+];
+---
+
+<LegalPage
+  title="Accessibility"
+  eyebrow="Accessibility"
+  description="The accessibility measures built into the Diorama Consulting website, and how to tell us when something falls short."
+  toc={toc}
+>
+  <section id="commitment" data-reveal>
+    <h2>Our commitment</h2>
+    <p>We want everyone to be able to use this site — regardless of ability, device, or assistive technology. We aim to meet the <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noopener noreferrer">Web Content Accessibility Guidelines (WCAG) 2.2</a> at level AA, and we treat accessibility as part of how the site is built, not a bolt-on afterthought.</p>
+  </section>
+
+  <section id="measures" data-reveal>
+    <h2>What this site does</h2>
+    <ul>
+      <li><strong>Semantic structure.</strong> Pages use meaningful HTML landmarks, a logical heading hierarchy, and native elements (buttons, links, details/summary) rather than div-based imitations — so screen readers get real structure to navigate by.</li>
+      <li><strong>Keyboard operability.</strong> Every interactive element — navigation, the interactive tool rack, the charity showcase tabs, forms, and the chat assistant — is reachable and usable by keyboard, with visible focus indicators throughout.</li>
+      <li><strong>Colour and contrast.</strong> The site's entire palette is built from a single design-token system chosen to keep text/background combinations within WCAG contrast requirements, in both the light content areas and the dark header and footer.</li>
+      <li><strong>Text alternatives.</strong> Meaningful images carry alt text (editable alongside each image in our content system); purely decorative graphics — such as the animated leaves — are hidden from assistive technology entirely.</li>
+      <li><strong>Forms.</strong> Form fields have visible labels, and errors are reported in text, not by colour alone.</li>
+      <li><strong>No surprises.</strong> No autoplaying audio or video, no content that flashes, and links that open in a new tab are external tools or third-party sites.</li>
+    </ul>
+  </section>
+
+  <section id="motion" data-reveal>
+    <h2>Motion &amp; animation</h2>
+    <p>This site uses light animation — scroll reveals, the expanding tool rack, count-up statistics, drifting leaves. Every one of these honours your system's <strong>“reduce motion”</strong> preference: with it enabled, animations are removed or replaced with static equivalents, and nothing on the page depends on motion to be understood. Content is always present and readable even if animation scripts never run at all.</p>
+  </section>
+
+  <section id="limitations" data-reveal>
+    <h2>Known limitations</h2>
+    <ul>
+      <li><strong>The tools themselves.</strong> The interactive applications linked from our <a href="/tools">Tools</a> pages are separate, standalone products; their accessibility varies and is not covered by this statement.</li>
+      <li><strong>Third-party embeds.</strong> A small number of third-party elements (for example, the live carbon-measurement badge in the footer) render content we don't control.</li>
+      <li><strong>Older documents.</strong> Some linked PDFs or externally hosted materials may not meet the same standard as the site itself.</li>
+    </ul>
+    <p>We review these areas as the site evolves and improve them where we can.</p>
+  </section>
+
+  <section id="feedback" data-reveal>
+    <h2>Feedback</h2>
+    <p>If you hit a barrier anywhere on this site — something unreadable, unreachable by keyboard, mislabelled for your screen reader, or anything else — please tell us via the <a href="/contact">contact form</a>. Reports of real problems from real visitors are the most valuable accessibility testing there is, and we'll aim to respond within a few working days.</p>
+  </section>
+</LegalPage>

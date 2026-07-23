@@ -1,4 +1,22 @@
 ---
+// Footer — redesigned.
+//
+// Changes from the previous version:
+//   - The contact-form CTA block hides itself on /contact (the page has
+//     its own form; two forms on one page was redundant). Detection is by
+//     pathname, so no prop-threading through every page is needed.
+//   - The sustainability strip now leads with the LIVE Website Carbon
+//     badge (always visible); the green-hosting badge moved into its
+//     expanded details area. See SustainabilityNote.astro.
+//   - Link groups restructured around the site's real information
+//     architecture (Services / Explore / Company / Legal), with the five
+//     legal & policy pages now real: Privacy Policy, Terms of Use,
+//     Cookie Policy, Accessibility, Sustainability. NOTE: the groups
+//     rendered in production come from Keystatic (footer-nav.yaml) — the
+//     defaults below only apply if that file's groups are emptied. Both
+//     were updated together in this change.
+//   - New credit line in the bottom bar: "Website by paolo.org.uk" with
+//     its mark (public/images/paolo-icon.svg), alongside the legal line.
 import SustainabilityNote from './SustainabilityNote.astro';
 import ContactForm from './ContactForm.astro';
 import { reader } from '../lib/keystatic';
@@ -17,18 +35,30 @@ interface Props {
 
 const siteSettings = await reader.singletons.siteSettings.read();
 
+// The contact page already has a full-size form — showing the footer's
+// compact one there as well meant two forms on one page.
+const onContactPage = Astro.url.pathname.startsWith('/contact');
+
 const {
   brandName = 'Diorama Consulting Ltd',
   brandBlurb = 'AI Technology Advice led by Mal Minhas with a focus on D2C marketplaces and products.',
   legalLine = `© ${new Date().getFullYear()} Diorama Consulting Ltd. All rights reserved. Registered at 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ in England No. 16137029 with VAT Registration No. 483184277`,
   groups = [
     {
-      heading: 'Site',
+      heading: 'Services',
       links: [
-        { label: 'Services', href: '/services' },
+        { label: 'Overview', href: '/services' },
+        { label: 'Consulting', href: '/services/consulting' },
+        { label: 'Charities', href: '/services/charities' },
+      ],
+    },
+    {
+      heading: 'Explore',
+      links: [
         { label: 'Tools', href: '/tools' },
         { label: 'Insights', href: '/insights' },
         { label: 'Events', href: '/events' },
+        { label: 'Teaching', href: '/teaching' },
       ],
     },
     {
@@ -43,10 +73,11 @@ const {
     {
       heading: 'Legal',
       links: [
-        { label: 'Privacy', href: '#' },
-        { label: 'Terms', href: '#' },
-        { label: 'Cookies', href: '#' },
-        { label: 'Accessibility', href: '#' },
+        { label: 'Privacy Policy', href: '/legal/privacy-policy' },
+        { label: 'Terms of Use', href: '/legal/terms-of-use' },
+        { label: 'Cookie Policy', href: '/legal/cookies-policy' },
+        { label: 'Accessibility', href: '/legal/accessibility' },
+        { label: 'Sustainability', href: '/legal/sustainability' },
       ],
     },
   ],
@@ -54,14 +85,16 @@ const {
 ---
 
 <footer class="site-footer">
-  <div class="container footer-cta">
-    <div class="footer-cta-copy">
-      <p class="footer-cta-eyebrow">Get in touch</p>
-      <h3>Have a project in mind?</h3>
-      <p class="footer-cta-sub">Send a quick note — we'll reply within a couple of working days.</p>
+  {!onContactPage && (
+    <div class="container footer-cta">
+      <div class="footer-cta-copy">
+        <p class="footer-cta-eyebrow">Get in touch</p>
+        <h3>Have a project in mind?</h3>
+        <p class="footer-cta-sub">Send a quick note — we'll reply within a couple of working days.</p>
+      </div>
+      <ContactForm formId="footer-contact-form" compact />
     </div>
-    <ContactForm formId="footer-contact-form" compact />
-  </div>
+  )}
 
   <div class="container footer-top">
     <div class="footer-brand">
@@ -84,6 +117,7 @@ const {
       </div>
     ))}
   </div>
+
   <div class="container footer-sustainability">
     <SustainabilityNote
       hostingProvider={siteSettings?.hostingProvider}
@@ -94,15 +128,19 @@ const {
       showSustainabilitySection={siteSettings?.showSustainabilitySection}
       showGreenBadges={siteSettings?.showGreenBadges}
       showCarbonBadge={siteSettings?.showCarbonBadge}
-      showCo2Estimate={siteSettings?.showCo2Estimate}
       showHostingInfo={siteSettings?.showHostingInfo}
       showVerificationStatus={siteSettings?.showVerificationStatus}
       showSustainabilityNotes={siteSettings?.showSustainabilityNotes}
       showMethodologyLink={siteSettings?.showMethodologyLink}
     />
   </div>
+
   <div class="container footer-bottom">
-    <p>{legalLine}</p>
+    <p class="legal-line">{legalLine}</p>
+    <a class="site-credit" href="https://paolo.org.uk" target="_blank" rel="noopener noreferrer">
+      <img src="/images/paolo-icon.svg" alt="" width="18" height="18" loading="lazy" />
+      <span>Website by <strong>paolo.org.uk</strong></span>
+    </a>
   </div>
 </footer>
 
@@ -146,16 +184,9 @@ const {
 
   .footer-top {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
     gap: var(--space-md);
     padding-block: var(--space-lg) var(--space-md);
-  }
-
-  @media (max-width: 860px) {
-    .footer-cta {
-      grid-template-columns: 1fr;
-      gap: var(--space-md);
-    }
   }
 
   .footer-brand .logo {
@@ -208,15 +239,48 @@ const {
   .footer-bottom {
     border-top: 1px solid var(--ink-border);
     padding-block: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
   }
 
-  .footer-bottom p {
+  .legal-line {
     font-size: 12.5px;
     color: var(--ink-text-muted);
     margin: 0;
+    max-width: 72ch;
   }
 
-  @media (max-width: 760px) {
+  .site-credit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--ink-text-muted);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+  }
+  .site-credit strong {
+    color: var(--ink-text);
+    font-weight: 600;
+    transition: color 0.2s ease;
+  }
+  .site-credit:hover strong {
+    color: var(--ink-accent-hover);
+  }
+  .site-credit img {
+    display: block;
+    border-radius: 50%;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .site-credit:hover img {
+    transform: rotate(60deg);
+  }
+
+  @media (max-width: 900px) {
     .footer-top {
       grid-template-columns: 1fr 1fr;
     }
@@ -224,5 +288,17 @@ const {
       grid-column: 1 / -1;
       margin-bottom: 12px;
     }
+  }
+
+  @media (max-width: 860px) {
+    .footer-cta {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-credit img { transition: none; }
+    .site-credit:hover img { transform: none; }
   }
 </style>
