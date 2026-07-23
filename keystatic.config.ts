@@ -451,13 +451,52 @@ export default config({
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Consulting' }),
         heading: fields.text({ label: 'Heading', defaultValue: 'Built on decades of experience' }),
         subheading: fields.text({ label: 'Subheading', multiline: true }),
+        // Editorial body of the page — several text-with-picture rows.
+        // Each row alternates naturally via its Image side setting; body
+        // supports Markdown. Leave empty to use the built-in default copy.
+        sections: fields.array(
+          fields.object({
+            heading: fields.text({ label: 'Heading' }),
+            body: fields.text({
+              label: 'Body (Markdown)',
+              multiline: true,
+              description: 'Several paragraphs. Supports **bold**, _italic_, links, and lists.',
+            }),
+            ...heroImageFieldsForSingleton('image', 'Image', 'src/content/pages/services-consulting'),
+            imageAlt: fields.text({ label: 'Image alt text' }),
+            imageSide: fields.select({
+              label: 'Image side',
+              options: [
+                { label: 'Right of the text', value: 'right' },
+                { label: 'Left of the text', value: 'left' },
+              ],
+              defaultValue: 'right',
+            }),
+          }),
+          {
+            label: 'Editorial sections (text with pictures)',
+            itemLabel: (props) => props.fields.heading.value || 'Section',
+          },
+        ),
+        // The capability cards now DISPLAY on /services (inside the
+        // animated "How we work" segment) but stay edited here, alongside
+        // the rest of the consulting content they describe.
+        capabilitiesHeading: fields.text({
+          label: 'Capabilities — heading (shown on /services)',
+          defaultValue: 'What every engagement draws on',
+        }),
+        capabilitiesIntro: fields.text({
+          label: 'Capabilities — intro line (shown on /services)',
+          multiline: true,
+          defaultValue: 'Six capabilities underpin the four steps — the same toolkit, tuned to each engagement.',
+        }),
         capabilities: fields.array(
           fields.object({
             title: fields.text({ label: 'Title' }),
             description: fields.text({ label: 'Description', multiline: true }),
           }),
           {
-            label: 'Capability cards',
+            label: 'Capability cards (displayed on /services)',
             itemLabel: (props) => props.fields.title.value || 'Capability',
           },
         ),

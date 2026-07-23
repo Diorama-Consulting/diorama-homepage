@@ -3,27 +3,35 @@ import Anthropic from '@anthropic-ai/sdk';
 import { reader } from '../../lib/keystatic';
 import { buildKnowledgeBase } from '../../lib/chatbot-context';
 import { getPostHogServer } from '../../lib/posthog-server';
+import { secret } from '../../lib/env';
 
 export const prerender = false;
 
-const anthropic = new Anthropic({ apiKey: import.meta.env.ANTHROPIC_API_KEY });
+// The client is created lazily, per-process, with the key read at RUNTIME
+// via secret() — never at module load via import.meta.env. Module-scope
+// `new Anthropic({ apiKey: import.meta.env.ANTHROPIC_API_KEY })` was the
+// bug that broke the bot after containerisation: the build-time placeholder
+// got baked in and the container's real env_file value was never read.
+// See src/lib/env.ts for the full story.
+let anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic | null {
+  if (anthropic) return anthropic;
+  const apiKey = secret('ANTHROPIC_API_KEY');
+  if (!apiKey) return null;
+  anthropic = new Anthropic({ apiKey });
+  return anthropic;
+}
 
 // Cheap, fast model — this is a marketing-site FAQ assistant, not a
-// reasoning task. Swap to 'claude-sonnet-5' if answers need to get sharper
-// as the knowledge base grows. See /mnt/skills/public/product-self-knowledge
-// equivalent (docs.claude.com) before changing model strings — they do
-// change over time.
+// reasoning task. Check docs.claude.com before changing model strings.
 const MODEL = 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 500;
 const MAX_TURNS = 10; // messages kept from the client-sent history
 const MAX_MESSAGE_LENGTH = 2000; // characters, per message
 
 // --- Minimal in-memory rate limit -------------------------------------
-// Good enough for a single-process deployment behind Caddy (this project's
-// target — see the Caddy section of the deploy notes). Resets on restart
-// and doesn't share state across multiple instances; if this ever runs
-// behind more than one Node process, move this to a small Redis/Upstash
-// instance, or a row in the Google Sheet if you want to stay dependency-free.
+// Good enough for a single-process deployment behind Caddy. Resets on
+// restart; if this ever runs as more than one replica, move it to Redis.
 const requestLog = new Map<string, number[]>();
 const RATE_LIMIT = 20; // requests
 const RATE_WINDOW_MS = 10 * 60 * 1000; // per 10 minutes, per IP
@@ -37,7 +45,6 @@ function isRateLimited(ip: string): boolean {
 }
 
 function clientIp(request: Request): string {
-  // Caddy's reverse_proxy sets this by default (see deploy/Caddyfile.example).
   const forwarded = request.headers.get('x-forwarded-for');
   return forwarded?.split(',')[0]?.trim() || 'unknown';
 }
@@ -56,18 +63,9 @@ function sanitizeHistory(input: unknown): ChatMessage[] {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  // Same-origin only — this key costs real money per call, and there's no
-  // reason for another site to be calling it directly from a browser.
-  // Doesn't stop server-to-server abuse, only casual cross-site embedding;
-  // the rate limit below is the real backstop.
-  //
-  // Behind Caddy, request.url reflects the internal connection (Caddy talks
-  // to this Node process over plain HTTP on 127.0.0.1), not the public
-  // https://dioramaconsulting.co.uk the browser actually used — so it can
-  // never match a real browser's Origin header. Reconstruct the public
-  // origin from the X-Forwarded-Host/-Proto headers Caddy sets by default
-  // instead, falling back to request.url only when those aren't present
-  // (e.g. local dev with no proxy in front).
+  // Same-origin only. Behind Caddy, reconstruct the public origin from
+  // X-Forwarded-Host/-Proto (request.url reflects the internal 127.0.0.1
+  // connection, never the public origin the browser used).
   const origin = request.headers.get('origin');
   const forwardedHost = request.headers.get('x-forwarded-host');
   const forwardedProto = request.headers.get('x-forwarded-proto');
@@ -79,14 +77,20 @@ export const POST: APIRoute = async ({ request }) => {
   const ip = clientIp(request);
   if (isRateLimited(ip)) {
     const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `chat-anon-${ip}`;
-    const posthog = getPostHogServer();
-    posthog.capture({ distinctId, event: 'chat_rate_limited' });
-    return json({ error: "Too many messages — please wait a few minutes and try again, or use the contact form." }, 429);
+    getPostHogServer().capture({ distinctId, event: 'chat_rate_limited' });
+    return json({ error: 'Too many messages — please wait a few minutes and try again, or use the contact form.' }, 429);
   }
 
   const chatbotSettings = await reader.singletons.chatbotSettings.read();
   if (chatbotSettings?.enabled === false) {
     return json({ error: 'Chat is currently unavailable.' }, 503);
+  }
+
+  const client = getAnthropic();
+  if (!client) {
+    // Configuration problem, not a user problem — log loudly, degrade politely.
+    console.error('/api/chat: ANTHROPIC_API_KEY is not set in the runtime environment.');
+    return json({ error: 'The assistant is temporarily unavailable — please use the contact form instead.' }, 503);
   }
 
   let body: unknown;
@@ -108,19 +112,16 @@ export const POST: APIRoute = async ({ request }) => {
   const extra = chatbotSettings?.extraContext ? `\n\n## Additional notes\n${chatbotSettings.extraContext}` : '';
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: [
         {
           type: 'text',
           text: `${persona}\n\n# CONTEXT\n${knowledgeBase}${extra}`,
-          // This system prompt is identical for every visitor and only
-          // changes when someone edits content in Keystatic (the 5-minute
-          // cache in chatbot-context.ts). Marking it ephemeral lets
-          // Anthropic cache it server-side, so a burst of concurrent chats
-          // only pays full price for the first request in each ~5 minute
-          // window. See docs.claude.com/en/docs/build-with-claude/prompt-caching.
+          // Identical for every visitor; changes only on Keystatic edits
+          // (5-min cache in chatbot-context.ts). Ephemeral marking lets
+          // Anthropic cache it server-side across concurrent chats.
           cache_control: { type: 'ephemeral' },
         },
       ],
@@ -131,8 +132,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const sessionId = request.headers.get('X-PostHog-Session-Id') || undefined;
     const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `chat-anon-${ip}`;
-    const posthog = getPostHogServer();
-    posthog.capture({
+    getPostHogServer().capture({
       distinctId,
       event: 'chat_message_processed',
       properties: {

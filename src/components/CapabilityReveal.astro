@@ -1,0 +1,114 @@
+---
+// CapabilityReveal — the six consulting capability points, relocated from
+// /services/consulting into the animated segment on /services.
+//
+// Not a numbered sequence (the six capabilities aren't steps, unlike the
+// HowWeWork process above this), so no rail/numbers — instead each card
+// uses the site's existing scroll-reveal pattern (data-reveal + the
+// observer in Layout.astro) with staggered delays, plus one deliberate
+// micro-interaction: an accent underline that draws itself in when the
+// card reveals, and re-sweeps on hover. Light by design; degrades to a
+// plain visible grid without JS or with reduced motion, same as every
+// other reveal on the site.
+//
+// Data comes from the servicesConsulting singleton's existing
+// `capabilities` field — editing them in Keystatic updates this segment.
+
+interface Capability {
+  title: string;
+  description: string;
+}
+
+interface Props {
+  capabilities: Capability[];
+}
+
+const { capabilities } = Astro.props;
+---
+
+<div class="capability-grid">
+  {capabilities.map((capability, i) => (
+    <div class="capability" data-reveal data-reveal-delay={String((i % 3) + 1)}>
+      <h3>{capability.title}</h3>
+      <span class="underline" aria-hidden="true"></span>
+      <p>{capability.description}</p>
+    </div>
+  ))}
+</div>
+
+<style>
+  .capability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .capability {
+    position: relative;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 24px 26px 22px;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease,
+      box-shadow 0.35s ease;
+  }
+
+  .capability:hover {
+    transform: translateY(-3px);
+    border-color: var(--hairline-hover);
+    box-shadow: var(--shadow-md);
+  }
+
+  .capability h3 {
+    font-size: 16px;
+    color: var(--text-strong);
+    margin: 0 0 10px;
+  }
+
+  .underline {
+    display: block;
+    height: 2px;
+    width: 100%;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, var(--signal), var(--signal-soft));
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s;
+  }
+
+  /* Draws in when the card's reveal fires (same class the Layout observer
+     adds), then re-sweeps on hover. */
+  .capability.is-visible .underline {
+    transform: scaleX(1);
+  }
+  .capability:hover .underline {
+    animation: sweep 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes sweep {
+    0% { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
+  }
+
+  .capability p {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+
+  @media (max-width: 860px) {
+    .capability-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* No JS / reduced motion: underline simply visible, no draw. */
+  @media (prefers-reduced-motion: reduce) {
+    .capability,
+    .underline { transition: none; }
+    .capability:hover { transform: none; }
+    .capability:hover .underline { animation: none; }
+    .underline { transform: scaleX(1); }
+  }
+  html:not(.js-ready) .underline { transform: scaleX(1); }
+</style>

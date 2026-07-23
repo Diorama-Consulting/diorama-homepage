@@ -1,10 +1,21 @@
 ---
+// /services/consulting — redesigned as an editorial page.
+//
+// The six capability cards that used to live here have MOVED to the
+// animated segment on /services (see CapabilityReveal.astro); they're
+// still edited from this page's singleton in Keystatic. This page is now
+// long-form: several paragraphs with alternating images, each section
+// revealing lightly on scroll via the site's existing data-reveal pattern.
+// All copy and images come from the "Services — Consulting" singleton's
+// new `sections` array; sensible defaults render until it's populated.
+import { marked } from 'marked';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
-import Card from '../../components/Card.astro';
 import TestimonialCard from '../../components/TestimonialCard.astro';
+import FloatingLeaves from '../../components/FloatingLeaves.astro';
 import Footer from '../../components/Footer.astro';
+import Button from '../../components/Button.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 const page = await reader.singletons.servicesConsulting.read();
@@ -21,20 +32,52 @@ const pageImage =
   resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
   resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
-const capabilities = page?.capabilities?.length
-  ? page.capabilities
-  : [
-      { title: 'High Level Experience', description: 'Fractional/Interim leadership (CTO, CPTO).' },
-      { title: 'Economics Driven', description: 'Pragmatic AI and Data Strategy aligned to P&L.' },
-      { title: 'E-commerce', description: 'D2C marketplace optimisation and innovation.' },
-      { title: 'Platform Modernisation', description: 'Architecture modernisation without rewrite.' },
-      { title: 'Engineering', description: 'Product Engineering team organisation design.' },
-      { title: 'Sustainability', description: 'Practical operationalisation of sustainability initiatives.' },
-    ];
+// Editorial sections — Keystatic-driven, with defaults so the page reads
+// well before anything is authored. Body supports Markdown (rendered with
+// marked, same trusted-CMS-content reasoning as /services and /faq).
+type EditorialSection = {
+  heading: string;
+  bodyHtml: string;
+  image?: string;
+  imageAlt?: string;
+  imageSide: 'left' | 'right';
+};
 
-// Testimonials are entirely optional now — leave the array empty in
-// Keystatic until there are real client quotes to show. No placeholder
-// content is shown in the meantime.
+const defaultSections: Array<{ heading: string; body: string; imageSide: 'left' | 'right' }> = [
+  {
+    heading: 'Leadership you can borrow',
+    body: 'Most scale-ups don\u2019t need a permanent CTO on day one — they need the judgement of one at the moments that matter: a funding round, a platform decision, a team that\u2019s outgrown its structure. Diorama provides fractional and interim CTO/CPTO leadership built on decades of doing the job full-time, stepping in with enough context to be useful in week one and enough detachment to tell you the truth.\n\nEngagements are shaped around the decision you\u2019re facing, not a retainer clock — whether that\u2019s six weeks of intensive due-diligence support or a standing fractional role through a growth phase.',
+    imageSide: 'right',
+  },
+  {
+    heading: 'AI strategy that answers to the P&L',
+    body: 'Every board is being asked what its AI strategy is; very few are being told what it should cost, what it should return, and what it genuinely changes about the operating model. Diorama\u2019s AI and data work starts from the economics: where language models actually move a number on your P&L, where they\u2019re a distraction, and how to sequence adoption so early wins fund the harder ones.\n\nThe advice is grounded in building, not just briefing — the tools on this site are working systems Diorama built and runs, and that hands-on fluency shapes every recommendation.',
+    imageSide: 'left',
+  },
+  {
+    heading: 'Platforms, teams, and the long game',
+    body: 'The unglamorous work matters most: modernising a platform without a rewrite, designing a product engineering organisation that can ship, and making sustainability an operational practice rather than a slide. Diorama has a particular depth in D2C marketplaces and consumer products, where platform economics, engineering velocity and customer experience are the same conversation.\n\nEvery engagement follows the same four-step shape — discover, design, build, embed — described on the services page, and ends with your team stronger than it started.',
+    imageSide: 'right',
+  },
+];
+
+const sections: EditorialSection[] = (page?.sections?.length
+  ? page.sections.map((s) => ({
+      heading: s.heading || '',
+      bodyHtml: s.body ? (marked.parse(s.body) as string) : '',
+      image: resolveImageUrl(s.image, s.imageUrl),
+      imageAlt: s.imageAlt || s.heading || '',
+      imageSide: (s.imageSide as 'left' | 'right') || 'right',
+    }))
+  : defaultSections.map((s) => ({
+      heading: s.heading,
+      bodyHtml: marked.parse(s.body) as string,
+      image: undefined,
+      imageAlt: '',
+      imageSide: s.imageSide,
+    }))
+).filter((s) => s.heading || s.bodyHtml);
+
 const testimonials = page?.testimonials ?? [];
 ---
 
@@ -44,12 +87,32 @@ const testimonials = page?.testimonials ?? [];
   <Section
     eyebrow={page?.eyebrow || 'Consulting'}
     heading={page?.heading || 'Built on decades of experience'}
-    subheading={page?.subheading || 'We help create defensible growth, reduce risk and accelerate value creation through:'}
+    subheading={page?.subheading || 'Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors — with a particular focus on D2C marketplaces.'}
   >
-    <div class="card-grid">
-      {capabilities.map((capability) => (
-        <Card title={capability.title} description={capability.description} />
+    <div class="editorial">
+      <FloatingLeaves count={4} seed={7} maxOpacity={0.07} />
+      {sections.map((section, i) => (
+        <div class:list={['editorial-row', section.imageSide === 'left' && 'editorial-row--flip']}>
+          <div class="editorial-text" data-reveal>
+            <h2>{section.heading}</h2>
+            <div class="editorial-body" set:html={section.bodyHtml} />
+          </div>
+          <div class="editorial-media" data-reveal data-reveal-delay="1">
+            {section.image ? (
+              <img src={section.image} alt={section.imageAlt} loading={i === 0 ? 'eager' : 'lazy'} />
+            ) : (
+              <div class:list={['editorial-placeholder', `placeholder-${i % 3}`]} aria-hidden="true">
+                <span class="placeholder-index">{String(i + 1).padStart(2, '0')}</span>
+              </div>
+            )}
+          </div>
+        </div>
       ))}
+    </div>
+
+    <div class="editorial-cta" data-reveal>
+      <p>The six capabilities behind this work are laid out on the <a href="/services/#capabilities">services page</a> — or skip straight to a conversation.</p>
+      <Button href="/contact">Start a conversation</Button>
     </div>
   </Section>
 
@@ -67,7 +130,91 @@ const testimonials = page?.testimonials ?? [];
 </Layout>
 
 <style>
-  .card-grid,
+  .editorial {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    padding-top: var(--space-sm);
+  }
+
+  .editorial-row {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--space-lg);
+    align-items: center;
+  }
+
+  .editorial-row--flip .editorial-text { order: 2; }
+  .editorial-row--flip .editorial-media { order: 1; }
+
+  .editorial-text h2 {
+    font-size: clamp(22px, 2.6vw, 30px);
+    color: var(--text-strong);
+    margin: 0 0 14px;
+  }
+
+  .editorial-body {
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: var(--mist-muted);
+    max-width: 58ch;
+  }
+  .editorial-body :global(p) { margin: 0 0 1em; }
+  .editorial-body :global(p:last-child) { margin-bottom: 0; }
+  .editorial-body :global(a) { color: var(--signal); text-decoration: underline; text-underline-offset: 2px; }
+  .editorial-body :global(strong) { color: var(--mist); }
+
+  .editorial-media img,
+  .editorial-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Token-built placeholder panels until real photography is uploaded in
+     Keystatic — consistent with HowWeWork's abstract visual panels. */
+  .editorial-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-surface);
+  }
+  .placeholder-0 { background: linear-gradient(135deg, var(--signal-soft), var(--gradient-surface)); }
+  .placeholder-1 { background: linear-gradient(135deg, var(--sand-soft), var(--gradient-surface)); }
+  .placeholder-2 { background: linear-gradient(135deg, var(--leaf-soft), var(--gradient-surface)); }
+
+  .placeholder-index {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--mist-faint);
+  }
+
+  .editorial-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: var(--space-xl);
+    padding: 26px 30px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+  }
+
+  .editorial-cta p {
+    font-size: 15px;
+    color: var(--mist-muted);
+    margin: 0;
+    max-width: 52ch;
+  }
+  .editorial-cta a { color: var(--signal); }
+
   .testimonial-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -75,7 +222,12 @@ const testimonials = page?.testimonials ?? [];
   }
 
   @media (max-width: 860px) {
-    .card-grid,
+    .editorial-row,
+    .editorial-row--flip {
+      grid-template-columns: 1fr;
+    }
+    .editorial-row--flip .editorial-text { order: 1; }
+    .editorial-row--flip .editorial-media { order: 2; }
     .testimonial-grid {
       grid-template-columns: 1fr;
     }
