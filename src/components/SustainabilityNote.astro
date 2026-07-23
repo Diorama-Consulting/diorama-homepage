@@ -1,32 +1,22 @@
 ---
-// src/components/SustainabilityNote.astro
+// src/components/SustainabilityNote.astro — reworked.
 //
-// Collapsed bar (always visible, no client JS needed to see it):
-//   [ CO2 leaf metric — left, the headline number ]  ...  [ green-hosting
-//   badges — right ]  [ Details chevron ]
-// Click anywhere to expand into the fuller technical disclosure (hosting
-// provider/region, Green Web Foundation verification line, notes, the
-// live Website Carbon script badge, methodology) — all still individually
-// toggleable from Keystatic.
+// Collapsed bar (always visible): the LIVE Website Carbon badge is now the
+// headline — a real per-page measurement from websitecarbon.com, replacing
+// the previous self-computed co2.js estimate (the "guessed number", now
+// removed entirely). Right side: a label and the Details chevron.
 //
-// Built on native <details>/<summary>: expand/collapse works with zero
-// client JS and can't be broken by a build-tool issue — see Layout.astro's
-// data-reveal comment for the same reasoning applied here.
+// Expanded panel: the Green Web Foundation hosting badge (moved here from
+// the collapsed bar), hosting provider/region, verification status, the
+// sustainability notes, and methodology links — plus a pointer to the new
+// /legal/sustainability page which carries the full story.
 //
-// Two CO2 sources, intentionally different:
-//   - co2.js estimate: self-hosted, zero external requests, calculated
-//     from page weight using the open-source Sustainable Web Design
-//     Model. See lib/carbon.ts. This is the number shown in the metric.
-//   - Website Carbon badge: a live external script (websitecarbon.com)
-//     that fetches a real per-page measurement. This DOES send the page
-//     URL (and standard request metadata) to a third party once per
-//     page per day (cached client-side) — see showCarbonBadge to disable
-//     this one external request if that's not wanted. Kept inside the
-//     expanded panel since it's a separate, slower-loading measurement.
-import { estimatePageCarbon } from '../lib/carbon';
+// Still built on native <details>/<summary>: expand/collapse works with
+// zero client JS. The Website Carbon badge is the one external script on
+// the page (cached client-side per page per day); showCarbonBadge in
+// Keystatic still disables it if ever needed.
 
 interface Props {
-  pageBytes?: number;
   hostingProvider?: string;
   hostingRegion?: string;
   greenHostingVerified?: boolean;
@@ -35,7 +25,6 @@ interface Props {
   showSustainabilitySection?: boolean;
   showGreenBadges?: boolean;
   showCarbonBadge?: boolean;
-  showCo2Estimate?: boolean;
   showHostingInfo?: boolean;
   showVerificationStatus?: boolean;
   showSustainabilityNotes?: boolean;
@@ -43,8 +32,7 @@ interface Props {
 }
 
 const {
-  pageBytes = 600 * 1024,
-  hostingProvider = 'Vercel',
+  hostingProvider = 'DigitalOcean & Cloudflare',
   hostingRegion,
   greenHostingVerified = false,
   greenHostingEvidenceUrl,
@@ -52,65 +40,37 @@ const {
   showSustainabilitySection = true,
   showGreenBadges = true,
   showCarbonBadge = true,
-  showCo2Estimate = true,
   showHostingInfo = true,
   showVerificationStatus = true,
   showSustainabilityNotes = true,
   showMethodologyLink = false,
 } = Astro.props;
 
-const estimate = estimatePageCarbon(pageBytes, greenHostingVerified);
-const gramsDisplay = estimate.grams < 0.1 ? estimate.grams.toFixed(3) : estimate.grams.toFixed(2);
-
-const showExpandedGrid = showHostingInfo || showVerificationStatus;
 const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
 const greenCheckImageUrl = `https://app.greenweb.org/api/v3/greencheckimage/${siteDomain}?nocache=true`;
 const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`;
+const showExpandedGrid = showHostingInfo || showVerificationStatus;
 ---
 
 {showSustainabilitySection && (
   <details class="sustainability-note">
     <summary class="sustainability-summary">
-
-      {showCo2Estimate && (
-        <span class="sustainability-metric">
-          <svg class="metric-leaf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M5 21c8 0 14-6 14-15C10 6 5 12 5 21Z" />
-            <path d="M5 21c0-6 3-10 8-12" />
-          </svg>
-          <span class="metric-text">
-            <span class="metric-value">~{gramsDisplay}g <span class="metric-unit">CO₂</span></span>
-            <span class="metric-label">Estimated per page view</span>
-          </span>
+      {showCarbonBadge && (
+        <span class="carbon-live">
+          <div id="wcb" class="carbonbadge wcb-d"></div>
+          <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
         </span>
       )}
+
+      <span class="sustainability-label">
+        <span class="label-title">This page's carbon footprint</span>
+        <span class="label-sub">Measured live by Website Carbon</span>
+      </span>
 
       <span class="sustainability-spacer"></span>
 
-      {showGreenBadges && (
-        <span class="sustainability-badges">
-          {/* Kualo's badge was removed here — hosting is DigitalOcean & Cloudflare per
-              site-settings.yaml, not Kualo, so that badge no longer matched reality.
-              The Green Web Foundation check below is domain-verified and accurate
-              regardless of which host is behind it. */}
-          <a
-            href={greenCheckLinkUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Green Web Foundation check for this site"
-          >
-            <img
-              src={greenCheckImageUrl}
-              alt="This website runs on green hosting - verified by thegreenwebfoundation.org"
-              width="160"
-              height="66"
-              loading="lazy"
-            />
-          </a>
-        </span>
-      )}
-
       <span class="sustainability-toggle" aria-hidden="true">
+        <span class="toggle-text">Details</span>
         <svg class="sustainability-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 9l6 6 6-6" />
         </svg>
@@ -118,256 +78,202 @@ const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check
     </summary>
 
     <div class="sustainability-panel">
-      {showExpandedGrid && (
-        <div class="sustainability-grid">
-          {showHostingInfo && (
-            <div class="sustainability-stat">
-              <span class="stat-value">{hostingProvider}{hostingRegion && ` · ${hostingRegion}`}</span>
-              <span class="stat-label">Current hosting</span>
-            </div>
-          )}
-          {showVerificationStatus && (
-            <div class="sustainability-stat">
-              <span class="stat-value">{greenHostingVerified ? 'Verified green' : 'Not yet verified'}</span>
-              <span class="stat-label">
-                <a href={greenCheckLinkUrl} target="_blank" rel="noopener noreferrer">
-                  Green Web Foundation status →
-                </a>
-                {greenHostingEvidenceUrl && (
-                  <>
-                    {' '}·{' '}
-                    <a href={greenHostingEvidenceUrl} target="_blank" rel="noopener noreferrer">Evidence →</a>
-                  </>
-                )}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+      <div class="panel-columns">
+        {showGreenBadges && (
+          <a class="green-badge" href={greenCheckLinkUrl} target="_blank" rel="noopener noreferrer" aria-label="Green Web Foundation check for this site">
+            <img src={greenCheckImageUrl} alt="This website runs on green hosting - verified by thegreenwebfoundation.org" width="160" height="66" loading="lazy" />
+          </a>
+        )}
+
+        {showExpandedGrid && (
+          <div class="sustainability-grid">
+            {showHostingInfo && (
+              <div class="sustainability-stat">
+                <span class="stat-value">{hostingProvider}{hostingRegion && ` · ${hostingRegion}`}</span>
+                <span class="stat-label">Current hosting</span>
+              </div>
+            )}
+            {showVerificationStatus && (
+              <div class="sustainability-stat">
+                <span class="stat-value">{greenHostingVerified ? 'Verified green' : 'Not yet verified'}</span>
+                <span class="stat-label">
+                  <a href={greenCheckLinkUrl} target="_blank" rel="noopener noreferrer">Green Web Foundation status →</a>
+                  {greenHostingEvidenceUrl && (
+                    <>
+                      {' '}·{' '}
+                      <a href={greenHostingEvidenceUrl} target="_blank" rel="noopener noreferrer">Evidence →</a>
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {showSustainabilityNotes && sustainabilityNotes && (
         <p class="sustainability-notes">{sustainabilityNotes}</p>
       )}
 
-      {showCarbonBadge && (
-        <div class="carbon-badge-wrap">
-          <div id="wcb" class="carbonbadge wcb-d"></div>
-          <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
-        </div>
-      )}
-
-      {showMethodologyLink && (
-        <p class="sustainability-methodology">
-          Self-measured estimate via <a href="https://www.thegreenwebfoundation.org/co2-js/" target="_blank" rel="noopener noreferrer">CO2.js</a>; live badge via <a href="https://www.websitecarbon.com/" target="_blank" rel="noopener noreferrer">Website Carbon</a>.
-        </p>
-      )}
+      <p class="sustainability-more">
+        Full detail on how this site is built and hosted: <a href="/legal/sustainability/">Sustainability →</a>
+        {showMethodologyLink && (
+          <>
+            {' '}· Live badge via <a href="https://www.websitecarbon.com/" target="_blank" rel="noopener noreferrer">Website Carbon</a>
+          </>
+        )}
+      </p>
     </div>
   </details>
 )}
 
 <style>
   .sustainability-note {
-    background: linear-gradient(135deg, var(--forest) 0%, var(--canopy) 130%);
-    border: 1px solid var(--hairline);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--ink-border);
     border-radius: var(--radius-lg);
     padding: 4px;
     transition: border-color 0.25s ease;
   }
-
   .sustainability-note:hover {
-    border-color: var(--hairline-hover);
+    border-color: var(--ink-border-hover);
   }
 
   .sustainability-summary {
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    padding: 16px 20px;
+    padding: 14px 20px;
     cursor: pointer;
     list-style: none;
   }
-  .sustainability-summary::-webkit-details-marker {
-    display: none;
-  }
-  .sustainability-summary::marker {
-    content: '';
-  }
+  .sustainability-summary::-webkit-details-marker { display: none; }
+  .sustainability-summary::marker { content: ''; }
 
-  /* ---- Left: the headline CO2 metric ---- */
-  .sustainability-metric {
+  /* The live badge — the star of the bar. wcb-d is the badge's own dark
+     variant, which sits naturally on the ink footer. */
+  .carbon-live {
+    flex-shrink: 0;
+    min-height: 28px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
   }
 
-  .metric-leaf {
-    flex-shrink: 0;
-    width: 34px;
-    height: 34px;
-    padding: 7px;
-    border-radius: 50%;
-    background: var(--signal-soft);
-    color: var(--signal);
-    box-sizing: border-box;
-  }
-
-  .metric-text {
+  .sustainability-label {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    line-height: 1.15;
+    line-height: 1.2;
   }
-
-  .metric-value {
+  .label-title {
     font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-strong);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink-text);
   }
-
-  .metric-unit {
-    font-size: 0.7em;
-    font-weight: 500;
-    color: var(--mist-muted);
-  }
-
-  .metric-label {
+  .label-sub {
     font-size: 12px;
-    color: var(--mist-muted);
-    white-space: nowrap;
+    color: var(--ink-text-muted);
   }
 
-  .sustainability-spacer {
-    flex: 1 1 auto;
-  }
+  .sustainability-spacer { flex: 1 1 auto; }
 
-  /* ---- Right: green-hosting badges ---- */
-  .sustainability-badges {
+  .sustainability-toggle {
     display: flex;
     align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
+    gap: 7px;
+    color: var(--ink-text-muted);
+    flex-shrink: 0;
+  }
+  .toggle-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .sustainability-chevron {
+    transition: transform 0.25s ease;
+  }
+  details[open] .sustainability-chevron {
+    transform: rotate(180deg);
   }
 
-  .sustainability-badges img {
+  /* ---- Expanded ---- */
+  .sustainability-panel {
+    padding: 6px 20px 18px;
+    border-top: 1px solid var(--ink-border);
+    margin: 0 4px;
+  }
+
+  .panel-columns {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    padding-top: 16px;
+  }
+
+  .green-badge img {
     display: block;
     opacity: 0.92;
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
-  .sustainability-badges a:hover img {
+  .green-badge:hover img {
     opacity: 1;
     transform: translateY(-1px);
   }
 
-  /* ---- Chevron toggle ---- */
-  .sustainability-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: 1px solid var(--hairline);
-    color: var(--mist-muted);
-    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-  }
-
-  .sustainability-summary:hover .sustainability-toggle {
-    color: var(--mint);
-    border-color: var(--moss);
-    background: var(--charcoal-soft);
-  }
-
-  .sustainability-chevron {
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .sustainability-note[open] .sustainability-chevron {
-    transform: rotate(180deg);
-  }
-
-  /* ---- Expanded panel ---- */
-  .sustainability-panel {
-    padding: 4px 20px 20px;
-  }
-
   .sustainability-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--hairline);
+    display: flex;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
   }
-
   .sustainability-stat {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
   }
-
   .stat-value {
-    font-size: 1.05rem;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--text-strong);
+    color: var(--ink-text);
   }
-
   .stat-label {
     font-size: 12px;
-    color: var(--mist-muted);
+    color: var(--ink-text-muted);
   }
-
   .stat-label a {
-    color: var(--mist-muted);
+    color: var(--ink-accent);
+    text-decoration: none;
   }
-
-  .stat-label a:hover {
-    color: var(--mint);
-  }
+  .stat-label a:hover { text-decoration: underline; }
 
   .sustainability-notes {
-    font-size: 13.5px;
-    color: var(--mist);
-    line-height: 1.5;
-    margin: 16px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink-text-muted);
+    max-width: 640px;
+    margin: 14px 0 0;
   }
 
-  .carbon-badge-wrap {
-    margin-top: 14px;
-  }
-
-  .sustainability-methodology {
-    font-size: 11.5px;
-    color: var(--mist-muted);
-    line-height: 1.5;
+  .sustainability-more {
+    font-size: 12.5px;
+    color: var(--ink-text-muted);
     margin: 12px 0 0;
   }
-
-  .sustainability-methodology a {
-    color: var(--mist-muted);
-    text-decoration: underline;
+  .sustainability-more a {
+    color: var(--ink-accent);
+    text-decoration: none;
   }
+  .sustainability-more a:hover { text-decoration: underline; }
 
   @media (max-width: 640px) {
-    .sustainability-summary {
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-    .sustainability-spacer {
-      flex-basis: 100%;
-      height: 0;
-    }
-    .sustainability-toggle {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-    }
-    .sustainability-note {
-      position: relative;
-    }
-    .sustainability-grid {
-      grid-template-columns: 1fr;
-    }
+    .sustainability-summary { flex-wrap: wrap; gap: 12px; }
+    .sustainability-label { min-width: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sustainability-chevron,
+    .green-badge img { transition: none; }
   }
 </style>

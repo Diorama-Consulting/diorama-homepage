@@ -1,0 +1,263 @@
+---
+// LegalPage — shared layout for /legal/* (Privacy, Terms, Cookies,
+// Accessibility, Sustainability).
+//
+// Structure: a compact dark ink hero (consistent with the site's dark
+// bookends) carrying the eyebrow, title and a mono "Last updated" chip;
+// then a two-column body — a sticky table of contents on the left (built
+// from the toc prop; hidden on mobile) and the document prose on the
+// right, with each section revealing lightly on scroll via the site's
+// existing data-reveal pattern. Prose styling is deliberately generous:
+// legal text is only "engaging" if it's genuinely comfortable to read.
+import Layout from './Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { reader } from '../lib/keystatic';
+
+interface TocItem {
+  id: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  eyebrow?: string;
+  lastUpdated?: string;
+  description: string;
+  toc?: TocItem[];
+}
+
+const { title, eyebrow = 'Legal', lastUpdated, description, toc = [] } = Astro.props;
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const siteSettings = await reader.singletons.siteSettings.read();
+const pageTitle = `${title} — ${siteSettings?.siteName ?? 'Diorama Consulting'}`;
+---
+
+<Layout title={pageTitle} description={description}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <section class="legal-hero">
+    <div class="container legal-hero-inner">
+      <p class="legal-eyebrow">{eyebrow}</p>
+      <h1>{title}</h1>
+      {lastUpdated && <p class="legal-updated">Last updated: {lastUpdated}</p>}
+    </div>
+  </section>
+
+  <main class="container legal-layout">
+    {toc.length > 0 && (
+      <nav class="legal-toc" aria-label="On this page">
+        <p class="toc-heading">On this page</p>
+        <ol>
+          {toc.map((item) => (
+            <li><a href={`#${item.id}`}>{item.label}</a></li>
+          ))}
+        </ol>
+      </nav>
+    )}
+    <article class="legal-body">
+      <slot />
+    </article>
+  </main>
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
+
+<style>
+  .legal-hero {
+    background: linear-gradient(180deg, var(--ink-bg) 0%, var(--ink-bg-2) 100%);
+  }
+  .legal-hero-inner {
+    padding-top: 60px;
+    padding-bottom: 52px;
+  }
+  .legal-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-accent);
+    margin: 0 0 12px;
+  }
+  .legal-hero h1 {
+    font-size: clamp(28px, 3.6vw, 42px);
+    color: var(--ink-text);
+    margin: 0 0 14px;
+  }
+  .legal-updated {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-text-muted);
+    border: 1px solid var(--ink-border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin: 0;
+  }
+
+  .legal-layout {
+    display: grid;
+    grid-template-columns: minmax(200px, 250px) minmax(0, 1fr);
+    gap: var(--space-2xl);
+    align-items: start;
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-2xl);
+  }
+  .legal-layout:not(:has(.legal-toc)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* ---- TOC ---- */
+  .legal-toc {
+    position: sticky;
+    top: 96px;
+  }
+  .toc-heading {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+    margin: 0 0 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .legal-toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    counter-reset: toc;
+  }
+  .legal-toc a {
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--mist-muted);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-left: 2px solid transparent;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .legal-toc a:hover {
+    color: var(--text-strong);
+    border-left-color: var(--signal);
+    background: var(--charcoal-soft);
+  }
+
+  /* ---- Prose ---- */
+  .legal-body {
+    max-width: 760px;
+    color: var(--mist);
+    font-size: 15.5px;
+    line-height: 1.75;
+  }
+  .legal-body :global(section) {
+    scroll-margin-top: 96px;
+    margin-bottom: var(--space-lg);
+  }
+  .legal-body :global(h2) {
+    font-size: clamp(19px, 2vw, 24px);
+    color: var(--text-strong);
+    margin: 0 0 14px;
+    padding-top: 8px;
+  }
+  .legal-body :global(h3) {
+    font-size: 16px;
+    color: var(--text-strong);
+    margin: 22px 0 10px;
+  }
+  .legal-body :global(p) {
+    margin: 0 0 1em;
+    color: var(--mist-muted);
+  }
+  .legal-body :global(ul),
+  .legal-body :global(ol) {
+    margin: 0 0 1.2em;
+    padding-left: 1.4em;
+    color: var(--mist-muted);
+  }
+  .legal-body :global(li) {
+    margin-bottom: 0.45em;
+  }
+  .legal-body :global(li strong),
+  .legal-body :global(p strong) {
+    color: var(--mist);
+  }
+  .legal-body :global(a) {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* Address / details card */
+  .legal-body :global(.legal-card) {
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--signal);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 18px 22px;
+    margin: 0 0 1.4em;
+  }
+  .legal-body :global(.legal-card p) {
+    margin: 0 0 0.3em;
+  }
+  .legal-body :global(.legal-card p:last-child) {
+    margin: 0;
+  }
+
+  /* Lawful-bases table (Privacy Policy §3) */
+  .legal-body :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 0 0 1.4em;
+  }
+  .legal-body :global(th) {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--hairline-hover);
+  }
+  .legal-body :global(td) {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--mist-muted);
+    vertical-align: top;
+  }
+  .legal-body :global(tr:hover td) {
+    background: var(--charcoal-soft);
+  }
+
+  @media (max-width: 860px) {
+    .legal-layout {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+    .legal-toc {
+      position: static;
+    }
+    .legal-toc ol {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .legal-toc a {
+      border-left: none;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+    }
+  }
+</style>

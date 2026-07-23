@@ -1,0 +1,93 @@
+---
+// /legal/sustainability — the sustainability information's new permanent
+// home (the footer strip now shows just the live measurement and links
+// here for the full story). Data comes from the existing siteSettings
+// sustainability fields in Keystatic, so hosting details, verification
+// and the notes stay editable in one place.
+import LegalPage from '../../layouts/LegalPage.astro';
+import { reader } from '../../lib/keystatic';
+
+const siteSettings = await reader.singletons.siteSettings.read();
+
+const hostingProvider = siteSettings?.hostingProvider || 'DigitalOcean & Cloudflare';
+const hostingRegion = siteSettings?.hostingRegion;
+const greenHostingVerified = siteSettings?.greenHostingVerified ?? false;
+const greenHostingEvidenceUrl = siteSettings?.greenHostingEvidenceUrl;
+const sustainabilityNotes = siteSettings?.sustainabilityNotes;
+
+const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
+const greenCheckImageUrl = `https://app.greenweb.org/api/v3/greencheckimage/${siteDomain}?nocache=true`;
+const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`;
+
+const toc = [
+  { id: 'why', label: 'Why it matters' },
+  { id: 'measurement', label: 'Live measurement' },
+  { id: 'hosting', label: 'Hosting' },
+  { id: 'design', label: 'How the site is built' },
+  { id: 'ongoing', label: 'Ongoing work' },
+];
+---
+
+<LegalPage
+  title="Sustainability"
+  eyebrow="Sustainability"
+  description="How the Diorama Consulting website is measured, hosted and built to keep its carbon footprint low."
+  toc={toc}
+>
+  <section id="why" data-reveal>
+    <h2>Why it matters</h2>
+    <p>The internet has a real carbon footprint — every page view triggers data transfer, server compute and device energy use. For a consultancy that helps clients operationalise sustainability, our own website should hold itself to the standard we advise: measure honestly, choose efficient defaults, and publish the results.</p>
+    {sustainabilityNotes && <p>{sustainabilityNotes}</p>}
+  </section>
+
+  <section id="measurement" data-reveal>
+    <h2>Live measurement</h2>
+    <p>The badge below is a live, per-page measurement from <a href="https://www.websitecarbon.com/" target="_blank" rel="noopener noreferrer">Website Carbon</a> — not a self-reported estimate. The same badge appears in the footer of every page, so the number is always in view, measured rather than guessed.</p>
+    <div class="measure-panel">
+      <div id="wcb" class="carbonbadge"></div>
+      <script is:inline src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
+    </div>
+  </section>
+
+  <section id="hosting" data-reveal>
+    <h2>Hosting</h2>
+    <p>This site is hosted on <strong>{hostingProvider}</strong>{hostingRegion && <> in the <strong>{hostingRegion}</strong> region</>}. {greenHostingVerified
+      ? 'Our hosting is verified as running on green energy by the Green Web Foundation — you can check the live verification for yourself:'
+      : 'You can check this domain’s green-hosting status live with the Green Web Foundation:'}</p>
+    <p>
+      <a href={greenCheckLinkUrl} target="_blank" rel="noopener noreferrer" aria-label="Green Web Foundation check for this site">
+        <img src={greenCheckImageUrl} alt="Green hosting check for this website by thegreenwebfoundation.org" width="200" height="82" loading="lazy" />
+      </a>
+    </p>
+    {greenHostingEvidenceUrl && (
+      <p><a href={greenHostingEvidenceUrl} target="_blank" rel="noopener noreferrer">Supporting evidence →</a></p>
+    )}
+  </section>
+
+  <section id="design" data-reveal>
+    <h2>How the site is built</h2>
+    <ul>
+      <li><strong>Static-first architecture.</strong> The site is built with Astro and pre-renders pages wherever possible, so most visits are served as lightweight static files rather than computed on demand.</li>
+      <li><strong>Optimised media.</strong> Every image is served in modern formats (AVIF/WebP) with responsive sizing, so devices only download what they'll actually display.</li>
+      <li><strong>Minimal JavaScript.</strong> Interactivity is added sparingly and progressively — pages work without scripts, and animation is decoration, never a dependency.</li>
+      <li><strong>Few third parties.</strong> The site avoids trackers and advertising entirely; the carbon badge above is one of the very few external requests it makes.</li>
+    </ul>
+  </section>
+
+  <section id="ongoing" data-reveal>
+    <h2>Ongoing work</h2>
+    <p>Sustainability is a practice, not a checkbox. We keep the live measurement public so regressions are visible, we review page weight when the site changes, and we evaluate our hosting choices as greener options mature. If you have suggestions — or spot something heavy — <a href="/contact">tell us</a>.</p>
+  </section>
+</LegalPage>
+
+<style>
+  .measure-panel {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+    padding: 22px 28px;
+    min-height: 60px;
+  }
+</style>
