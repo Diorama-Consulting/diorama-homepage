@@ -5,7 +5,16 @@
 // charity tabs, token-based contrast, CMS alt-text fields), not template
 // boilerplate. If a claim stops being true, edit this page.
 import LegalPage from '../../layouts/LegalPage.astro';
+import { reader } from '../../lib/keystatic';
 
+export const prerender = false;
+
+
+// Page toggle — controlled from Keystatic > Legal pages. Off = 404.
+const legal = await reader.singletons.legalPages.read().catch(() => null);
+if (legal && legal.accessibilityEnabled === false) {
+  return new Response('Not found', { status: 404 });
+}
 const toc = [
   { id: 'commitment', label: 'Our commitment' },
   { id: 'measures', label: 'What this site does' },

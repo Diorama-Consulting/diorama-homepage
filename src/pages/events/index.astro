@@ -39,6 +39,7 @@ const past = allEvents
     heroImage: resolveImageUrl(e.data.heroImage, e.data.heroImageUrl),
   }));
 
+const eventsPage = await reader.singletons.eventsIndex.read().catch(() => null);
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
@@ -52,13 +53,13 @@ const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.d
 >
   <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
-  <Section eyebrow="Events" heading="Talks, workshops, and things we're part of" subheading="Managed independently from the blog/insights — add new ones any time in Keystatic, and pick any of them for the homepage hero carousel." />
+  <Section eyebrow={eventsPage?.eyebrow || 'Events'} heading={eventsPage?.heading || "Talks, workshops, and things we're part of"} subheading={eventsPage?.subheading || 'Managed independently from the blog/insights — add new ones any time in Keystatic, and pick any of them for the homepage hero carousel.'} />
 
   {upcoming.length > 0 ? (
     <UpcomingEvents events={upcoming} eyebrow="Upcoming" heading="What's next" id="events-upcoming" />
   ) : (
     <Section>
-      <p class="events-empty">Nothing on the calendar right now — check back soon.</p>
+      <p class="events-empty">{eventsPage?.emptyMessage || 'Nothing on the calendar right now — check back soon.'}</p>
     </Section>
   )}
 

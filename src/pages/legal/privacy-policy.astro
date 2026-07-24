@@ -3,7 +3,17 @@
 // (12 Oct 2025 version) and must not be paraphrased when editing; only
 // structure/links are added. "Contact us here" phrases link to /contact.
 import LegalPage from '../../layouts/LegalPage.astro';
+import { reader } from '../../lib/keystatic';
 
+export const prerender = false;
+
+
+// Page toggle — controlled from Keystatic > Legal pages. Off = 404.
+const legal = await reader.singletons.legalPages.read().catch(() => null);
+if (legal && legal.privacyEnabled === false) {
+  return new Response('Not found', { status: 404 });
+}
+const lastUpdated = legal?.privacyLastUpdated || '12 October 2025';
 const toc = [
   { id: 'what-data', label: '1. What data we collect' },
   { id: 'how-collect', label: '2. How we collect data' },
@@ -23,7 +33,7 @@ const toc = [
 
 <LegalPage
   title="Privacy Policy"
-  lastUpdated="12 October 2025"
+  lastUpdated={lastUpdated}
   description="How Diorama Consulting Ltd collects, uses, and protects your personal data."
   toc={toc}
 >
