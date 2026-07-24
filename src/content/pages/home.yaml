@@ -1,7 +1,7 @@
-heroEyebrow: AI Technology Advisory
-heroHeading: Bridging product strategy, engineering and AI.
-heroSubheading: AI Technology Advisory led by Mal Minhas, partnering with C-Suite, Boards, Founders and Investors — with a focus on D2C marketplaces and products.
-heroCtaText: Book a conversation
+heroEyebrow: Now in beta
+heroHeading: Ideas that make a difference.
+heroSubheading: We help ambitious teams ship AI products that actually work.
+heroCtaText: Get started
 heroCtaHref: /contact
 heroFaceAlt: Portrait of the founder.
 revealHeading: Unique Industry Experience.
@@ -19,7 +19,9 @@ exploreCards:
     href: /services
     linkText: View Services
   - title: Tools
-    description: Side projects, apps, and interactive tools built with AI coding assistants.
+    description: >-
+      Side projects, apps, and interactive tools built with AI coding
+      assistants.
     href: /tools
     linkText: View Tools
   - title: Insights
@@ -46,9 +48,12 @@ trustedCompanies:
     logoUrl: >-
       https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/960px-Amazon_logo.svg.png?_=20250504041148
   - name: Adobe
-    logoUrl: https://commons.wikimedia.org/wiki/File:Adobe_Corporate_logo.svg
+    logo: trustedCompanies/1/logo.png
   - name: Apple
     logoUrl: https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg
-  - name: Gumtree
-    logoUrl: >-
-      https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN8hej6EcarCuIOD3cmAL1GsWKnGAn3VcpGK_0LOJdFoh6Xiae5KmQmao&s=10
+  - name: Depop
+    logo: trustedCompanies/3/logo.svg
+  - name: Aston Mansfield
+    logo: trustedCompanies/4/logo.png
+  - name: Helpforce
+    logo: trustedCompanies/5/logo.jpg
