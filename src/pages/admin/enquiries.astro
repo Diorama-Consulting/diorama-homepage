@@ -101,12 +101,18 @@ const counts = {
         <p class="eyebrow">Admin</p>
         <h1>Enquiries</h1>
       </div>
-      <nav class="filters" aria-label="Filter by status">
+      <div class="head-right">
+        <nav class="admin-nav" aria-label="Admin pages">
+          <a href="/admin/dashboard">Dashboard</a>
+          <a class="active" href="/admin/enquiries">Enquiries</a>
+        </nav>
+        <nav class="filters" aria-label="Filter by status">
         <a class:list={[{ active: !filter }]} href="/admin/enquiries">All</a>
         <a class:list={[{ active: filter === 'new' }]} href="/admin/enquiries?filter=new">New{!filter && counts.new > 0 ? ` (${counts.new})` : ''}</a>
         <a class:list={[{ active: filter === 'handled' }]} href="/admin/enquiries?filter=handled">Handled</a>
         <a class:list={[{ active: filter === 'archived' }]} href="/admin/enquiries?filter=archived">Archived</a>
-      </nav>
+        </nav>
+      </div>
     </div>
 
     {loadError && (
@@ -176,6 +182,20 @@ const counts = {
     color: var(--signal);
     margin-bottom: 8px;
   }
+
+  .head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .admin-nav { display: flex; gap: 6px; }
+  .admin-nav a {
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--mist-muted);
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+  }
+  .admin-nav a.active { background: var(--signal); border-color: var(--signal); color: hsl(0 0% 100%); }
+  .admin-nav a:not(.active):hover { border-color: var(--hairline-hover); background: var(--charcoal-soft); }
 
   .filters { display: flex; gap: 6px; }
   .filters a {
