@@ -424,6 +424,7 @@ export default config({
         body: fields.text({ label: 'Body copy', multiline: true }),
         ctaText: fields.text({ label: 'Button text', defaultValue: 'Learn more' }),
         ctaHref: fields.text({ label: 'Button link', defaultValue: '/services/charities' }),
+        ...heroImageFieldsForSingleton('image', 'Card image (full-bleed background)', 'src/content/pages/home-charity-widget'),
       },
     }),
 
@@ -435,6 +436,7 @@ export default config({
         body: fields.text({ label: 'Body copy', multiline: true }),
         ctaText: fields.text({ label: 'Button text', defaultValue: 'Read CxAI' }),
         ctaHref: fields.url({ label: 'Button link', defaultValue: 'https://cxai100.substack.com' }),
+        ...heroImageFieldsForSingleton('image', 'Card image (full-bleed background)', 'src/content/pages/home-cxai-widget'),
       },
     }),
 
@@ -669,6 +671,7 @@ export default config({
           label: 'What-we-do chips (short phrases shown under the mission line)',
           itemLabel: (props) => props.value || 'Chip',
         }),
+        ...heroImageFieldsForSingleton('heroBackgroundImage', 'Hero background photo', 'src/content/pages/about'),
         // --- Act 2: the story, revealed on scroll ---
         storyEyebrow: fields.text({ label: 'Story section — eyebrow', defaultValue: 'Why "Diorama"' }),
         bodyParagraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
@@ -740,24 +743,10 @@ export default config({
           itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
         }),
         teamHeading: fields.text({ label: 'Team section heading', defaultValue: 'A small team, for complete control' }),
-        team: fields.array(
-          fields.object({
-            name: fields.text({ label: 'Name' }),
-            role: fields.text({ label: 'Role' }),
-            bio: fields.text({ label: 'Bio', multiline: true }),
-            socials: fields.array(
-              fields.object({
-                label: fields.text({ label: 'Platform' }),
-                href: fields.url({ label: 'URL' }),
-              }),
-              { label: 'Social links', itemLabel: (props) => props.fields.label.value || 'Link' },
-            ),
-          }),
-          {
-            label: 'Team members',
-            itemLabel: (props) => props.fields.name.value || 'Member',
-          },
-        ),
+        // The three-person profile grid (Paolo/Rowan/Mal) this field used
+        // to feed was removed from the About page — just the founder
+        // block remains. Field removed too rather than left behind
+        // silently doing nothing in the Keystatic UI.
       },
     }),
 

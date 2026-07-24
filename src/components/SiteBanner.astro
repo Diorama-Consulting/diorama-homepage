@@ -12,7 +12,20 @@
 <div id="site-banner" hidden></div>
 
 <style>
-  #site-banner {
+  /* THE FIX for the white gap above the header: this used to be a plain
+     #site-banner selector, whose specificity (100) beats the browser's
+     own [hidden] { display: none } UA rule (specificity ~10) — meaning
+     the empty div still rendered as a flex box (with real padding, so
+     real height) even while `hidden`, just visually translated off
+     hidden it via translateY(-100%). Transform doesn't remove an element
+     from layout, so that reserved height showed up as a gap of plain
+     page background sitting above the header on every single page.
+     Scoping every rule to :not([hidden]) means these rules simply don't
+     match at all while the attribute is present — the UA default wins
+     outright, with no specificity fight — and once JS clears `hidden`
+     the moment it has real content to show, this same rule set applies
+     normally. */
+  #site-banner:not([hidden]) {
     position: relative;
     z-index: 70;
     display: flex;

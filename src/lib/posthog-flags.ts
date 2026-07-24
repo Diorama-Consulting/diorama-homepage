@@ -20,6 +20,13 @@ import { PH_APP_HOST, PH_PROJECT, posthogConfigured } from './posthog-query';
 
 const PH_KEY = secret('POSTHOG_PERSONAL_API_KEY');
 
+// Same idea as posthog-query.ts's lastQueryAuthError: a key can exist and
+// still lack the specific scope this file's calls need ("Feature Flag"
+// read for listing, read+WRITE for create/toggle) — distinct from "not
+// configured at all." Checked by /admin/tools to show a precise notice
+// instead of silently doing nothing when a toggle click fails.
+export let lastFlagAuthError = false;
+
 export interface FeatureFlag {
   id: number;
   key: string;
@@ -30,7 +37,7 @@ export interface FeatureFlag {
 async function phFetch(path: string, init?: RequestInit): Promise<Response | null> {
   if (!posthogConfigured) return null;
   try {
-    return await fetch(`${PH_APP_HOST}/api/projects/${PH_PROJECT}${path}`, {
+    const res = await fetch(`${PH_APP_HOST}/api/projects/${PH_PROJECT}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
@@ -39,6 +46,8 @@ async function phFetch(path: string, init?: RequestInit): Promise<Response | nul
       },
       signal: AbortSignal.timeout(10_000),
     });
+    lastFlagAuthError = res.status === 401 || res.status === 403;
+    return res;
   } catch (e) {
     console.error('posthog-flags: request error', e);
     return null;

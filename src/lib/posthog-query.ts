@@ -25,6 +25,14 @@ export const PH_APP_HOST = ingestHost.replace('.i.posthog.com', '.posthog.com');
 
 export const posthogConfigured = Boolean(PH_KEY && PH_PROJECT);
 
+// Tracks whether the MOST RECENT query attempt failed specifically due to
+// an auth/permission problem (401/403) — distinct from "not configured at
+// all" (missing env vars) or a transient network error. A personal API
+// key can exist and still lack the "Query" read scope specifically (e.g.
+// if only "Feature Flags" scope was ever granted) — that failure mode
+// looks identical to "no data" unless callers check this and say so.
+export let lastQueryAuthError = false;
+
 export type HogQLRow = (string | number | boolean | null)[];
 
 /** Escapes a value for safe interpolation into a single-quoted HogQL string literal. */
@@ -45,9 +53,11 @@ export async function hogql(query: string): Promise<HogQLRow[]> {
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
+      lastQueryAuthError = res.status === 401 || res.status === 403;
       console.error(`posthog-query: HogQL request failed ${res.status}: ${await res.text()}`);
       return [];
     }
+    lastQueryAuthError = false;
     return (await res.json())?.results ?? [];
   } catch (e) {
     console.error('posthog-query: HogQL request error', e);

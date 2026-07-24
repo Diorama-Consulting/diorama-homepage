@@ -16,7 +16,7 @@
 import AdminShell from '../../components/AdminShell.astro';
 import { requireAdmin } from '../../lib/admin-auth';
 import { reader } from '../../lib/keystatic';
-import { hogql, escapeHogQL, posthogConfigured } from '../../lib/posthog-query';
+import { hogql, escapeHogQL, posthogConfigured, lastQueryAuthError } from '../../lib/posthog-query';
 import { getChatbotOverride, setChatbotOverride, clearChatbotOverride } from '../../lib/chatbot-override';
 
 export const prerender = false;
@@ -54,17 +54,24 @@ const flaggedOnly = url.searchParams.get('flagged') === '1';
 let rows: Awaited<ReturnType<typeof hogql>> = [];
 let totalCount = 0;
 let flaggedCount = 0;
+let allTimeCount = 0; // diagnostic: lets the page tell "no data in 30 days" apart from "no data at all"
 
 if (posthogConfigured) {
   const whereClauses = ["event = 'chat_message_processed'", 'timestamp > now() - INTERVAL 30 DAY'];
-  if (flaggedOnly) whereClauses.push("(properties.flagged = 'true' OR properties.flagged = true)");
+  // toString(...) rather than a bare `= true`/`= 'true'` comparison: the
+  // `flagged` property arrives as a genuine JS boolean from api/chat.ts,
+  // and JSON-typed properties can come back from ClickHouse as either a
+  // native bool or its string form depending on how the column was
+  // inferred — casting to a string first and comparing against the
+  // string 'true' works regardless of which representation landed.
+  if (flaggedOnly) whereClauses.push("toString(properties.flagged) = 'true'");
   if (q) {
     const safe = escapeHogQL(q.toLowerCase());
-    whereClauses.push(`(lower(properties.user_message) LIKE '%${safe}%' OR lower(properties.assistant_reply) LIKE '%${safe}%')`);
+    whereClauses.push(`(lower(toString(properties.user_message)) LIKE '%${safe}%' OR lower(toString(properties.assistant_reply)) LIKE '%${safe}%')`);
   }
   const where = whereClauses.join(' AND ');
 
-  const [transcriptRows, counts] = await Promise.all([
+  const [transcriptRows, counts, allTime] = await Promise.all([
     hogql(`
       SELECT timestamp, distinct_id, properties.$session_id, properties.page_path,
              properties.user_message, properties.assistant_reply, properties.flagged, properties.flag_reason
@@ -74,17 +81,24 @@ if (posthogConfigured) {
       LIMIT 100
     `),
     hogql(`
-      SELECT count(), countIf(properties.flagged = 'true' OR properties.flagged = true)
+      SELECT count(), countIf(toString(properties.flagged) = 'true')
       FROM events
       WHERE event = 'chat_message_processed' AND timestamp > now() - INTERVAL 30 DAY
     `),
+    // No date filter at all — if THIS is also zero, the honest answer is
+    // "no chat_message_processed events exist yet" (nothing to show,
+    // not a query bug). If this is non-zero but the 30-day count above
+    // is zero, the events exist but are older than the window.
+    hogql(`SELECT count() FROM events WHERE event = 'chat_message_processed'`),
   ]);
   rows = transcriptRows;
   const c = counts[0] ?? [0, 0];
   totalCount = Number(c[0] ?? 0);
   flaggedCount = Number(c[1] ?? 0);
+  allTimeCount = Number(allTime[0]?.[0] ?? 0);
 }
 
+const queryAuthError = lastQueryAuthError;
 const fmt = (iso: unknown) =>
   typeof iso === 'string' ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 const flagPct = totalCount > 0 ? `${((flaggedCount / totalCount) * 100).toFixed(1)}%` : '—';
@@ -95,6 +109,15 @@ const flagPct = totalCount > 0 ? `${((flaggedCount / totalCount) * 100).toFixed(
     <p class="notice">
       Transcripts need <code>POSTHOG_PERSONAL_API_KEY</code> and <code>POSTHOG_PROJECT_ID</code> in
       <code>/opt/apps/diorama/.env</code>. The prompt editor below works regardless.
+    </p>
+  )}
+
+  {posthogConfigured && queryAuthError && (
+    <p class="notice notice--warn">
+      PostHog rejected the last query with a permission error. This page's personal API key needs the
+      <strong>"Query" read</strong> scope specifically — a key with only <strong>"Feature Flag"</strong> scope
+      (enough for /admin/tools' toggles) isn't enough here. Check PostHog → Settings → Personal API keys → this
+      key's scopes, add Query read, and reload.
     </p>
   )}
 
@@ -165,7 +188,24 @@ const flagPct = totalCount > 0 ? `${((flaggedCount / totalCount) * 100).toFixed(
         </div>
 
         {rows.length === 0 ? (
-          <p class="empty">No messages match — try a different search, or check back once the bot's had some traffic.</p>
+          <div class="empty-state">
+            {allTimeCount === 0 ? (
+              <p class="empty">
+                No <code>chat_message_processed</code> events found in PostHog at all yet. Send yourself a test
+                message through the chat widget on the live site, then reload this page — it should appear within a
+                few seconds. If it still doesn't, check the site container's logs for errors around
+                <code>/api/chat</code>.
+              </p>
+            ) : q || flaggedOnly ? (
+              <p class="empty">No messages match this search/filter — {allTimeCount} total messages exist. Try clearing the search or the flagged filter.</p>
+            ) : (
+              <p class="empty">
+                {allTimeCount} message{allTimeCount === 1 ? '' : 's'} exist in PostHog, but none in the last 30 days —
+                widen the window isn't available yet as a control here, but this usually just means chat traffic has
+                been quiet recently.
+              </p>
+            )}
+          </div>
         ) : (
           <div class="transcript-list">
             {rows.map((row) => {

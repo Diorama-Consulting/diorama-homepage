@@ -19,7 +19,7 @@
 import AdminShell from '../../components/AdminShell.astro';
 import { requireAdmin } from '../../lib/admin-auth';
 import { secret } from '../../lib/env';
-import { hogql, escapeHogQL, posthogConfigured, personUrl, replayUrl } from '../../lib/posthog-query';
+import { hogql, escapeHogQL, posthogConfigured, lastQueryAuthError, personUrl, replayUrl } from '../../lib/posthog-query';
 
 export const prerender = false;
 
@@ -108,6 +108,11 @@ function eventLabel(e: JourneyEvent): string {
   return names[e.event] || e.event;
 }
 
+// Captured after every hogql() call above has resolved — reflects whether
+// PostHog rejected any of them specifically for a permission reason
+// (distinct from "not configured" or "no matching rows").
+const queryAuthError = lastQueryAuthError;
+
 const fmt = (iso: unknown) =>
   typeof iso === 'string' ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 const fmtShort = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -121,6 +126,15 @@ const fmtShort = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: '
       Journey enrichment needs <code>POSTHOG_PERSONAL_API_KEY</code> and <code>POSTHOG_PROJECT_ID</code> in
       <code>/opt/apps/diorama/.env</code> (PostHog → Settings → Personal API keys, "Query read" scope). Submissions
       below still show without it, just without the journey/replay context.
+    </p>
+  )}
+
+  {posthogConfigured && queryAuthError && (
+    <p class="notice notice--warn">
+      PostHog rejected the last query with a permission error. This page's personal API key needs the
+      <strong>"Query" read</strong> scope specifically — a key with only <strong>"Feature Flag"</strong> scope
+      (enough for /admin/tools' toggles) isn't enough here. Check PostHog → Settings → Personal API keys → this
+      key's scopes, add Query read, and reload.
     </p>
   )}
 

@@ -18,8 +18,8 @@
 import { getCollection } from 'astro:content';
 import AdminShell from '../../components/AdminShell.astro';
 import { requireAdmin } from '../../lib/admin-auth';
-import { hogql, posthogConfigured } from '../../lib/posthog-query';
-import { listFeatureFlags, ensureToolFlag, setFlagActive } from '../../lib/posthog-flags';
+import { hogql, posthogConfigured, lastQueryAuthError } from '../../lib/posthog-query';
+import { listFeatureFlags, ensureToolFlag, setFlagActive, lastFlagAuthError } from '../../lib/posthog-flags';
 
 export const prerender = false;
 
@@ -74,6 +74,7 @@ await Promise.all(
 
 // ---- Feature flags -----------------------------------------------------------
 const allFlags = posthogConfigured ? await listFeatureFlags() : [];
+const flagAuthError = lastFlagAuthError;
 const flagByKey = new Map(allFlags.map((f) => [f.key, f]));
 
 // ---- Usage leaderboard --------------------------------------------------------
@@ -94,9 +95,20 @@ if (posthogConfigured) {
 }
 const maxCount30d = Math.max(1, ...leaderboard.map((l) => l.count30d));
 const titleById = new Map(tools.map((t) => [t.id, t.data.title]));
+const queryAuthError = lastQueryAuthError;
 ---
 
 <AdminShell title="Tools & Health" eyebrow="Admin" activeHref="/admin/tools">
+  <p class="notice">
+    These three panels are <strong>independent</strong> — each needs a different piece of configuration, and one
+    being unconfigured doesn't affect the others:
+  </p>
+  <ul class="dep-list">
+    <li><strong>Health dashboard</strong> — no PostHog involved at all. It's a plain HTTP request to each tool's "Health-check URL" field in Keystatic. Every tool shows "Not monitored" until that field is filled in — that's the expected state for a brand-new field, not a bug.</li>
+    <li><strong>Feature flags</strong> — needs the personal API key's <strong>"Feature Flag"</strong> scope (read to list, write to create/toggle).</li>
+    <li><strong>Usage leaderboard</strong> — needs the <strong>"Query"</strong> read scope — a separate permission from Feature Flags in PostHog's own scope list.</li>
+  </ul>
+
   <section class="panel">
     <h2>Health dashboard</h2>
     <table>
@@ -134,6 +146,12 @@ const titleById = new Map(tools.map((t) => [t.id, t.data.title]));
     <h2>Feature flags — per-tool kill switch</h2>
     {!posthogConfigured ? (
       <p class="notice">Needs <code>POSTHOG_PERSONAL_API_KEY</code> (with Feature Flag write access) and <code>POSTHOG_PROJECT_ID</code> in <code>/opt/apps/diorama/.env</code>.</p>
+    ) : flagAuthError ? (
+      <p class="notice notice--warn">
+        PostHog rejected the last feature-flag request with a permission error. This key needs the
+        <strong>"Feature Flag"</strong> scope — both read (to list) and write (to create/toggle). Check PostHog →
+        Settings → Personal API keys → this key's scopes, then reload.
+      </p>
     ) : (
       <table>
         <thead>
@@ -188,6 +206,12 @@ const titleById = new Map(tools.map((t) => [t.id, t.data.title]));
     <h2>Usage leaderboard · last 30 days</h2>
     {!posthogConfigured ? (
       <p class="notice">Needs the same PostHog env vars as above.</p>
+    ) : queryAuthError ? (
+      <p class="notice notice--warn">
+        PostHog rejected the last query with a permission error. This key needs the <strong>"Query"</strong> read
+        scope — separate from Feature Flag scope. Check PostHog → Settings → Personal API keys → this key's scopes,
+        then reload.
+      </p>
     ) : leaderboard.length === 0 ? (
       <p class="empty">No tool-open events yet — this fills in once visitors start clicking "Open tool."</p>
     ) : (
@@ -207,6 +231,19 @@ const titleById = new Map(tools.map((t) => [t.id, t.data.title]));
 </AdminShell>
 
 <style>
+  .dep-list {
+    margin: -6px 0 var(--space-md);
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--mist-muted);
+    line-height: 1.55;
+  }
+  .dep-list strong {
+    color: var(--text-strong);
+  }
   .leaderboard {
     display: flex;
     flex-direction: column;
