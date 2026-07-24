@@ -1,19 +1,23 @@
 ---
-// /services/consulting — redesigned as an editorial page.
-//
-// The six capability cards that used to live here have MOVED to the
-// animated segment on /services (see CapabilityReveal.astro); they're
-// still edited from this page's singleton in Keystatic. This page is now
-// long-form: several paragraphs with alternating images, each section
-// revealing lightly on scroll via the site's existing data-reveal pattern.
-// All copy and images come from the "Services — Consulting" singleton's
-// new `sections` array; sensible defaults render until it's populated.
+// /services/consulting — rebuilt around the firm's REAL service catalogue
+// (all copy below is the exact supplied text — titles, intros and bullet
+// wording must not be paraphrased when editing; hover/expand presentation
+// is the only thing added). Structure:
+//   1. Intro + the four key business outcomes (OutcomesBand, exact text)
+//   2. Eight service areas as expandable cards — title + intro always
+//      visible, bullets revealed on open (native <details>, keyboard-
+//      accessible, no JS required)
+//   3. Optional editorial sections (only if authored in Keystatic — the
+//      previous default filler copy is gone)
+//   4. Testimonials (unchanged)
+// Service areas are Keystatic-editable via the servicesConsulting
+// singleton's serviceAreas field; the defaults below are the exact text.
 import { marked } from 'marked';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import TestimonialCard from '../../components/TestimonialCard.astro';
-import FloatingLeaves from '../../components/FloatingLeaves.astro';
+import OutcomesBand from '../../components/OutcomesBand.astro';
 import Footer from '../../components/Footer.astro';
 import Button from '../../components/Button.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
@@ -27,56 +31,135 @@ const pageTitle = page?.seoTitle || `Consulting — ${siteSettings?.siteName ?? 
 const pageDescription =
   page?.seoDescription ||
   page?.subheading ||
-  'Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors, with a focus on D2C marketplaces.';
+  'Fractional and interim advisory across Board and Investor Advisory, AI and Data Strategy, marketplaces, platform modernisation, and more.';
 const pageImage =
   resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
   resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
-// Editorial sections — Keystatic-driven, with defaults so the page reads
-// well before anything is authored. Body supports Markdown (rendered with
-// marked, same trusted-CMS-content reasoning as /services and /faq).
-type EditorialSection = {
-  heading: string;
-  bodyHtml: string;
-  image?: string;
-  imageAlt?: string;
-  imageSide: 'left' | 'right';
-};
-
-const defaultSections: Array<{ heading: string; body: string; imageSide: 'left' | 'right' }> = [
+// ---------------------------------------------------------------------
+// THE SERVICE CATALOGUE — exact supplied wording. Bullets are Markdown
+// (one per line) so links survive round-trips through Keystatic.
+// ---------------------------------------------------------------------
+const defaultServiceAreas = [
   {
-    heading: 'Leadership you can borrow',
-    body: 'Most scale-ups don\u2019t need a permanent CTO on day one — they need the judgement of one at the moments that matter: a funding round, a platform decision, a team that\u2019s outgrown its structure. Diorama provides fractional and interim CTO/CPTO leadership built on decades of doing the job full-time, stepping in with enough context to be useful in week one and enough detachment to tell you the truth.\n\nEngagements are shaped around the decision you\u2019re facing, not a retainer clock — whether that\u2019s six weeks of intensive due-diligence support or a standing fractional role through a growth phase.',
-    imageSide: 'right',
+    title: 'Board and Investor Advisory',
+    intro: 'Strategic guidance from pre-deal due diligence through post-investment value creation.',
+    bullets: [
+      'Technical & product due diligence and post-acquisition',
+      '100-day acceleration plans',
+      'Operating models, OKRs, and governance',
+      'Risk reviews and executive readouts',
+    ],
   },
   {
-    heading: 'AI strategy that answers to the P&L',
-    body: 'Every board is being asked what its AI strategy is; very few are being told what it should cost, what it should return, and what it genuinely changes about the operating model. Diorama\u2019s AI and data work starts from the economics: where language models actually move a number on your P&L, where they\u2019re a distraction, and how to sequence adoption so early wins fund the harder ones.\n\nThe advice is grounded in building, not just briefing — the tools on this site are working systems Diorama built and runs, and that hands-on fluency shapes every recommendation.',
-    imageSide: 'left',
+    title: 'Non-Executive and Trustee',
+    intro: 'Board-level governance experience as a Non-Executive Director and charity Trustee, alongside advisory work.',
+    bullets: [
+      'Trustee at [Helpforce](https://helpforce.community/), a national NHS and community volunteering charity.',
+      'Trustee at [Aston-Mansfield](https://www.aston-mansfield.org.uk/), a community charity supporting children, young people and families in Newham, London.',
+      'Governance, risk, and digital/AI oversight at Board level',
+      'Available for NED appointments, particularly where technology, AI or data strategy is on the agenda.',
+    ],
   },
   {
-    heading: 'Platforms, teams, and the long game',
-    body: 'The unglamorous work matters most: modernising a platform without a rewrite, designing a product engineering organisation that can ship, and making sustainability an operational practice rather than a slide. Diorama has a particular depth in D2C marketplaces and consumer products, where platform economics, engineering velocity and customer experience are the same conversation.\n\nEvery engagement follows the same four-step shape — discover, design, build, embed — described on the services page, and ends with your team stronger than it started.',
-    imageSide: 'right',
+    title: 'Marketplaces and Consumer Products',
+    intro: 'Technology to support you from discovery and trust to growth loops, pricing, and unit economics.',
+    bullets: [
+      'Onsite and offsite advertising. SEO/GEO strategy.',
+      'Search/discovery and conversion improvements',
+      'Trust and safety: review integrity, identity/KYC, fraud detection',
+      'Operational Tooling to support product catalog, disputes',
+      'Product Experimentation and growth modelling',
+      'Sustaining and Disruptive Product Innovation',
+    ],
+  },
+  {
+    title: 'AI and Data Strategy',
+    intro: 'Pragmatic, safe adoption of AI tied directly to commercial outcomes based on our 3 step [AI Future Ready](https://dioramaconsulting.co.uk/ai-future-ready/) framework.',
+    bullets: [
+      'Agentic AI coding adoption support',
+      'Use-case discovery and prioritisation',
+      'Evaluation, guardrails, and observability',
+      'Data platforms and AI-ready architectures',
+      'Cost, safety, and ROI modelling',
+      'Personalised AI executive training',
+    ],
+  },
+  {
+    title: 'AI Leadership Readiness (AILR)',
+    intro: 'Our [AI Leadership Readiness (AILR)](/ailr) is a structured self-assessment that benchmarks individual and team readiness to lead with AI, built on our REACH™ framework.',
+    bullets: [
+      '40-question personal and team scorecard across five leadership domains.',
+      'REACH™ readiness profile mapped to maturity levels.',
+      'Personalised coaching reports with strengths and focus areas',
+      'Team-level aggregation for coaches and team admins',
+      'More information on AILR is available [here](/tools/ailr/).',
+      '[Try out AILR today](/ailr)!',
+    ],
+  },
+  {
+    title: 'Platform Architecture and Modernisation',
+    intro: 'Evolving legacy systems into scalable platforms with minimal disruption.',
+    bullets: [
+      'Domain-led decomposition and API-first target architecture',
+      'Cloud, DevOps, and security baselining',
+      'Paved paths and developer experience',
+      'Resilience, SLOs, and cost controls',
+      'Platform Engineering dimensioning',
+    ],
+  },
+  {
+    title: 'Tech Leadership and Organisation Design',
+    intro: 'Right-sized tech organisation structures, roles, and practices that improve speed and quality.',
+    bullets: [
+      'Team topology and role clarity',
+      'Hiring plans and capability mapping',
+      'DORA/SPACE and outcome metrics',
+      'Leadership coaching and operating rhythms',
+      'Restructuring and Talent Density uplift',
+    ],
+  },
+  {
+    title: 'Climate-Tech Advisory',
+    intro: 'Support for founders and funds building sustainability data products and infrastructure.',
+    bullets: [
+      'Product and data strategy',
+      'Partnerships and go-to-market',
+      'Impact framing and measurement',
+      'Board advisory and diligence',
+    ],
   },
 ];
 
-const sections: EditorialSection[] = (page?.sections?.length
-  ? page.sections.map((s) => ({
-      heading: s.heading || '',
-      bodyHtml: s.body ? (marked.parse(s.body) as string) : '',
-      image: resolveImageUrl(s.image, s.imageUrl),
-      imageAlt: s.imageAlt || s.heading || '',
-      imageSide: (s.imageSide as 'left' | 'right') || 'right',
+type ServiceArea = { title: string; introHtml: string; bulletsHtml: string[] };
+
+const rawAreas = page?.serviceAreas?.length
+  ? page.serviceAreas.map((a) => ({
+      title: a.title || '',
+      intro: a.intro || '',
+      bullets: (a.bullets || '').split('\n').map((b) => b.trim()).filter(Boolean),
     }))
-  : defaultSections.map((s) => ({
-      heading: s.heading,
-      bodyHtml: marked.parse(s.body) as string,
-      image: undefined,
-      imageAlt: '',
-      imageSide: s.imageSide,
-    }))
-).filter((s) => s.heading || s.bodyHtml);
+  : defaultServiceAreas;
+
+const serviceAreas: ServiceArea[] = rawAreas
+  .filter((a) => a.title)
+  .map((a) => ({
+    title: a.title,
+    introHtml: marked.parseInline(a.intro) as string,
+    bulletsHtml: a.bullets.map((b) => marked.parseInline(b) as string),
+  }));
+
+// Optional editorial sections — ONLY when authored in Keystatic; the old
+// default filler copy is intentionally gone.
+const editorialSections = (page?.sections ?? [])
+  .map((s) => ({
+    heading: s.heading || '',
+    bodyHtml: s.body ? (marked.parse(s.body) as string) : '',
+    image: resolveImageUrl(s.image, s.imageUrl),
+    imageAlt: s.imageAlt || s.heading || '',
+    imageSide: (s.imageSide as 'left' | 'right') || 'right',
+  }))
+  .filter((s) => s.heading || s.bodyHtml);
 
 const testimonials = page?.testimonials ?? [];
 ---
@@ -86,35 +169,61 @@ const testimonials = page?.testimonials ?? [];
 
   <Section
     eyebrow={page?.eyebrow || 'Consulting'}
-    heading={page?.heading || 'Built on decades of experience'}
-    subheading={page?.subheading || 'Fractional CTO/CPTO leadership and pragmatic AI strategy for Boards, Founders and Investors — with a particular focus on D2C marketplaces.'}
-  >
-    <div class="editorial">
-      <FloatingLeaves count={4} seed={7} maxOpacity={0.07} />
-      {sections.map((section, i) => (
-        <div class:list={['editorial-row', section.imageSide === 'left' && 'editorial-row--flip']}>
-          <div class="editorial-text" data-reveal>
-            <h2>{section.heading}</h2>
-            <div class="editorial-body" set:html={section.bodyHtml} />
-          </div>
-          <div class="editorial-media" data-reveal data-reveal-delay="1">
-            {section.image ? (
-              <img src={section.image} alt={section.imageAlt} loading={i === 0 ? 'eager' : 'lazy'} />
-            ) : (
-              <div class:list={['editorial-placeholder', `placeholder-${i % 3}`]} aria-hidden="true">
-                <span class="placeholder-index">{String(i + 1).padStart(2, '0')}</span>
-              </div>
-            )}
-          </div>
-        </div>
+    heading={page?.heading || 'Fractional and interim advisory'}
+    subheading={page?.subheading || 'Services provided by Diorama Consulting cover a broad spectrum of fractional and interim advisory focussed on four key business outcomes.'}
+  />
+
+  <OutcomesBand
+    eyebrow="Outcomes"
+    heading="Four key business outcomes"
+    showProofStrip={false}
+  />
+
+  <Section eyebrow="Services" heading="What we do" subheading="Open any area for the detail — every engagement is scoped around the outcomes above.">
+    <div class="areas-grid">
+      {serviceAreas.map((area, i) => (
+        <details class="area" data-reveal data-reveal-delay={String((i % 2) + 1)}>
+          <summary>
+            <span class="area-head">
+              <h3>{area.title}</h3>
+              <p class="area-intro" set:html={area.introHtml} />
+            </span>
+            <span class="area-toggle" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+            </span>
+          </summary>
+          <ul class="area-bullets">
+            {area.bulletsHtml.map((b) => <li set:html={b} />)}
+          </ul>
+        </details>
       ))}
     </div>
 
-    <div class="editorial-cta" data-reveal>
-      <p>The six capabilities behind this work are laid out on the <a href="/services/#capabilities">services page</a> — or skip straight to a conversation.</p>
-      <Button href="/contact">Start a conversation</Button>
+    <div class="consult-cta" data-reveal>
+      <p><a href="/contact">Get in touch</a> if you'd like help with any of them.</p>
+      <Button href="/contact">Book a conversation</Button>
     </div>
   </Section>
+
+  {editorialSections.length > 0 && (
+    <Section eyebrow="In depth" heading="More on how we work">
+      <div class="editorial">
+        {editorialSections.map((section, i) => (
+          <div class:list={['editorial-row', section.imageSide === 'left' && 'editorial-row--flip']}>
+            <div class="editorial-text" data-reveal>
+              <h2>{section.heading}</h2>
+              <div class="editorial-body" set:html={section.bodyHtml} />
+            </div>
+            {section.image && (
+              <div class="editorial-media" data-reveal data-reveal-delay="1">
+                <img src={section.image} alt={section.imageAlt} loading={i === 0 ? 'eager' : 'lazy'} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </Section>
+  )}
 
   {testimonials.length > 0 && (
     <Section eyebrow={page?.testimonialsEyebrow || 'Testimonials'} heading={page?.testimonialsHeading || 'What people say'}>
@@ -130,30 +239,143 @@ const testimonials = page?.testimonials ?? [];
 </Layout>
 
 <style>
-  .editorial {
+  .areas-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .area {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .area:hover {
+    border-color: var(--hairline-hover);
+    box-shadow: var(--shadow-sm);
+  }
+  .area[open] {
+    border-color: color-mix(in srgb, var(--signal) 35%, var(--hairline));
+  }
+
+  .area summary {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px 24px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .area summary::-webkit-details-marker { display: none; }
+  .area summary::marker { content: ''; }
+
+  .area-head { min-width: 0; }
+
+  .area h3 {
+    font-size: 17px;
+    color: var(--text-strong);
+    margin: 0 0 6px;
+  }
+
+  .area-intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+  .area-intro :global(a) {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .area-toggle {
+    flex-shrink: 0;
+    margin-left: auto;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    color: var(--signal);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease;
+  }
+  .area:hover .area-toggle { background: var(--signal-soft); }
+  .area[open] .area-toggle { transform: rotate(45deg); }
+
+  .area-bullets {
+    list-style: none;
+    margin: 0 24px;
+    padding: 18px 0 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    border-top: 1px solid var(--hairline);
+  }
+  .area-bullets li {
     position: relative;
+    padding-left: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--mist-muted);
+  }
+  .area-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    background: var(--signal);
+    opacity: 0.7;
+  }
+  .area-bullets :global(a) {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .consult-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: var(--space-lg);
+    padding: 24px 28px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+  }
+  .consult-cta p {
+    font-size: 15px;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+  .consult-cta a { color: var(--signal); }
+
+  .editorial {
     display: flex;
     flex-direction: column;
     gap: var(--space-xl);
-    padding-top: var(--space-sm);
   }
-
   .editorial-row {
     display: grid;
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     gap: var(--space-lg);
     align-items: center;
   }
-
   .editorial-row--flip .editorial-text { order: 2; }
   .editorial-row--flip .editorial-media { order: 1; }
-
   .editorial-text h2 {
     font-size: clamp(22px, 2.6vw, 30px);
     color: var(--text-strong);
     margin: 0 0 14px;
   }
-
   .editorial-body {
     font-size: 15.5px;
     line-height: 1.75;
@@ -163,57 +385,13 @@ const testimonials = page?.testimonials ?? [];
   .editorial-body :global(p) { margin: 0 0 1em; }
   .editorial-body :global(p:last-child) { margin-bottom: 0; }
   .editorial-body :global(a) { color: var(--signal); text-decoration: underline; text-underline-offset: 2px; }
-  .editorial-body :global(strong) { color: var(--mist); }
-
-  .editorial-media img,
-  .editorial-placeholder {
+  .editorial-media img {
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
   }
-
-  /* Token-built placeholder panels until real photography is uploaded in
-     Keystatic — consistent with HowWeWork's abstract visual panels. */
-  .editorial-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--gradient-surface);
-  }
-  .placeholder-0 { background: linear-gradient(135deg, var(--signal-soft), var(--gradient-surface)); }
-  .placeholder-1 { background: linear-gradient(135deg, var(--sand-soft), var(--gradient-surface)); }
-  .placeholder-2 { background: linear-gradient(135deg, var(--leaf-soft), var(--gradient-surface)); }
-
-  .placeholder-index {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--mist-faint);
-  }
-
-  .editorial-cta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin-top: var(--space-xl);
-    padding: 26px 30px;
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-lg);
-    background: var(--forest);
-  }
-
-  .editorial-cta p {
-    font-size: 15px;
-    color: var(--mist-muted);
-    margin: 0;
-    max-width: 52ch;
-  }
-  .editorial-cta a { color: var(--signal); }
 
   .testimonial-grid {
     display: grid;
@@ -222,14 +400,14 @@ const testimonials = page?.testimonials ?? [];
   }
 
   @media (max-width: 860px) {
-    .editorial-row,
-    .editorial-row--flip {
-      grid-template-columns: 1fr;
-    }
+    .areas-grid { grid-template-columns: 1fr; }
+    .editorial-row, .editorial-row--flip { grid-template-columns: 1fr; }
     .editorial-row--flip .editorial-text { order: 1; }
     .editorial-row--flip .editorial-media { order: 2; }
-    .testimonial-grid {
-      grid-template-columns: 1fr;
-    }
+    .testimonial-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .area, .area-toggle { transition: none; }
   }
 </style>
