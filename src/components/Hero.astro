@@ -2,6 +2,7 @@
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Button from './Button.astro';
+import ScrollCue from './ScrollCue.astro';
 import defaultHeroImage from '../assets/hero/dark-background.jpg';
 
 interface Props {
@@ -58,6 +59,7 @@ const {
           <Button href={ctaHref}>{ctaText}</Button>
           <Button href="/about" variant="ghost">Find out more →</Button>
         </div>
+        <ScrollCue targetId="about-intro" label="Scroll" theme="dark" />
       </div>
 
       <div class="hero-phase phase-two">
@@ -159,6 +161,7 @@ const {
   .hero .eyebrow {
     font-family: var(--font-mono);
     font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-accent);
@@ -167,7 +170,7 @@ const {
 
   .hero h1,
   .hero h2 {
-    font-size: 48px;
+    font-size: var(--page-title-size);
     line-height: 1.1;
     letter-spacing: -0.01em;
     margin: 0 0 20px;
@@ -218,12 +221,7 @@ const {
     transform: none;
   }
 
-  @media (max-width: 860px) {
-    .hero h1,
-    .hero h2 {
-      font-size: 36px;
-    }
-  }
+
 </style>
 
 <script>

@@ -15,6 +15,7 @@ interface Props {
       renders its own eyebrow/heading/subheading) to avoid a duplicate
       heading + doubled-up vertical padding stacking on top of it. */
   showHead?: boolean;
+  id?: string;
 }
 
 const {
@@ -23,6 +24,7 @@ const {
   intro = 'Services provided by Diorama Consulting cover a broad spectrum of fractional and interim advisory focussed on four key business outcomes.',
   showProofStrip = true,
   showHead = true,
+  id,
 } = Astro.props;
 
 // Outcomes come from the positioning singleton when set in Keystatic,
@@ -32,7 +34,7 @@ const positioning = await reader.singletons.positioning.read().catch(() => null)
 const outcomes = resolveOutcomes(positioning?.outcomes);
 ---
 
-<section class:list={['outcomes', 'container', !showHead && 'outcomes--nested']}>
+<section id={id} class:list={['outcomes', 'container', !showHead && 'outcomes--nested']}>
   {showHead && (
     <div class="outcomes-head" data-reveal>
       <p class="eyebrow">{eyebrow}</p>
@@ -89,6 +91,7 @@ const outcomes = resolveOutcomes(positioning?.outcomes);
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--signal);

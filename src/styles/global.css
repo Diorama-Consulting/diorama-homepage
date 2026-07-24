@@ -113,6 +113,12 @@
   --space-section: clamp(80px, 10vw, 148px);
   --space-stack: 28px;
 
+  /* ---- Page title — the single size used for the primary heading on
+     every top-level page (Home, About, Services, Insights, Contact), so
+     the "header" reads consistently as you move around the site instead
+     of each page having its own bespoke clamp range. ---- */
+  --page-title-size: clamp(34px, 4.6vw, 52px);
+
   color-scheme: light;   /* was dark — native form controls/scrollbars now assume light */
 }
 

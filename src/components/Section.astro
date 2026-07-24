@@ -4,15 +4,21 @@ interface Props {
   heading?: string;
   subheading?: string;
   id?: string;
+  /** Set true only for the Section that acts as a page's primary,
+   * top-of-page heading (e.g. Services, Contact) so it renders at the
+   * same --page-title-size used by Home/About/Insights. Every other
+   * Section usage (in-page subsection headers) is left at its normal
+   * smaller size. */
+  pageTitle?: boolean;
 }
 
-const { eyebrow, heading, subheading, id } = Astro.props;
+const { eyebrow, heading, subheading, id, pageTitle = false } = Astro.props;
 ---
 
 <section class="section" id={id}>
   <div class="container">
     {(eyebrow || heading || subheading) && (
-      <div class="section-head">
+      <div class:list={['section-head', pageTitle && 'section-head--page-title']}>
         {eyebrow && <p class="eyebrow">{eyebrow}</p>}
         {heading && <h2>{heading}</h2>}
         {subheading && <p class="subheading">{subheading}</p>}
@@ -36,15 +42,22 @@ const { eyebrow, heading, subheading, id } = Astro.props;
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--mint);
+    color: var(--signal);
     margin: 0 0 12px;
   }
 
   .section-head h2 {
     font-size: 28px;
     margin-bottom: 12px;
+  }
+
+  .section-head--page-title h2 {
+    font-size: var(--page-title-size);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
   }
 
   .subheading {

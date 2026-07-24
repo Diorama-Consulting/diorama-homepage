@@ -1,0 +1,95 @@
+---
+// A small "scroll for more" affordance for the top of a page/section.
+// Purely a navigation aid (jumps to the next landmark via a real <a
+// href="#...">), so it works with no JS, keyboard-only, and screen
+// readers — the arrow itself is aria-hidden and the accessible name
+// comes from aria-label, not the (optional, decorative) visible label.
+//
+// theme="dark" is for use over a photo/dark hero (Home, About — matches
+// --ink-accent/--ink-text-muted, the same palette as the dark header).
+// theme="light" is for use on the plain page background (Services,
+// Insights, Contact).
+interface Props {
+  targetId: string;
+  label?: string;
+  theme?: 'dark' | 'light';
+}
+
+const { targetId, label, theme = 'light' } = Astro.props;
+---
+
+<a class:list={['scroll-cue', `scroll-cue--${theme}`]} href={`#${targetId}`} aria-label="Scroll down for more">
+  {label && <span class="cue-label">{label}</span>}
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 4v16m0 0 6-6m-6 6-6-6" />
+  </svg>
+</a>
+
+<style>
+  .scroll-cue {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    font-family: var(--font-mono);
+    animation: cue-rise 0.7s ease 1.2s both;
+    transition: color 0.2s ease;
+    z-index: 3;
+  }
+
+  .scroll-cue--dark {
+    color: var(--ink-text-muted);
+  }
+  .scroll-cue--dark:hover {
+    color: var(--ink-accent-hover);
+  }
+
+  .scroll-cue--light {
+    color: var(--mist-muted);
+  }
+  .scroll-cue--light:hover {
+    color: var(--signal);
+  }
+
+  .cue-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .scroll-cue svg {
+    animation: cue-bob 2.2s ease-in-out 1.6s infinite;
+  }
+
+  @keyframes cue-rise {
+    from { opacity: 0; transform: translate(-50%, 14px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  @keyframes cue-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue {
+      animation: none;
+      opacity: 1;
+      transform: translateX(-50%);
+    }
+    .scroll-cue svg {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .scroll-cue {
+      display: none;
+    }
+  }
+</style>
