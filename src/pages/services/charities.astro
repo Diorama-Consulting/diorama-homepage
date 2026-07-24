@@ -76,5 +76,133 @@ const pageImage =
     <CharityShowcase charities={charityItems} />
   </Section>
 
+  <Section eyebrow="Resources" heading="Charity" subheading="Links and resources related to the UK Charity sector.">
+    <div class="tsl" data-reveal>
+      <h3>ThirdSectorLab</h3>
+      <p class="tsl-intro">These two sessions form an AI Leadership Readiness programme delivered to charity leaders through <a href="https://thirdsectorlab.co.uk/" target="_blank" rel="noopener noreferrer">Third Sector Lab</a> in 2026. Session 1 (13 May) introduced foundational AI literacy and governance frameworks for charity leadership teams. Session 2 (16 June) moved from frameworks to practical implementation, covering AI policy development, data classification, and a live demonstration of building a lightweight CRM for a fictional small charity called BrightHope directly from a spreadsheet. Feedback from both sessions was positive, with attendees consistently citing the practical, charity-specific framing as the key strength.</p>
+
+      <div class="tsl-sessions">
+        <div class="tsl-session" data-reveal data-reveal-delay="1">
+          <p class="session-tag">Session 1 · 13 May 2026</p>
+          <h4><a href="https://thirdsectorlab.co.uk/events/ai-leadership-readiness-for-charity-leaders/" target="_blank" rel="noopener noreferrer">AI Leadership Readiness for Charity Leaders</a></h4>
+          <a class="session-download" href="https://dioramaconsulting.co.uk/wp-content/uploads/2026/06/S1-AI-Leadership-Readiness-Charity-Leaders.pdf" target="_blank" rel="noopener noreferrer">
+            S1-AI-Leadership-Readiness-Charity-Leaders · Download ↓
+          </a>
+        </div>
+        <div class="tsl-session" data-reveal data-reveal-delay="2">
+          <p class="session-tag">Session 2 · 16 June 2026</p>
+          <h4><a href="https://thirdsectorlab.co.uk/events/ai-leadership-from-frameworks-to-implementation/" target="_blank" rel="noopener noreferrer">From Frameworks to Implementations</a></h4>
+          <a class="session-download" href="https://dioramaconsulting.co.uk/wp-content/uploads/2026/06/S2-AI-Leadership-Readiness-Charity-Leaders-1.pdf" target="_blank" rel="noopener noreferrer">
+            S2-AI-Leadership-Readiness-Charity-Leaders · Download ↓
+          </a>
+        </div>
+      </div>
+
+      <div class="brighthope" data-reveal>
+        <div class="bh-copy">
+          <h4><a href="https://brighthope-crm.lovable.app/" target="_blank" rel="noopener noreferrer">BrightHope CRM</a></h4>
+          <p>BrightHope is a proof-of-concept customer relationship management tool, built to show charities a practical middle step between an overstretched spreadsheet and a costly enterprise CRM. Developed with Lovable and Claude Code as a live demonstration for the second Third Sector Lab session, it illustrates how a small charity could track donors, supporters, and case records in a lightweight, purpose-built interface, without the procurement overhead of a full CRM platform.</p>
+        </div>
+        <a class="bh-cta" href="https://brighthope-crm.lovable.app/" target="_blank" rel="noopener noreferrer">Open BrightHope ↗</a>
+      </div>
+    </div>
+  </Section>
+
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>
+
+<style>
+  .tsl h3 {
+    font-size: 20px;
+    color: var(--text-strong);
+    margin: 0 0 12px;
+  }
+  .tsl-intro {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--mist-muted);
+    max-width: 72ch;
+    margin: 0 0 var(--space-md);
+  }
+  .tsl-intro a { color: var(--signal); text-decoration: underline; text-underline-offset: 2px; }
+
+  .tsl-sessions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: var(--space-md);
+  }
+  .tsl-session {
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--signal);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 20px 24px;
+  }
+  .session-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+    margin: 0 0 8px;
+  }
+  .tsl-session h4 {
+    font-size: 16px;
+    margin: 0 0 12px;
+  }
+  .tsl-session h4 a { color: var(--text-strong); text-decoration: none; }
+  .tsl-session h4 a:hover { color: var(--signal); }
+  .session-download {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--signal);
+    text-decoration: none;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 7px 14px;
+  }
+  .session-download:hover { border-color: var(--signal); background: var(--signal-soft); }
+
+  .brighthope {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+    padding: 24px 28px;
+  }
+  .bh-copy { max-width: 62ch; }
+  .brighthope h4 { font-size: 17px; margin: 0 0 8px; }
+  .brighthope h4 a { color: var(--text-strong); text-decoration: none; }
+  .brighthope h4 a:hover { color: var(--signal); }
+  .brighthope p {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+  .bh-cta {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: hsl(0 0% 100%);
+    background: var(--signal);
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+  }
+  .bh-cta:hover { transform: translateY(-1px); }
+
+  @media (max-width: 760px) {
+    .tsl-sessions { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bh-cta { transition: none; }
+  }
+</style>

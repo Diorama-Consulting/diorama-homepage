@@ -1,0 +1,275 @@
+---
+// LiveProof — the homepage's "don't take our word for it" section, closing
+// the gap the benchmark analysis flagged: every big-consultancy homepage
+// TALKS about AI; almost none demonstrate it live. Diorama actually has
+// live AI to demonstrate — this section surfaces it in two ways:
+//   1. "Ask this site" — a button that opens the real chat assistant
+//      (the same ChatWidget already on the page, answering from the
+//      site's own content), rather than a mock or a screenshot.
+//   2. A strip of genuinely running tools (from the projects collection),
+//      each one click from being used, linking through to /tools.
+// If the chat widget is disabled or absent, the button hides itself.
+interface Tool {
+  id: string;
+  title: string;
+  tagline?: string;
+  summary: string;
+  accent: string;
+  monogram?: string;
+  externalUrl?: string;
+}
+
+interface Props {
+  tools: Tool[];
+}
+
+const { tools } = Astro.props;
+
+const initials = (title: string) =>
+  title.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+---
+
+<section class="live-proof container" id="live-proof">
+  <div class="lp-head" data-reveal>
+    <p class="eyebrow">Proof, running live</p>
+    <h2>We advise on AI by building with it</h2>
+    <p class="lp-sub">Everything below is real and running — ask this site's assistant a question, or open one of the tools we built and use ourselves.</p>
+  </div>
+
+  <div class="lp-grid">
+    <div class="lp-chat" data-reveal>
+      <div class="lp-chat-glow" aria-hidden="true"></div>
+      <p class="lp-chat-eyebrow">Live on this page</p>
+      <h3>Ask this site anything</h3>
+      <p>The assistant in the corner answers from Diorama's own services, tools and writing — a small, working example of grounded AI done properly.</p>
+      <button type="button" class="lp-chat-btn" id="lp-open-chat">
+        Try the assistant
+        <span class="arrow">→</span>
+      </button>
+    </div>
+
+    <div class="lp-tools">
+      {tools.map((tool, i) => (
+        <a class="lp-tool" href={`/tools/${tool.id}/`} data-accent={tool.accent} data-reveal data-reveal-delay={String((i % 3) + 1)}>
+          <span class="lp-tile" aria-hidden="true">{tool.monogram || initials(tool.title)}</span>
+          <span class="lp-tool-text">
+            <span class="lp-tool-name">{tool.title}</span>
+            <span class="lp-tool-tag">{tool.tagline || tool.summary}</span>
+          </span>
+          <span class="lp-tool-arrow" aria-hidden="true">→</span>
+        </a>
+      ))}
+      <a class="lp-all" href="/tools/">All tools →</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  const btn = document.getElementById('lp-open-chat');
+  const chatToggle = document.getElementById('chat-toggle');
+  if (btn && chatToggle) {
+    btn.addEventListener('click', () => {
+      chatToggle.click();
+      chatToggle.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  } else if (btn) {
+    // Chat widget disabled/absent on this page — hide the dead button.
+    btn.style.display = 'none';
+  }
+</script>
+
+<style>
+  .lp-tool[data-accent='green'] { --lp-accent: var(--signal); }
+  .lp-tool[data-accent='leaf']  { --lp-accent: var(--leaf); }
+  .lp-tool[data-accent='amber'] { --lp-accent: var(--amber); }
+  .lp-tool[data-accent='sky']   { --lp-accent: var(--sky); }
+  .lp-tool[data-accent='sand']  { --lp-accent: var(--sand); }
+  .lp-tool[data-accent='rose']  { --lp-accent: var(--rose); }
+
+  .live-proof {
+    padding-block: var(--space-xl);
+  }
+
+  .lp-head {
+    max-width: 620px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 10px;
+  }
+
+  .lp-head h2 {
+    font-size: clamp(24px, 3vw, 34px);
+    color: var(--text-strong);
+    margin: 0 0 12px;
+  }
+
+  .lp-sub {
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+
+  .lp-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  /* ---- Chat card ---- */
+  .lp-chat {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, var(--ink-bg) 0%, var(--ink-bg-2) 100%);
+    padding: 34px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .lp-chat-glow {
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, hsl(var(--hue-green) 60% 45% / 0.35), transparent 70%);
+    pointer-events: none;
+  }
+  .lp-chat-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-accent);
+    margin: 0 0 12px;
+  }
+  .lp-chat h3 {
+    font-size: clamp(20px, 2.2vw, 26px);
+    color: var(--ink-text);
+    margin: 0 0 12px;
+  }
+  .lp-chat p {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink-text-muted);
+    margin: 0 0 auto;
+    max-width: 40ch;
+  }
+  .lp-chat-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    font-size: 14.5px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    color: hsl(var(--hue-green) 30% 8%);
+    background: var(--ink-accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .lp-chat-btn:hover { transform: translateY(-1px); }
+  .lp-chat-btn .arrow { transition: transform 0.2s ease; }
+  .lp-chat-btn:hover .arrow { transform: translateX(3px); }
+
+  /* ---- Tool strip ---- */
+  .lp-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .lp-tool {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+    padding: 16px 20px;
+    text-decoration: none;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+    flex: 1;
+  }
+  .lp-tool:hover {
+    border-color: color-mix(in srgb, var(--lp-accent) 40%, var(--hairline));
+    transform: translateX(4px);
+  }
+
+  .lp-tile {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: hsl(0 0% 100%);
+    background: linear-gradient(150deg, var(--lp-accent), color-mix(in srgb, var(--lp-accent) 72%, hsl(var(--hue-green) 30% 12%)));
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.25);
+  }
+
+  .lp-tool-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .lp-tool-name {
+    font-family: var(--font-display);
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .lp-tool-tag {
+    font-size: 13px;
+    color: var(--mist-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lp-tool-arrow {
+    margin-left: auto;
+    color: var(--mist-faint);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+  .lp-tool:hover .lp-tool-arrow {
+    transform: translateX(3px);
+    color: var(--lp-accent);
+  }
+
+  .lp-all {
+    align-self: flex-end;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--signal);
+    text-decoration: none;
+    padding: 4px 2px;
+  }
+  .lp-all:hover { color: var(--mint); }
+
+  @media (max-width: 860px) {
+    .lp-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lp-chat-btn, .lp-chat-btn .arrow, .lp-tool, .lp-tool-arrow { transition: none; }
+    .lp-tool:hover { transform: none; }
+  }
+</style>

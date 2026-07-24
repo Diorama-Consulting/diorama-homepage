@@ -1,0 +1,210 @@
+---
+// OutcomesBand — the four key business outcomes Diorama's advisory work
+// targets, plus a named-proof strip (real trustee roles and a delivered
+// 2026 programme). Wording of the four outcomes is the exact supplied
+// positioning text — do not paraphrase when editing. Used on the
+// homepage (above the widgets) and on /services.
+interface Props {
+  eyebrow?: string;
+  heading?: string;
+  intro?: string;
+  showProofStrip?: boolean;
+}
+
+const {
+  eyebrow = 'Outcomes',
+  heading = 'Four key business outcomes',
+  intro = 'Services provided by Diorama Consulting cover a broad spectrum of fractional and interim advisory focussed on four key business outcomes.',
+  showProofStrip = true,
+} = Astro.props;
+
+const outcomes = [
+  {
+    title: 'Defensible growth',
+    description: 'Data, platforms, and network effects measured in revenue, retention, and margin.',
+  },
+  {
+    title: 'Lower delivery risk',
+    description: 'Guardrails, governance, and observability to reduce incidents and compliance exposure.',
+  },
+  {
+    title: 'Faster time-to-value',
+    description: 'Lean roadmaps, paved paths, and automation to accelerate impact.',
+  },
+  {
+    title: 'Resilience at scale',
+    description: 'Architectures that evolve without wholesale rewrites.',
+  },
+];
+---
+
+<section class="outcomes container">
+  <div class="outcomes-head" data-reveal>
+    <p class="eyebrow">{eyebrow}</p>
+    <h2>{heading}</h2>
+    <p class="outcomes-intro">{intro} <a href="/contact">Get in touch</a> if you'd like help with any of them.</p>
+  </div>
+
+  <div class="outcomes-grid">
+    {outcomes.map((outcome, i) => (
+      <div class="outcome" data-reveal data-reveal-delay={String((i % 4) + 1)}>
+        <span class="outcome-index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+        <h3>{outcome.title}</h3>
+        <p>{outcome.description}</p>
+      </div>
+    ))}
+  </div>
+
+  {showProofStrip && (
+    <div class="proof-strip" data-reveal>
+      <p class="proof-label">Board-level, in practice</p>
+      <ul>
+        <li>Trustee at <a href="https://helpforce.community/" target="_blank" rel="noopener noreferrer">Helpforce</a>, a national NHS and community volunteering charity</li>
+        <li>Trustee at <a href="https://www.aston-mansfield.org.uk/" target="_blank" rel="noopener noreferrer">Aston-Mansfield</a>, a community charity in Newham, London</li>
+        <li>AI Leadership Readiness programme delivered to charity leaders through <a href="https://thirdsectorlab.co.uk/" target="_blank" rel="noopener noreferrer">Third Sector Lab</a> in 2026</li>
+      </ul>
+    </div>
+  )}
+</section>
+
+<style>
+  .outcomes {
+    padding-block: var(--space-xl);
+  }
+
+  .outcomes-head {
+    max-width: 640px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 10px;
+  }
+
+  .outcomes-head h2 {
+    font-size: clamp(24px, 3vw, 34px);
+    color: var(--text-strong);
+    margin: 0 0 12px;
+  }
+
+  .outcomes-intro {
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+  .outcomes-intro a {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .outcomes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .outcome {
+    position: relative;
+    border: 1px solid var(--hairline);
+    border-top: 3px solid var(--signal);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 22px 24px 20px;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+  }
+  .outcome:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .outcome-index {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--mist-faint);
+  }
+
+  .outcome h3 {
+    font-size: 16.5px;
+    color: var(--text-strong);
+    margin: 8px 0 8px;
+  }
+
+  .outcome p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+
+  .proof-strip {
+    margin-top: var(--space-lg);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--forest);
+    padding: 20px 26px;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+  }
+
+  .proof-label {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .proof-strip ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 10px 28px;
+    flex-wrap: wrap;
+  }
+
+  .proof-strip li {
+    font-size: 13.5px;
+    color: var(--mist-muted);
+    position: relative;
+  }
+  .proof-strip li + li::before {
+    content: '·';
+    position: absolute;
+    left: -17px;
+    color: var(--mist-faint);
+  }
+  .proof-strip a {
+    color: var(--signal);
+    text-decoration: none;
+  }
+  .proof-strip a:hover { text-decoration: underline; }
+
+  @media (max-width: 960px) {
+    .outcomes-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .outcomes-grid { grid-template-columns: 1fr; }
+    .proof-strip { flex-direction: column; gap: 10px; }
+    .proof-strip ul { flex-direction: column; }
+    .proof-strip li + li::before { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .outcome { transition: none; }
+    .outcome:hover { transform: none; }
+  }
+</style>

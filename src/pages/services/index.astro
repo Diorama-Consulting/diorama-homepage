@@ -6,6 +6,7 @@ import Section from '../../components/Section.astro';
 import FeatureToggle from '../../components/FeatureToggle.astro';
 import HowWeWork from '../../components/HowWeWork.astro';
 import CapabilityReveal from '../../components/CapabilityReveal.astro';
+import OutcomesBand from '../../components/OutcomesBand.astro';
 import FloatingLeaves from '../../components/FloatingLeaves.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
@@ -93,26 +94,28 @@ const tileItems = tiles.map((tile) => ({
     <FeatureToggle groupId="services" items={tileItems} />
   </Section>
 
+  <OutcomesBand showProofStrip={false} />
+
   <Section eyebrow="How we work" heading="Four steps, every engagement" subheading="Scroll through — the same shape whether it's a six-week fractional CTO sprint or a pro-bono charity project.">
     <div style="position: relative;">
       <FloatingLeaves count={5} seed={4} maxOpacity={0.08} />
       <HowWeWork
         steps={[
           {
-            title: 'Discovery',
-            description: 'Clarify goals, constraints, metrics.',
+            title: 'Discover',
+            description: 'Understand the problem, the stakeholders, and the real constraints — technical, commercial, or organisational — before proposing anything.',
           },
           {
-            title: 'Proposal',
-            description: "Scope outcomes, cadence, governance.",
+            title: 'Design',
+            description: "Shape the approach with the client, not for them: agree scope, sequencing, and what success actually looks like before work starts.",
           },
           {
-            title: 'Engagement',
-            description: 'Build, coach, deliver and evaluate.',
+            title: 'Build',
+            description: 'Ship in focused increments with visibility throughout — no black-box months, no surprise scope creep.',
           },
           {
-            title: 'Measure',
-            description: 'Track ROI/OKRs, adjust and handover.',
+            title: 'Embed',
+            description: 'Hand over cleanly, measure the impact against what we agreed at the start, and stay reachable after the engagement ends.',
           },
         ]}
       />

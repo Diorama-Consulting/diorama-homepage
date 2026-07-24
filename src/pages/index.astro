@@ -9,12 +9,10 @@ import Section from '../components/Section.astro';
 import FeatureToggle from '../components/FeatureToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import Footer from '../components/Footer.astro';
-import SpacerDivider from '../components/spacers/SpacerDivider.astro';
 import WindTurbineReveal from '../components/animated/WindTurbineReveal.astro';
-import LeafToTreeReveal from '../components/animated/LeafToTreeReveal.astro';
-import FloatingLeaves from '../components/FloatingLeaves.astro';
 import FallingLeaves from '../components/FallingLeaves.astro';
-import LeafSwoosh from '../components/LeafSwoosh.astro';
+import OutcomesBand from '../components/OutcomesBand.astro';
+import LiveProof from '../components/LiveProof.astro';
 import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 import defaultHeroPhoto from '../assets/hero/dark-background.jpg';
 import defaultFounderPortrait from '../assets/hero/MalmCol.png';
@@ -130,6 +128,21 @@ const trustedCompanies = (page?.trustedCompanies ?? [])
 // Homepage widgets are deliberately standalone content (their own Keystatic
 // singletons) rather than teasers pulled live from /services/charities or
 // the CxAI Substack — see README for the reasoning.
+// Featured live tools for the LiveProof section — first three
+// applications by sort order from the same collection that drives /tools.
+const liveTools = (await getCollection('projects', ({ data }) => !data.draft && data.category === 'application'))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3)
+  .map((t) => ({
+    id: t.id,
+    title: t.data.title,
+    tagline: t.data.tagline,
+    summary: t.data.summary,
+    accent: t.data.accent,
+    monogram: t.data.monogram,
+    externalUrl: t.data.externalUrl,
+  }));
+
 const charityWidget = await reader.singletons.homeCharityWidget.read();
 const cxaiWidget = await reader.singletons.homeCxaiWidget.read();
 const showCharityWidget = page?.showCharityWidget ?? true;
@@ -151,10 +164,10 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
         </div>
       )}
       <Hero
-        eyebrow={page?.heroEyebrow || 'Now in beta'}
-        heading={page?.heroHeading || 'Ideas that make a difference.'}
-        subheading={page?.heroSubheading || 'We help ambitious teams ship AI products that actually work.'}
-        ctaText={page?.heroCtaText || 'Get started'}
+        eyebrow={page?.heroEyebrow || 'AI Technology Advisory'}
+        heading={page?.heroHeading || 'Bridging product strategy, engineering and AI.'}
+        subheading={page?.heroSubheading || 'AI Technology Advisory led by Mal Minhas, partnering with C-Suite, Boards, Founders and Investors — with a focus on D2C marketplaces and products.'}
+        ctaText={page?.heroCtaText || 'Book a conversation'}
         ctaHref={page?.heroCtaHref || '/contact'}
         revealHeading={page?.revealHeading || 'Unique Industry Experience.'}
         revealSubheading={page?.revealSubheading || 'Our team has extensive experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.'}
@@ -170,28 +183,18 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
     <TrustedCompanies companies={trustedCompanies} heading={page?.trustedCompaniesHeading} />
   </div>
 
-  <div class="container">
-    <SpacerDivider label="Where to start" />
-  </div>
-
   <Section
     id="explore"
     eyebrow={page?.exploreEyebrow || 'Explore'}
     heading={page?.exploreHeading || 'Where to start'}
     subheading={page?.exploreSubheading || "A quick map of what's on this site."}
   >
-    <div style="position: relative;">
-      <FloatingLeaves count={5} seed={2} maxOpacity={0.07} />
-      <div data-reveal>
-        <FeatureToggle groupId="explore" items={exploreItems} />
-      </div>
+    <div data-reveal>
+      <FeatureToggle groupId="explore" items={exploreItems} />
     </div>
   </Section>
 
-  <LeafSwoosh
-    heading="Clearing space for what's next"
-    subheading="The same principle behind how we scope an engagement — clear the ground first, then build."
-  />
+  <LiveProof tools={liveTools} />
 
   <div class="container">
     <WindTurbineReveal
@@ -205,6 +208,8 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
        Standalone content widgets, independently editable in Keystatic.
        Add further widgets here following the same LinkCard pattern.
   ==================================================================== -->
+  <OutcomesBand />
+
   {(showCharityWidget || showCxaiWidget) && (
     <Section id="widgets" eyebrow={page?.widgetsEyebrow || 'From the network'} heading={page?.widgetsHeading || 'More from Diorama'}>
       <div class="widget-grid">
@@ -236,12 +241,6 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
       </div>
     </Section>
   )}
-
-  <LeafToTreeReveal
-    eyebrow="Renewal"
-    heading="Every ending is groundwork for what's next"
-    text="The same principle behind our sustainability work and our approach to client engagements: clear the ground properly, then build something that lasts."
-  />
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 </Layout>

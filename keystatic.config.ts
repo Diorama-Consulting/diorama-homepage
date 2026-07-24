@@ -478,6 +478,24 @@ export default config({
             itemLabel: (props) => props.fields.heading.value || 'Section',
           },
         ),
+        // The full service catalogue shown on /services/consulting as
+        // expandable cards. Leave empty to use the built-in exact defaults
+        // (the supplied service-catalogue text). Bullets: one per line,
+        // Markdown links supported.
+        serviceAreas: fields.array(
+          fields.object({
+            title: fields.text({ label: 'Service area title' }),
+            intro: fields.text({ label: 'Intro sentence (Markdown links OK)', multiline: true }),
+            bullets: fields.text({
+              label: 'Bullets — one per line (Markdown links OK)',
+              multiline: true,
+            }),
+          }),
+          {
+            label: 'Service areas (the catalogue on /services/consulting)',
+            itemLabel: (props) => props.fields.title.value || 'Service area',
+          },
+        ),
         // The capability cards now DISPLAY on /services (inside the
         // animated "How we work" segment) but stay edited here, alongside
         // the rest of the consulting content they describe.
