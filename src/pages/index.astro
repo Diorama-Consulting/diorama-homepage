@@ -10,6 +10,7 @@ import FeatureToggle from '../components/FeatureToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import Footer from '../components/Footer.astro';
 import WindTurbineReveal from '../components/animated/WindTurbineReveal.astro';
+import AboutIntro from '../components/AboutIntro.astro';
 import FallingLeaves from '../components/FallingLeaves.astro';
 import OutcomesBand from '../components/OutcomesBand.astro';
 import LiveProof from '../components/LiveProof.astro';
@@ -177,6 +178,8 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
       />
     </>
   )}
+
+  <AboutIntro />
 
   <div data-reveal style="position: relative;">
     <FallingLeaves count={20} seed={11} maxOpacity={0.14} />

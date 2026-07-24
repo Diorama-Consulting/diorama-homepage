@@ -180,10 +180,10 @@ const testimonials = page?.testimonials ?? [];
   />
 
   <Section eyebrow="Services" heading="What we do" subheading="Open any area for the detail — every engagement is scoped around the outcomes above.">
-    <div class="areas-grid">
+    <div class="areas-list">
       {serviceAreas.map((area, i) => (
-        <details class="area" data-reveal data-reveal-delay={String((i % 2) + 1)}>
-          <summary>
+        <div class="area" data-reveal data-reveal-delay={String((i % 3) + 1)}>
+          <button type="button" class="area-summary" aria-expanded="false" aria-controls={`area-body-${i}`}>
             <span class="area-head">
               <h3>{area.title}</h3>
               <p class="area-intro" set:html={area.introHtml} />
@@ -191,11 +191,15 @@ const testimonials = page?.testimonials ?? [];
             <span class="area-toggle" aria-hidden="true">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             </span>
-          </summary>
-          <ul class="area-bullets">
-            {area.bulletsHtml.map((b) => <li set:html={b} />)}
-          </ul>
-        </details>
+          </button>
+          <div class="area-collapse" id={`area-body-${i}`}>
+            <div class="area-collapse-inner">
+              <ul class="area-bullets">
+                {area.bulletsHtml.map((b) => <li set:html={b} />)}
+              </ul>
+            </div>
+          </div>
+        </div>
       ))}
     </div>
 
@@ -204,6 +208,36 @@ const testimonials = page?.testimonials ?? [];
       <Button href="/contact">Book a conversation</Button>
     </div>
   </Section>
+
+  <noscript>
+    <style>
+      /* Zero-JS fallback: the accordion needs a click handler to open, so
+         without JS every bullet list is shown flat and the (now inert)
+         toggle button is hidden — nothing is ever inaccessible. */
+      .area-collapse { grid-template-rows: 1fr !important; }
+      .area-toggle { display: none !important; }
+    </style>
+  </noscript>
+
+  <script>
+    // Accessible accordion: a real <button aria-expanded>, height animated
+    // via the CSS grid-template-rows 0fr->1fr trick (see styles below) so
+    // it transitions smoothly in every modern browser without JS measuring
+    // scrollHeight. Native <details> was replaced because it can't animate
+    // height at all — it snaps open/closed instantly.
+    document.querySelectorAll<HTMLElement>('.area').forEach((area) => {
+      const btn = area.querySelector<HTMLButtonElement>('.area-summary');
+      const collapse = area.querySelector<HTMLElement>('.area-collapse');
+      if (!btn || !collapse || area.dataset.accInit) return;
+      area.dataset.accInit = 'true';
+      btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        collapse.classList.toggle('is-open', !open);
+        area.classList.toggle('is-open', !open);
+      });
+    });
+  </script>
 
   {editorialSections.length > 0 && (
     <Section eyebrow="In depth" heading="More on how we work">
@@ -239,11 +273,10 @@ const testimonials = page?.testimonials ?? [];
 </Layout>
 
 <style>
-  .areas-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    align-items: start;
+  .areas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
 
   .area {
@@ -256,20 +289,23 @@ const testimonials = page?.testimonials ?? [];
     border-color: var(--hairline-hover);
     box-shadow: var(--shadow-sm);
   }
-  .area[open] {
+  .area.is-open {
     border-color: color-mix(in srgb, var(--signal) 35%, var(--hairline));
   }
 
-  .area summary {
+  .area-summary {
+    width: 100%;
     display: flex;
     align-items: flex-start;
     gap: 16px;
     padding: 22px 24px;
     cursor: pointer;
-    list-style: none;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
   }
-  .area summary::-webkit-details-marker { display: none; }
-  .area summary::marker { content: ''; }
 
   .area-head { min-width: 0; }
 
@@ -304,7 +340,26 @@ const testimonials = page?.testimonials ?? [];
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease;
   }
   .area:hover .area-toggle { background: var(--signal-soft); }
-  .area[open] .area-toggle { transform: rotate(45deg); }
+  .area.is-open .area-toggle { transform: rotate(45deg); }
+
+  /* The height-animation trick: the OUTER element transitions its single
+     grid row between 0fr and 1fr — a track-size change, which (unlike
+     height/max-height) animates smoothly to an intrinsic, unmeasured
+     content height in every modern browser. The INNER element clips
+     overflow during the transition and holds the actual padding, so nudge
+     visible/hidden padding lives on it, not on the row that's animating. */
+  .area-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .area-collapse.is-open {
+    grid-template-rows: 1fr;
+  }
+  .area-collapse-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
 
   .area-bullets {
     list-style: none;
@@ -400,7 +455,6 @@ const testimonials = page?.testimonials ?? [];
   }
 
   @media (max-width: 860px) {
-    .areas-grid { grid-template-columns: 1fr; }
     .editorial-row, .editorial-row--flip { grid-template-columns: 1fr; }
     .editorial-row--flip .editorial-text { order: 1; }
     .editorial-row--flip .editorial-media { order: 2; }
@@ -408,6 +462,6 @@ const testimonials = page?.testimonials ?? [];
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .area, .area-toggle { transition: none; }
+    .area, .area-toggle, .area-collapse { transition: none; }
   }
 </style>
