@@ -1,0 +1,361 @@
+---
+// AdminShell — shared chrome for the newer admin pages (/admin/leads,
+// /admin/chatbot, /admin/tools, /admin/access, /admin/banner).
+// /admin/dashboard and /admin/enquiries predate this and keep their own
+// copies of the same markup/CSS — lowest-risk choice, since they already
+// work; this component exists so every page added AFTER them doesn't
+// duplicate the same ~150 lines a fifth and sixth time.
+//
+// IMPORTANT CSS NOTE: the styles below are deliberately :global(). Astro
+// scopes a component's <style> block to elements written IN THAT
+// component's own template — slotted content passed in from a consuming
+// page keeps the PARENT page's scope hash, so a normal (non-global) rule
+// here would silently never match anything the page puts in its <slot/>.
+// This is the same class of bug the Insights hub's filter had (a scoped
+// selector that could never match component-rendered markup) — solved
+// there with :global(), solved here the same way, proactively.
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { reader } from '../lib/keystatic';
+import { ADMIN_PAGES } from '../lib/admin-auth';
+
+interface Props {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  activeHref: string;
+}
+
+const { title, description = 'Admin', eyebrow = 'Admin', activeHref } = Astro.props;
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+---
+
+<Layout title={`${title} — Admin`} description={description} showChatWidget={false}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <main class="container">
+    <div class="admin-head">
+      <div>
+        <p class="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+      </div>
+      <nav class="admin-nav" aria-label="Admin pages">
+        {ADMIN_PAGES.map((page) => (
+          <a class:list={[{ active: page.href === activeHref }]} href={page.href}>{page.label}</a>
+        ))}
+      </nav>
+    </div>
+
+    <slot />
+  </main>
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
+
+<style is:global>
+  /* Scoped to the admin section only by virtue of only ever being loaded
+     on /admin/* pages via this shell — not scoped by Astro's hashing
+     mechanism (see the note above for why that's deliberate here). */
+  main.container {
+    padding-top: 56px;
+    padding-bottom: 96px;
+  }
+
+  .admin-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md);
+  }
+  .admin-head .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 8px;
+  }
+  .admin-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .admin-nav a {
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--mist-muted);
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+  .admin-nav a.active {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: hsl(0 0% 100%);
+  }
+  .admin-nav a:not(.active):hover {
+    border-color: var(--hairline-hover);
+    background: var(--charcoal-soft);
+  }
+
+  .notice {
+    color: var(--mist-muted);
+    border: 1px dashed var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    margin-bottom: var(--space-md);
+    line-height: 1.7;
+  }
+  .notice code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    color: var(--mist);
+  }
+  .notice.notice--warn {
+    border-color: var(--amber);
+    color: var(--mist);
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: var(--space-md);
+  }
+  .stat {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat--accent {
+    border-top: 3px solid var(--signal);
+  }
+  .stat--warn {
+    border-top: 3px solid var(--amber);
+  }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--mist-faint);
+  }
+
+  .panel {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+  }
+  .panel h2 {
+    font-size: 14px;
+    color: var(--text-strong);
+    margin: 0 0 14px;
+  }
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .panel-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--signal);
+    text-decoration: none;
+  }
+  .panel-link:hover {
+    text-decoration: underline;
+  }
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .panel-grid .panel {
+    margin-bottom: 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  td,
+  th {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--mist-muted);
+    text-align: left;
+  }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mist-faint);
+    font-weight: 600;
+  }
+  tr:last-child td {
+    border-bottom: none;
+  }
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+  }
+  .num {
+    text-align: right;
+    color: var(--mist);
+    font-variant-numeric: tabular-nums;
+  }
+  .dim {
+    color: var(--mist-faint);
+  }
+  .empty {
+    color: var(--mist-faint);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+  .pill--new,
+  .pill--up,
+  .pill--active {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: hsl(0 0% 100%);
+  }
+  .pill--down,
+  .pill--flagged,
+  .pill--expired,
+  .pill--revoked {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: hsl(0 0% 100%);
+  }
+  .pill--unmonitored,
+  .pill--muted {
+    background: transparent;
+    color: var(--mist-faint);
+  }
+  .pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  form.inline {
+    display: inline;
+    margin: 0;
+  }
+  button.admin-btn,
+  a.admin-btn {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--mist);
+    cursor: pointer;
+    text-decoration: none;
+    font-family: var(--font-body);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  button.admin-btn:hover,
+  a.admin-btn:hover {
+    border-color: var(--hairline-hover);
+    background: var(--charcoal-soft);
+  }
+  button.admin-btn.primary {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: hsl(0 0% 100%);
+  }
+  button.admin-btn.primary:hover {
+    background: var(--mint);
+  }
+  button.admin-btn.danger {
+    color: var(--rose);
+  }
+
+  .admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .admin-field label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--mist-muted);
+  }
+  .admin-field textarea,
+  .admin-field input[type='text'],
+  .admin-field input[type='url'],
+  .admin-field input[type='search'] {
+    width: 100%;
+    background: var(--canopy);
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    padding: 10px 13px;
+    color: var(--mist);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+  .admin-field textarea {
+    resize: vertical;
+    min-height: 90px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .admin-field-hint {
+    font-size: 12px;
+    color: var(--mist-faint);
+  }
+
+  @media (max-width: 960px) {
+    .stat-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .panel-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

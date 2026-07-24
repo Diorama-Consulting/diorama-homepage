@@ -14,6 +14,9 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Badge from '../components/Badge.astro';
+import SiteBanner from '../components/SiteBanner.astro';
+import ToolOpenTracking from '../components/ToolOpenTracking.astro';
+import ToolVisibility from '../components/ToolVisibility.astro';
 import { reader, resolveImageUrl } from '../lib/keystatic';
 
 type Props = CollectionEntry<'projects'>['data'] & { slug: string };
@@ -76,6 +79,9 @@ const toolJsonLd = {
     <BaseHead title={pageTitle} description={pageDescription} image={heroUrl} jsonLd={toolJsonLd} />
   </head>
   <body data-accent={accent}>
+    <SiteBanner />
+    <ToolOpenTracking />
+    <ToolVisibility />
     <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
     <section class="tool-hero">
@@ -101,9 +107,19 @@ const toolJsonLd = {
               href={externalUrl}
               target="_blank"
               rel={isExternal ? 'noopener noreferrer' : undefined}
+              data-track-tool-open
+              data-tool-id={slug}
+              data-tool-title={title}
+              data-tool-location="tool_page_hero"
+              data-tool-flag={`tool-${slug}`}
             >
               Open {title}<span class="arrow">→</span>
             </a>
+          )}
+          {externalUrl && (
+            <p class="maintenance-note" data-tool-flag-fallback={`tool-${slug}`} hidden>
+              This tool is temporarily offline for maintenance — check back soon, or <a href="/contact">get in touch</a> if it's urgent.
+            </p>
           )}
           {repoUrl && (
             <a class="action action-quiet" href={repoUrl} target="_blank" rel="noopener noreferrer">
@@ -144,9 +160,17 @@ const toolJsonLd = {
               href={externalUrl}
               target="_blank"
               rel={isExternal ? 'noopener noreferrer' : undefined}
+              data-track-tool-open
+              data-tool-id={slug}
+              data-tool-title={title}
+              data-tool-location="tool_page_launch"
+              data-tool-flag={`tool-${slug}`}
             >
               Open {title}<span class="arrow">→</span>
             </a>
+            <p class="maintenance-note" data-tool-flag-fallback={`tool-${slug}`} hidden>
+              This tool is temporarily offline for maintenance — check back soon, or <a href="/contact">get in touch</a> if it's urgent.
+            </p>
           </div>
         </section>
       )}
@@ -261,6 +285,17 @@ const toolJsonLd = {
         align-items: center;
         gap: 14px;
         flex-wrap: wrap;
+      }
+
+      .maintenance-note {
+        flex-basis: 100%;
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--ink-amber);
+      }
+      .maintenance-note a {
+        color: inherit;
+        text-decoration: underline;
       }
 
       .action {

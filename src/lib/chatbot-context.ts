@@ -62,7 +62,7 @@ export async function buildKnowledgeBase(ttlMs = 5 * 60 * 1000): Promise<string>
       reader.singletons.contactPage.read().catch(() => null),
     ]);
 
-  const tools = await getCollection('projects', ({ data }) => !data.draft).catch(() => []);
+  const tools = await getCollection('projects', ({ data }) => !data.draft && !data.restricted).catch(() => []);
 
   const parts: string[] = [];
 

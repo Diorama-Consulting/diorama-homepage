@@ -4,6 +4,8 @@ import { reader } from '../../lib/keystatic';
 import { buildKnowledgeBase, minimumKnowledge } from '../../lib/chatbot-context';
 import { getPostHogServer } from '../../lib/posthog-server';
 import { secret } from '../../lib/env';
+import { getChatbotOverride } from '../../lib/chatbot-override';
+import { assessChatQuality } from '../../lib/chat-quality';
 
 export const prerender = false;
 
@@ -114,9 +116,15 @@ export const POST: APIRoute = async ({ request }) => {
     knowledgeBase = minimumKnowledge();
   }
   const persona =
+    getChatbotOverride()?.personaInstructions ||
     chatbotSettings?.personaInstructions ||
     'You are the website assistant for Diorama Consulting Ltd. Answer only from the context provided.';
-  const extra = chatbotSettings?.extraContext ? `\n\n## Additional notes\n${chatbotSettings.extraContext}` : '';
+  const extraOverride = getChatbotOverride()?.extraContext;
+  const extra = extraOverride
+    ? `\n\n## Additional notes\n${extraOverride}`
+    : chatbotSettings?.extraContext
+      ? `\n\n## Additional notes\n${chatbotSettings.extraContext}`
+      : '';
 
   try {
     const response = await client.messages.create({
@@ -135,10 +143,19 @@ export const POST: APIRoute = async ({ request }) => {
       messages,
     });
 
-    const reply = response.content.find((block) => block.type === 'text')?.text?.trim();
+    const reply = response.content.find((block) => block.type === 'text')?.text?.trim() || "Sorry, I didn't catch that — could you rephrase?";
 
     const sessionId = request.headers.get('X-PostHog-Session-Id') || undefined;
     const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `chat-anon-${ip}`;
+    const pagePath = request.headers.get('X-Page-Path') || undefined;
+    const lastUserMessage = messages[messages.length - 1]?.content ?? '';
+    const quality = assessChatQuality(lastUserMessage, reply);
+
+    // The transcript itself lives ONLY here, as event properties — there's
+    // no separate chat-log database in this architecture. /admin/chatbot
+    // reconstructs conversations by querying PostHog for these events.
+    // Truncated generously but not unbounded, so a very long back-and-forth
+    // doesn't balloon a single event's property payload.
     getPostHogServer().capture({
       distinctId,
       event: 'chat_message_processed',
@@ -147,10 +164,15 @@ export const POST: APIRoute = async ({ request }) => {
         turn_count: messages.length,
         input_tokens: response.usage?.input_tokens,
         output_tokens: response.usage?.output_tokens,
+        page_path: pagePath,
+        user_message: lastUserMessage.slice(0, 800),
+        assistant_reply: reply.slice(0, 1200),
+        flagged: quality.flagged,
+        flag_reason: quality.reason,
       },
     });
 
-    return json({ reply: reply || "Sorry, I didn't catch that — could you rephrase?" });
+    return json({ reply });
   } catch (error) {
     console.error('Anthropic API error in /api/chat:', error);
     return json({ error: 'The assistant is temporarily unavailable — please try the contact form instead.' }, 502);

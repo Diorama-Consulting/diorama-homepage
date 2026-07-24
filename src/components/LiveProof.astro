@@ -50,7 +50,7 @@ const initials = (title: string) =>
 
     <div class="lp-tools">
       {tools.map((tool, i) => (
-        <a class="lp-tool" href={`/tools/${tool.id}/`} data-accent={tool.accent} data-reveal data-reveal-delay={String((i % 3) + 1)}>
+        <a class="lp-tool" href={`/tools/${tool.id}/`} data-accent={tool.accent} data-tool-flag={`tool-${tool.id}`} data-reveal data-reveal-delay={String((i % 3) + 1)}>
           <span class="lp-tile" aria-hidden="true">{tool.monogram || initials(tool.title)}</span>
           <span class="lp-tool-text">
             <span class="lp-tool-name">{tool.title}</span>

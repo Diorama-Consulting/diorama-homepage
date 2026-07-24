@@ -146,6 +146,9 @@ const { formId = 'contact-form', compact = false, heading } = Astro.props;
             'Content-Type': 'application/json',
             'X-PostHog-Session-Id': sessionId,
             'X-PostHog-Distinct-Id': distinctId,
+            // Which page the form was submitted from — shown next to the
+            // lead in /admin/leads alongside their fuller journey.
+            'X-Page-Path': window.location.pathname,
           },
           body: JSON.stringify(formData),
         });

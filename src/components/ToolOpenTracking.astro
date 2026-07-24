@@ -1,0 +1,24 @@
+---
+// ToolOpenTracking — a single delegated click listener for every
+// [data-track-tool-open] link (ToolRack.astro's panel CTA, and
+// ToolPage.astro's hero + launch-band CTAs). Delegation on `document`
+// means it doesn't matter which of those components rendered the link,
+// or whether the page uses Layout.astro or has its own <body> (several
+// tool-related pages do) — one script, mounted once per page, covers all
+// of them. Feeds /admin/tools' usage leaderboard.
+---
+
+<script>
+  document.addEventListener('click', (event) => {
+    const link = (event.target as HTMLElement)?.closest<HTMLElement>('[data-track-tool-open]');
+    if (!link) return;
+    const toolId = link.dataset.toolId;
+    if (!toolId) return;
+    window.posthog?.capture('tool_opened', {
+      tool_id: toolId,
+      tool_title: link.dataset.toolTitle,
+      location: link.dataset.toolLocation,
+      href: link.getAttribute('href'),
+    });
+  });
+</script>

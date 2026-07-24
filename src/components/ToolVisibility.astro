@@ -1,0 +1,53 @@
+---
+// ToolVisibility — hides any [data-tool-flag="tool-<id>"] element whose
+// PostHog feature flag has been explicitly switched off in /admin/tools
+// (the "flip it off for maintenance, visitors stop seeing it" kill
+// switch). This is a CLIENT-SIDE check deliberately: most pages here are
+// static-prerendered (see astro.config.mjs — output: 'static'), so there
+// is no per-request server code to bake a live flag check into. Checking
+// via posthog-js instead means the toggle takes effect immediately, no
+// rebuild needed, at the cost of a brief flash of the element before JS
+// hides it (acceptable for a maintenance toggle; not used for anything
+// that must never flash).
+//
+// Fails OPEN, not closed: if PostHog is blocked, slow, or the flag simply
+// doesn't exist yet, elements stay visible. Only an explicit `false`
+// hides something — undefined never does. A marketing site should never
+// let a third-party analytics hiccup take down a tool listing.
+//
+// If a matching [data-tool-flag-fallback="tool-<id>"] element exists
+// (ToolPage.astro's maintenance note), it's revealed in place of hiding
+// silently.
+---
+
+<script>
+  function applyToolFlags() {
+    const ph = window.posthog;
+    if (!ph?.isFeatureEnabled) return;
+
+    const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-tool-flag]'));
+    if (targets.length === 0) return;
+
+    targets.forEach((el) => {
+      const key = el.dataset.toolFlag;
+      if (!key) return;
+      const enabled = ph.isFeatureEnabled(key);
+      if (enabled === false) {
+        el.style.display = 'none';
+        const fallback = document.querySelector<HTMLElement>(`[data-tool-flag-fallback="${key}"]`);
+        if (fallback) fallback.hidden = false;
+      }
+    });
+  }
+
+  function initToolVisibility() {
+    if (!window.posthog) return;
+    // onFeatureFlags fires once flags have loaded, and again on any
+    // later reload — re-applying each time keeps this correct if flags
+    // change mid-session (e.g. a very quick toggle-then-revert).
+    window.posthog.onFeatureFlags?.(applyToolFlags);
+  }
+
+  initToolVisibility();
+  document.addEventListener('astro:page-load', initToolVisibility);
+</script>

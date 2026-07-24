@@ -2,6 +2,9 @@
 import BaseHead from '../components/BaseHead.astro';
 import ChatWidget from '../components/ChatWidget.astro';
 import PostHog from '../components/posthog.astro';
+import SiteBanner from '../components/SiteBanner.astro';
+import ToolOpenTracking from '../components/ToolOpenTracking.astro';
+import ToolVisibility from '../components/ToolVisibility.astro';
 
 interface Props {
   title: string;
@@ -24,6 +27,9 @@ const { title, description = 'Built with Astro.', image, jsonLd, showChatWidget 
     <PostHog />
   </head>
   <body>
+    <SiteBanner />
+    <ToolOpenTracking />
+    <ToolVisibility />
     <slot />
     {showChatWidget && <ChatWidget />}
   </body>

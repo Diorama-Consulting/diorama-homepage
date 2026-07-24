@@ -17,7 +17,7 @@ import Footer from '../../components/Footer.astro';
 import ToolRack from '../../components/ToolRack.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
-const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+const all = (await getCollection('projects', ({ data }) => !data.draft && !data.restricted)).sort(
   (a, b) => a.data.order - b.data.order,
 );
 

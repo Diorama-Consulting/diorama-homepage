@@ -5,6 +5,7 @@ import InsightCard from '../../components/InsightCard.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
+import SiteBanner from '../../components/SiteBanner.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 
 // The Insights hub — articles and events combined into one feed, the way
@@ -87,6 +88,7 @@ function formatDate(iso: string) {
     />
   </head>
   <body>
+    <SiteBanner />
     <Header
       logoText={headerNav?.logoText}
       links={headerNav?.links}

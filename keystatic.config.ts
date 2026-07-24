@@ -101,7 +101,7 @@ export default config({
       'Site-wide': ['siteSettings', 'positioning', 'headerNav', 'footerNav'],
       'Homepage': ['home', 'homeCharityWidget', 'homeCxaiWidget'],
       'Services pages': ['servicesIndex', 'servicesConsulting', 'servicesCharities', 'charities'],
-      'Tools': ['projectsIndex', 'projects'],
+      'Tools': ['projectsIndex', 'projects', 'clientAccess'],
       'Insights & Events': ['insightsIndex', 'blog', 'eventsIndex', 'events'],
       'About & Contact': ['about', 'aboutFounder', 'faqPage', 'teachingPage', 'contactPage'],
       'Legal pages': ['legalPages'],
@@ -1099,6 +1099,22 @@ export default config({
           },
         }),
         repoUrl: fields.url({ label: 'Source code URL' }),
+        // -------------------------------------------------------------
+        // DOCKER TOOL TELEMETRY (see /admin/tools) — both optional, both
+        // safe to leave blank for tools that aren't containerised or
+        // aren't ready to be monitored/gated yet.
+        // -------------------------------------------------------------
+        healthCheckUrl: fields.url({
+          label: 'Health-check URL (internal)',
+          description:
+            'A URL reachable FROM the site container\u2019s own Docker network that returns 2xx when the tool is healthy — e.g. http://invoice-forge:3000/health. Not the public URL. Leave blank to skip health monitoring for this tool on /admin/tools.',
+        }),
+        restricted: fields.checkbox({
+          label: 'Restricted (requires a client access link)',
+          description:
+            'Tick to hide this tool from the public /tools/<slug> page and require a valid magic link generated in /admin/access instead. See /tools/gated/<slug>.',
+          defaultValue: false,
+        }),
         techStack: fields.array(fields.text({ label: 'Technology' }), {
           label: 'Tech stack (short chips, e.g. "React", "FastAPI")',
           itemLabel: (props) => props.value || 'Technology',
@@ -1188,6 +1204,52 @@ export default config({
         linkText: fields.text({ label: 'Link text', defaultValue: 'Details' }),
         draft: fields.checkbox({ label: 'Draft (hide from site)', defaultValue: false }),
         content: fields.mdx({ label: 'Additional details (optional)' }),
+      },
+    }),
+
+    // -------------------------------------------------------------------
+    // CLIENT ACCESS — grants for "restricted" tools (see the Restricted
+    // checkbox on Tools, above). Pure structured data, no long-form
+    // content, so this is a form-layout collection rather than
+    // entryLayout: 'content'. Managed here in Keystatic (git-backed, same
+    // as everything else on the site) — /admin/access is a READ-ONLY
+    // dashboard over this data (status at a glance, magic-link copy
+    // buttons); create/edit/revoke grants happen here in the normal
+    // Keystatic UI, not via a second parallel write path.
+    //
+    // A magic link is: https://<domain>/tools/gated/<tool-slug>?token=<token>
+    // See src/pages/tools/gated/[...slug].astro for the redemption logic.
+    // -------------------------------------------------------------------
+    clientAccess: collection({
+      label: 'Client Access (Tools)',
+      slugField: 'clientName',
+      path: 'src/content/client-access/*/',
+      entryLayout: 'form',
+      schema: {
+        clientName: fields.slug({ name: { label: 'Client / contact name', validation: { isRequired: true } } }),
+        clientEmail: fields.text({ label: 'Client email (optional, for your reference)' }),
+        token: fields.text({
+          label: 'Access token',
+          description: 'A long random string — use the generator on /admin/access, then paste it here. Anyone with a tool\u2019s magic link (which includes this token) gets access, so treat it like a password.',
+          validation: { isRequired: true },
+        }),
+        grantedTools: fields.array(
+          fields.relationship({ label: 'Tool', collection: 'projects' }),
+          {
+            label: 'Tools this grant unlocks',
+            description: 'Only tools with "Restricted" ticked need a grant — granting access to a non-restricted tool has no effect since it\u2019s already public.',
+            itemLabel: (props) => props.value || 'Tool',
+          },
+        ),
+        expiresAt: fields.date({
+          label: 'Expires on (optional)',
+          description: 'Leave blank for no expiry.',
+        }),
+        revoked: fields.checkbox({
+          label: 'Revoked (manually kill this grant immediately)',
+          defaultValue: false,
+        }),
+        notes: fields.text({ label: 'Notes (private — never shown to the client)', multiline: true }),
       },
     }),
   },

@@ -5,6 +5,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Badge from '../components/Badge.astro';
+import SiteBanner from '../components/SiteBanner.astro';
 import { reader, resolveImageSrc, resolveImageUrl } from '../lib/keystatic';
 
 type Props = CollectionEntry<'projects'>['data'] & { slug: string };
@@ -127,6 +128,7 @@ const projectJsonLd = {
   </head>
 
   <body>
+    <SiteBanner />
     <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
     <main>

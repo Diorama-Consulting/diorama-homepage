@@ -1,0 +1,213 @@
+---
+// /admin/access — "Client Access Management."
+//
+// Grants live in the `clientAccess` Keystatic collection (git-backed,
+// managed at /keystatic — same as everything else on the site) so there
+// is exactly one place to create/edit/revoke access, not two competing
+// write paths. This page is a READ-ONLY dashboard over that data: status
+// at a glance (active/expiring soon/expired/revoked), and a magic-link
+// copy button per granted tool so you don't have to hand-build the URL.
+//
+// A magic link is: https://<domain>/tools/gated/<tool-slug>?token=<token>
+// — redeemed by src/pages/tools/gated/[...slug].astro.
+import { getCollection } from 'astro:content';
+import AdminShell from '../../components/AdminShell.astro';
+import { requireAdmin } from '../../lib/admin-auth';
+import { reader } from '../../lib/keystatic';
+
+export const prerender = false;
+
+const gate = await requireAdmin(Astro, '/admin/access');
+if (gate instanceof Response) return gate;
+
+const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramaconsulting.co.uk';
+const origin = `https://${siteDomain}`;
+
+const grants = await reader.collections.clientAccess.all();
+const tools = await getCollection('projects', ({ data }) => data.restricted);
+const titleById = new Map(tools.map((t) => [t.id, t.data.title]));
+
+const now = Date.now();
+function grantStatus(g: (typeof grants)[number]['entry']): { label: string; variant: string } {
+  if (g.revoked) return { label: 'Revoked', variant: 'revoked' };
+  if (g.expiresAt && new Date(g.expiresAt).getTime() < now) return { label: 'Expired', variant: 'expired' };
+  return { label: 'Active', variant: 'active' };
+}
+
+const fmtDate = (iso: unknown) =>
+  typeof iso === 'string' && iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+---
+
+<AdminShell title="Client Access" eyebrow="Admin" activeHref="/admin/access">
+  <p class="notice">
+    Grants are created and edited in <a href="/keystatic/collection/clientAccess" target="_blank" rel="noopener noreferrer">Keystatic</a> —
+    this page is a read-only view for checking status and copying magic links. Only tools with "Restricted" ticked
+    need a grant here.
+  </p>
+
+  <section class="panel">
+    <h2>Generate a token</h2>
+    <p class="dim" style="margin: 0 0 12px; font-size: 13px;">A quick helper for creating a new grant in Keystatic — generates a random token to paste in, so you don't have to invent one.</p>
+    <div class="token-gen">
+      <input type="text" id="token-output" readonly aria-label="Generated token" placeholder="Click generate…" />
+      <button type="button" class="admin-btn" id="token-generate">Generate</button>
+      <button type="button" class="admin-btn" id="token-copy">Copy</button>
+    </div>
+  </section>
+
+  {tools.length === 0 ? (
+    <p class="notice">No tools are marked "Restricted" yet — tick that box on a Tool entry in Keystatic to start gating it.</p>
+  ) : grants.length === 0 ? (
+    <p class="empty">No client access grants yet.</p>
+  ) : (
+    <div class="cards">
+      {grants.map(({ entry: g, slug }) => {
+        const status = grantStatus(g);
+        const grantedTools = (g.grantedTools ?? []).filter((id): id is string => Boolean(id));
+        return (
+          <article class:list={['grant-card', `grant-card--${status.variant}`]}>
+            <header>
+              <div>
+                <strong>{g.clientName}</strong>
+                {g.clientEmail && <span class="dim"> · {g.clientEmail}</span>}
+              </div>
+              <span class:list={['pill', `pill--${status.variant}`]}><span class="pill-dot" />{status.label}</span>
+            </header>
+
+            <p class="dim" style="font-size: 13px; margin: 8px 0;">
+              Expires: {fmtDate(g.expiresAt)}{g.notes ? ` · ${g.notes}` : ''}
+            </p>
+
+            {grantedTools.length === 0 ? (
+              <p class="empty">No tools granted yet — edit this entry in Keystatic to add some.</p>
+            ) : (
+              <div class="link-list">
+                {grantedTools.map((toolId) => {
+                  const link = `${origin}/tools/gated/${toolId}?token=${g.token}`;
+                  return (
+                    <div class="link-row">
+                      <span class="link-tool">{titleById.get(toolId) || toolId}</span>
+                      <code class="link-url">{link}</code>
+                      <button type="button" class="admin-btn copy-link-btn" data-copy={link}>Copy link</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  )}
+</AdminShell>
+
+<style>
+  .token-gen {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .token-gen input {
+    flex: 1;
+    min-width: 220px;
+    background: var(--canopy);
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    padding: 9px 13px;
+    color: var(--mist);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .grant-card {
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--pine);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 18px 22px;
+  }
+  .grant-card--active {
+    border-left-color: var(--signal);
+  }
+  .grant-card--expired,
+  .grant-card--revoked {
+    border-left-color: var(--rose);
+    opacity: 0.8;
+  }
+  .grant-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .link-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--hairline);
+    padding-top: 8px;
+  }
+  .link-tool {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-strong);
+    min-width: 140px;
+  }
+  .link-url {
+    flex: 1;
+    min-width: 200px;
+    font-size: 11.5px;
+    color: var(--mist-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  function randomToken(): string {
+    if (window.crypto?.randomUUID) {
+      return `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, '');
+    }
+    // Fallback for older environments — still cryptographically random.
+    const bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  document.getElementById('token-generate')?.addEventListener('click', () => {
+    const out = document.getElementById('token-output') as HTMLInputElement | null;
+    if (out) out.value = randomToken();
+  });
+
+  document.getElementById('token-copy')?.addEventListener('click', async () => {
+    const out = document.getElementById('token-output') as HTMLInputElement | null;
+    if (out?.value) await navigator.clipboard.writeText(out.value);
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.copy-link-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const link = btn.dataset.copy;
+      if (!link) return;
+      await navigator.clipboard.writeText(link);
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = original;
+      }, 1500);
+    });
+  });
+</script>
