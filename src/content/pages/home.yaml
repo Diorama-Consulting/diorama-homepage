@@ -57,3 +57,9 @@ trustedCompanies:
     logo: trustedCompanies/4/logo.png
   - name: Helpforce
     logo: trustedCompanies/5/logo.jpg
+craftBandEyebrow: Built with care
+craftBandHeading: Built with the same discipline we bring to client work
+craftBandText: >-
+  A fast, static-first site with optimised images and a public per-page
+  carbon measurement — the site itself is a small proof point for how we
+  work.

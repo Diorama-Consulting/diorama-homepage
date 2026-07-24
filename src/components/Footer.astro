@@ -31,9 +31,20 @@ interface Props {
   brandBlurb?: string;
   legalLine?: string;
   groups?: LinkGroup[];
+  /** Footer contact CTA block — editable in Keystatic (Footer singleton). */
+  ctaEyebrow?: string;
+  ctaHeading?: string;
+  ctaSub?: string;
 }
 
 const siteSettings = await reader.singletons.siteSettings.read();
+// Read here directly (same pattern as siteSettings above) so every one of
+// the ~16 call sites gets the editable CTA copy automatically — pages
+// only need to pass brandBlurb/groups/legalLine explicitly; the CTA prop
+// overrides below exist for a caller that already has footerNav in scope
+// and wants to pass it through explicitly (e.g. the About page), but are
+// optional.
+const footerNavForCta = await reader.singletons.footerNav.read().catch(() => null);
 
 // The contact page already has a full-size form — showing the footer's
 // compact one there as well meant two forms on one page.
@@ -81,6 +92,13 @@ const {
       ],
     },
   ],
+  // Defaults mirror the footerNav Keystatic schema's own defaults — kept
+  // in sync so a never-edited entry and a freshly-created one read the
+  // same copy. "Have a project in mind?" was the previous hardcoded copy;
+  // the new default is more direct and matches what's now editable here.
+  ctaEyebrow = footerNavForCta?.ctaEyebrow || 'Get in touch',
+  ctaHeading = footerNavForCta?.ctaHeading || 'Get in touch to discuss your needs',
+  ctaSub = footerNavForCta?.ctaSub || "Send a quick note — we'll reply within a couple of working days.",
 } = Astro.props;
 ---
 
@@ -88,9 +106,9 @@ const {
   {!onContactPage && (
     <div class="container footer-cta">
       <div class="footer-cta-copy">
-        <p class="footer-cta-eyebrow">Get in touch</p>
-        <h3>Have a project in mind?</h3>
-        <p class="footer-cta-sub">Send a quick note — we'll reply within a couple of working days.</p>
+        <p class="footer-cta-eyebrow">{ctaEyebrow}</p>
+        <h3>{ctaHeading}</h3>
+        <p class="footer-cta-sub">{ctaSub}</p>
       </div>
       <ContactForm formId="footer-contact-form" compact />
     </div>

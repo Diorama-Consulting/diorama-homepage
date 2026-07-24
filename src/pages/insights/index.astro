@@ -24,6 +24,11 @@ import { reader, resolveImageUrl } from '../../lib/keystatic';
 const posts = await getCollection('blog', ({ data }) => !data.draft);
 const events = await getCollection('events', ({ data }) => !data.draft);
 
+// Events are shown whether upcoming OR past — the insights hub is the
+// full archive. Each event carries a flag so its card can say which it
+// is (grace window of one day so "today" still counts as upcoming).
+const nowMs = Date.now() - 1000 * 60 * 60 * 24;
+
 const items = [
   ...posts.map((post) => ({
     type: 'article' as const,
@@ -39,6 +44,7 @@ const items = [
     title: event.data.title,
     excerpt: event.data.description,
     date: event.data.date.toISOString(),
+    past: event.data.date.getTime() < nowMs,
     image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl),
     href: event.data.href || '/events/',
     external: Boolean(event.data.href?.startsWith('http')),
@@ -144,6 +150,7 @@ function formatDate(iso: string) {
                 href={item.href}
                 external={item.external}
                 location={'location' in item ? item.location : undefined}
+                past={'past' in item ? item.past : undefined}
               />
             ))}
             <p class="insights-empty" id="insights-empty" hidden>Nothing matches that search — try a different term.</p>
@@ -366,7 +373,13 @@ function formatDate(iso: string) {
     padding: 40px 0;
   }
 
-  .insight-card[data-hidden='true'] {
+  /* THE FILTER FIX: these cards are rendered by the InsightCard component,
+     so they don't carry THIS page's Astro scope hash — a plain scoped
+     selector here never matched them and data-hidden did nothing (the
+     buttons/search set the attribute, but nothing visually changed).
+     :global() opts the selector out of scoping, same as the is-refreshing
+     rule below already did. */
+  :global(.insight-card[data-hidden='true']) {
     display: none;
   }
 
@@ -493,7 +506,8 @@ function formatDate(iso: string) {
 
       cards.forEach((card) => {
         const matchesType = activeType === 'all' || card.dataset.type === activeType;
-        const matchesQuery = !query || (card.dataset.title || '').includes(query);
+        const haystack = `${card.dataset.title || ''} ${card.dataset.excerpt || ''}`;
+        const matchesQuery = !query || haystack.includes(query);
         const show = matchesType && matchesQuery;
         card.setAttribute('data-hidden', String(!show));
         if (show) visibleCount++;

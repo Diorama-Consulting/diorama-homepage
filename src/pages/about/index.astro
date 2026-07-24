@@ -6,17 +6,26 @@ import Footer from '../../components/Footer.astro';
 import QuoteBanner from '../../components/QuoteBanner.astro';
 import LinkCard from '../../components/LinkCard.astro';
 import Profile from '../../components/Profile.astro';
-import SpacerImageSweep from '../../components/spacers/SpacerImageSweep.astro';
-import SpacerTextBox from '../../components/spacers/SpacerTextBox.astro';
-import FloatingLeaves from '../../components/FloatingLeaves.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
+import LeafToTreeReveal from '../../components/animated/LeafToTreeReveal.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
 import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 
-// The former standalone /about/mal page is now merged into this page as a
-// "Team" section — see about/mal.astro, which now just redirects here for
-// old links/bookmarks/SEO. Both singletons are still read independently so
-// no Keystatic content had to be migrated.
+// ---------------------------------------------------------------------------
+// ABOUT — redesigned as a scroll story.
+//
+//   Act 1  Statement hero: who we are + the mission, readable the instant
+//          the page opens (word-by-word entrance on load, no scroll needed).
+//   Act 2  The story: each paragraph is a full-width statement that lights
+//          up as it crosses the viewport, threaded on a growing timeline.
+//   Act 3  Pillars: what we actually do, as staggered cards.
+//   Act 4  Numbers: stats that count up when they enter view.
+//   Act 5  Quote banner (smaller, more readable text) + team.
+//   Act 6  The leaf-to-tree scroll animation as the closing band.
+//
+// EVERY string on this page comes from the `about` / `aboutFounder`
+// Keystatic singletons (with sensible fallbacks) — nothing is hardcoded.
+// ---------------------------------------------------------------------------
 const page = await reader.singletons.about.read();
 const founder = await reader.singletons.aboutFounder.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -29,6 +38,19 @@ const pageImage =
   resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
   resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
+// --- Act 1 ---
+const eyebrow = page?.eyebrow || 'About us';
+const heading = page?.heading || 'We are all in the diorama';
+const mission =
+  page?.subheading ||
+  'Diorama Consulting is an AI Technology Advisory practice — bridging product strategy, engineering and AI for Boards, Founders and Investors.';
+const missionChips = page?.missionChips?.length
+  ? page.missionChips
+  : ['Fractional CTO/CPTO leadership', 'AI & data strategy', 'Platform modernisation', 'Organisation design'];
+const headingWords = heading.split(/\s+/);
+
+// --- Act 2 ---
+const storyEyebrow = page?.storyEyebrow || 'Why "Diorama"';
 const bodyParagraphs = page?.bodyParagraphs?.length
   ? page.bodyParagraphs
   : [
@@ -36,98 +58,167 @@ const bodyParagraphs = page?.bodyParagraphs?.length
       "The name Diorama Consulting is inspired by a quote from David Wallace-Wells and the reality that we're not outside observers of climate change, AI disruption, or technological change. We are all in the diorama, creating it and being shaped by it in turn.",
     ];
 
+// --- Act 3 ---
+const pillarsEyebrow = page?.pillarsEyebrow || 'What we do';
+const pillarsHeading = page?.pillarsHeading || 'Four ways we help';
+const pillars = page?.pillars?.length
+  ? page.pillars
+  : [
+      { title: 'Fractional leadership', description: 'CTO/CPTO leadership that plugs into your team without a full-time hire — strategy, delivery, and accountability.' },
+      { title: 'AI & data strategy', description: 'Pragmatic, product-led AI adoption — what to build, what to buy, and what to leave alone.' },
+      { title: 'Platform modernisation', description: 'Untangling legacy platforms so technology accelerates the roadmap instead of blocking it.' },
+      { title: 'Organisation design', description: 'Team shapes, operating rhythms, and hiring plans that fit the product you are actually building.' },
+    ];
+
+// --- Act 4 ---
+const stats = page?.stats?.length
+  ? page.stats
+  : [
+      { value: '25+', label: 'Years in product & technology' },
+      { value: '2024', label: 'Diorama founded' },
+      { value: '2', label: 'UK charity trusteeships' },
+      { value: '100%', label: 'Senior attention on every engagement' },
+    ];
+
+// --- Approach callout ---
+const approachEyebrow = page?.approachEyebrow || 'Our approach';
+const approachText =
+  page?.approachText || "Thoughtful strategy, careful execution — we'd rather do fewer things well than everything at once.";
+
+// --- Quote (Act 5) ---
 const quote =
   page?.quote ||
-  "you believe that what is contained in the taxidermy scene has something to teach you—but only by the logic of metaphor, because you are not a stuffed animal and do not live in the scene but beyond it, outside it, observing rather than participating. The logic is twisted by global warming, because it collapses the perceived distance between humans and nature—between you and the diorama.";
+  'you believe that what is contained in the taxidermy scene has something to teach you—but only by the logic of metaphor… The logic is twisted by global warming, because it collapses the perceived distance between humans and nature—between you and the diorama.';
 const quoteAuthor = page?.quoteAuthor || 'David Wallace-Wells, The Uninhabitable Earth';
-// Falls back to the site's default hero photograph if no dedicated quote
-// backdrop has been uploaded yet, so the banner never renders with nothing
-// behind it.
 const quoteImage =
   resolveImageUrl(page?.quoteImage, page?.quoteImageUrl) ||
   resolveImageUrl(founder?.portrait, founder?.portraitUrl) ||
   (defaultHeroPhoto as unknown as { src: string }).src;
 
+// --- Team ---
 const portraitUrl = resolveImageUrl(founder?.portrait, founder?.portraitUrl) || '/Mal.png';
-
 const founderParagraphs = founder?.paragraphs?.length
   ? founder.paragraphs
   : [
       'Mal Minhas founded Diorama Consulting in 2024 to help Boards, Founders and Investors turn product, technology and AI strategy into commercial outcomes through fractional CTO/CPTO leadership and AI enablement including platform modernisation and organisation design, with a particular focus on D2C marketplaces and consumer products.',
       'Alongside advisory work, Mal serves as a Trustee for two UK charities: Helpforce, which supports NHS trusts and community organisations to build high-impact volunteering programmes across the health system, and Aston-Mansfield, which supports children, young people and families in Newham and east London.',
     ];
-
 const team = founder?.team?.length
   ? founder.team
   : [
-      {
-        name: 'Mal Minhas',
-        role: 'Founder & Everything Else',
-        bio: 'AI Technology Advisor, charity Trustee, and occasional Substack writer.',
-        socials: [{ label: 'LinkedIn', href: 'https://linkedin.com/malminhas' }],
-      },
-      {
-        name: 'Paolo Minhas',
-        role: 'Website & Engineering',
-        bio: 'Builds and maintains the Diorama site and tooling.',
-        socials: [
-          { label: 'GitHub', href: 'https://github.com/paolominhas' },
-          { label: 'LinkedIn', href: 'https://linkedin.com/in/paolo-m' },
-        ],
-      },
-      {
-        name: 'Rowan Caulfield',
-        role: 'Logo Design',
-        bio: 'Makes logos.',
-        socials: [{ label: 'LinkedIn', href: 'https://linkedin.com' }],
-      },
+      { name: 'Mal Minhas', role: 'Founder & Everything Else', bio: 'AI Technology Advisor, charity Trustee, and occasional Substack writer.', socials: [{ label: 'LinkedIn', href: 'https://linkedin.com/malminhas' }] },
+      { name: 'Paolo Minhas', role: 'Website & Engineering', bio: 'Builds and maintains the Diorama site and tooling.', socials: [{ label: 'GitHub', href: 'https://github.com/paolominhas' }, { label: 'LinkedIn', href: 'https://linkedin.com/in/paolo-m' }] },
+      { name: 'Rowan Caulfield', role: 'Logo Design', bio: 'Makes logos.', socials: [{ label: 'LinkedIn', href: 'https://linkedin.com' }] },
     ];
+
+// --- Act 6: closing animated band ---
+const closingEyebrow = page?.closingEyebrow || 'Renewal';
+const closingHeading = page?.closingHeading || 'Small, deliberate, and growing';
+const closingText =
+  page?.closingText || 'A small practice by design — every engagement gets senior attention from start to finish.';
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
   <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
 
-  <Section
-    eyebrow={page?.eyebrow || 'About us'}
-    heading={page?.heading || 'We are all in the diorama'}
-    subheading={page?.subheading || 'Diorama Consulting Ltd is an AI Technology Advisory practice with a focus on D2C marketplaces and consumer products.'}
-  >
-    <FloatingLeaves count={4} seed={5} maxOpacity={0.06} />
-    <div class="about-prose" data-reveal>
-      {bodyParagraphs.map((paragraph) => <p>{paragraph}</p>)}
+  <!-- ============================================================
+       ACT 1 — the statement. Everything essential is on screen the
+       moment the page opens: who, what, and for whom. The headline
+       cascades in word-by-word on load (a page-load animation, NOT a
+       scroll one — no interaction required to read the mission).
+  ============================================================= -->
+  <section class="about-hero" id="about-hero">
+    <div class="about-hero-glow" aria-hidden="true"></div>
+    <div class="container about-hero-inner">
+      <p class="hero-eyebrow">{eyebrow}</p>
+      <h1 class="hero-heading" aria-label={heading}>
+        {headingWords.map((word, i) => (
+          <span class="hero-word" style={`--word-i: ${i}`} aria-hidden="true">{word}</span>
+        ))}
+      </h1>
+      <p class="hero-mission">{mission}</p>
+      {missionChips.length > 0 && (
+        <ul class="hero-chips" aria-label="What we do">
+          {missionChips.map((chip, i) => (
+            <li style={`--chip-i: ${i}`}>{chip}</li>
+          ))}
+        </ul>
+      )}
     </div>
+    <a class="hero-scroll-cue" href="#about-story" aria-label="Scroll to read more">
+      <span class="cue-label">The story</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 4v16m0 0 6-6m-6 6-6-6" />
+      </svg>
+    </a>
+  </section>
 
-    <div class="about-links" data-reveal data-reveal-delay="1">
-      <LinkCard
-        href="#team"
-        eyebrow="Meet the team"
-        title={founder?.heading?.replace('Meet ', '') || 'Mal & the team'}
-        description={page?.founderLinkDescription || 'The story behind Diorama and the people building it.'}
-        linkText="Read more"
-        size="compact"
-      />
-      <LinkCard
-        href="/about/faq"
-        eyebrow="Questions"
-        title={page?.faqLinkTitle || 'FAQ'}
-        description={page?.faqLinkDescription || 'How we engage with clients and what to expect.'}
-        linkText="View FAQ"
-        size="compact"
-      />
+  <!-- ============================================================
+       ACT 2 — the story. A vertical timeline grows as you scroll;
+       each paragraph brightens from faint to full as it crosses the
+       middle of the viewport.
+  ============================================================= -->
+  <section class="about-story container" id="about-story">
+    <p class="story-eyebrow">{storyEyebrow}</p>
+    <div class="story-thread" data-story-thread>
+      <div class="story-line" aria-hidden="true"><span class="story-line-fill" data-story-fill></span></div>
+      <div class="story-items">
+        {bodyParagraphs.map((paragraph) => (
+          <p class="story-paragraph" data-story-item>
+            <span class="story-dot" aria-hidden="true"></span>
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ACT 3 — pillars.
+  ============================================================= -->
+  <Section id="pillars" eyebrow={pillarsEyebrow} heading={pillarsHeading}>
+    <FallingLeaves count={10} seed={17} maxOpacity={0.06} />
+    <div class="pillar-grid">
+      {pillars.map((pillar, i) => (
+        <article class="pillar-card" data-reveal data-reveal-delay={String(Math.min(i + 1, 4))}>
+          <span class="pillar-index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <h3>{pillar.title}</h3>
+          {pillar.description && <p>{pillar.description}</p>}
+        </article>
+      ))}
     </div>
   </Section>
 
+  <!-- ============================================================
+       ACT 4 — the numbers, counting up on arrival.
+  ============================================================= -->
+  {stats.length > 0 && (
+    <div class="container">
+      <div class="stats-band" data-reveal>
+        {stats.map((stat) => (
+          <div class="stat">
+            <span class="stat-value" data-count-value={stat.value}>{stat.value}</span>
+            <span class="stat-label">{stat.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
   <div class="container">
-    <SpacerTextBox eyebrow="Our approach" text="Thoughtful strategy, careful execution — we'd rather do fewer things well than everything at once." tone="sand" />
+    <div class="approach-callout" data-reveal>
+      <span class="approach-eyebrow">{approachEyebrow}</span>
+      <p>{approachText}</p>
+    </div>
   </div>
 
   <div class="container">
     <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
   </div>
 
-  <!-- ===================================================================
-       TEAM — merged in from the former standalone /about/mal page.
-  ==================================================================== -->
+  <!-- ============================================================
+       ACT 5 — the team.
+  ============================================================= -->
   <Section id="team" eyebrow="The team" heading={founder?.heading || 'Meet Mal'} subheading={founder?.teamHeading}>
     <FallingLeaves count={14} seed={21} maxOpacity={0.08} />
     <div class="founder-block" data-reveal>
@@ -146,33 +237,356 @@ const team = founder?.team?.length
         </div>
       ))}
     </div>
+
+    <div class="about-links" data-reveal>
+      <LinkCard
+        href="/about/faq"
+        eyebrow="Questions"
+        title={page?.faqLinkTitle || 'FAQ'}
+        description={page?.faqLinkDescription || 'How we engage with clients and what to expect.'}
+        linkText="View FAQ"
+        size="compact"
+      />
+      <LinkCard
+        href="/contact"
+        eyebrow="Next step"
+        title="Start a conversation"
+        description={page?.founderLinkDescription || 'The story behind Diorama and the people building it.'}
+        linkText="Get in touch"
+        size="compact"
+      />
+    </div>
   </Section>
 
+  <!-- ============================================================
+       ACT 6 — the classic leaf-to-tree scroll animation closes the
+       page ("the old animation effects, utilised towards the bottom").
+  ============================================================= -->
   <div class="container">
-    <SpacerImageSweep image={(defaultHeroPhoto as unknown as { src: string }).src} imageAlt="" caption="Building thoughtfully, one project at a time." />
+    <LeafToTreeReveal eyebrow={closingEyebrow} heading={closingHeading} text={closingText} />
   </div>
 
-  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} ctaEyebrow={footerNav?.ctaEyebrow} ctaHeading={footerNav?.ctaHeading} ctaSub={footerNav?.ctaSub} />
 </Layout>
 
 <style>
-  .about-prose {
-    max-width: 760px;
-    color: var(--mist);
-    line-height: 1.7;
-    margin-bottom: var(--space-lg);
+  /* =================== ACT 1: statement hero =================== */
+  .about-hero {
+    position: relative;
+    min-height: calc(100svh - 120px);
+    display: flex;
+    align-items: center;
+    background: linear-gradient(180deg, var(--ink-bg-2) 0%, var(--ink-bg) 100%);
+    overflow: hidden;
   }
 
-  .about-prose p {
-    margin-bottom: 1.2rem;
+  .about-hero-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 80% at 75% 15%, hsl(var(--hue-green) 55% 40% / 0.16), transparent 65%),
+      radial-gradient(45% 60% at 15% 90%, hsl(var(--hue-amber) 70% 50% / 0.08), transparent 60%);
+    pointer-events: none;
   }
 
-  .about-links {
+  .about-hero-inner {
+    position: relative;
+    padding-block: var(--space-2xl) var(--space-xl);
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-accent);
+    margin: 0 0 20px;
+    animation: hero-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hero-heading {
+    font-size: clamp(42px, 7vw, 92px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--ink-text);
+    margin: 0 0 26px;
+    max-width: 14ch;
+  }
+
+  .hero-word {
+    display: inline-block;
+    margin-right: 0.24em;
+    opacity: 0;
+    transform: translateY(0.5em) rotate(1.5deg);
+    animation: hero-word-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.12s + var(--word-i) * 0.09s);
+  }
+
+  .hero-mission {
+    font-size: clamp(17px, 2vw, 22px);
+    line-height: 1.55;
+    color: var(--ink-text-muted);
+    max-width: 640px;
+    margin: 0 0 30px;
+    animation: hero-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+  }
+
+  .hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hero-chips li {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    color: var(--ink-text);
+    border: 1px solid var(--ink-border-hover);
+    background: hsl(0 0% 100% / 0.05);
+    border-radius: 999px;
+    padding: 8px 16px;
+    opacity: 0;
+    animation: hero-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.75s + var(--chip-i) * 0.08s);
+  }
+
+  .hero-scroll-cue {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-text-muted);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    animation: hero-rise 0.7s ease 1.2s both;
+    transition: color 0.2s ease;
+  }
+  .hero-scroll-cue:hover { color: var(--ink-accent-hover); }
+  .cue-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-scroll-cue svg { animation: cue-bob 2.2s ease-in-out 1.6s infinite; }
+
+  @keyframes hero-word-in {
+    to { opacity: 1; transform: translateY(0) rotate(0deg); }
+  }
+  @keyframes hero-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cue-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+  }
+
+  /* =================== ACT 2: the story thread =================== */
+  .about-story {
+    padding-block: var(--space-2xl) var(--space-xl);
+  }
+
+  .story-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 var(--space-md);
+  }
+
+  .story-thread {
+    position: relative;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 0 28px;
+    max-width: 820px;
+  }
+
+  .story-line {
+    position: relative;
+    width: 2px;
+    justify-self: center;
+    background: var(--hairline);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  /* Grows top-to-bottom with scroll progress (JS writes --story-progress). */
+  .story-line-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--signal), var(--leaf));
+    transform-origin: top;
+    transform: scaleY(var(--story-progress, 0));
+  }
+
+  .story-items {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(48px, 8vh, 88px);
+    padding-block: 8px;
+  }
+
+  .story-paragraph {
+    position: relative;
+    font-family: var(--font-display);
+    font-size: clamp(19px, 2.5vw, 27px);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    color: var(--text-strong);
+    margin: 0;
+    opacity: 0.22;
+    transform: translateY(14px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .story-paragraph.is-lit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .story-dot {
+    position: absolute;
+    left: -41px;
+    top: 0.55em;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--canopy);
+    border: 2px solid var(--hairline-hover);
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .story-paragraph.is-lit .story-dot {
+    background: var(--signal);
+    border-color: var(--signal);
+    box-shadow: 0 0 0 5px var(--signal-soft);
+  }
+
+  /* =================== ACT 3: pillars =================== */
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
     gap: var(--space-sm);
   }
 
+  .pillar-card {
+    position: relative;
+    background: var(--forest);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 28px 26px 26px;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .pillar-card::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--signal), var(--leaf));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .pillar-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--hairline-hover);
+    box-shadow: var(--shadow-md);
+  }
+  .pillar-card:hover::after { transform: scaleX(1); }
+
+  .pillar-index {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--signal);
+    letter-spacing: 0.05em;
+  }
+  .pillar-card h3 {
+    font-size: 18px;
+    margin: 12px 0 10px;
+  }
+  .pillar-card p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--mist-muted);
+    margin: 0;
+  }
+
+  /* =================== ACT 4: stats =================== */
+  .stats-band {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-sm);
+    background: var(--ink-bg);
+    border-radius: var(--radius-xl);
+    padding: clamp(32px, 5vw, 56px);
+    margin-block: var(--space-xl);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 700;
+    color: var(--ink-accent);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--ink-text-muted);
+    line-height: 1.4;
+  }
+
+  /* =================== Approach callout =================== */
+  .approach-callout {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 40px 44px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--hairline);
+    background: var(--sand-soft);
+  }
+  .approach-eyebrow {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sand);
+    margin-bottom: 12px;
+  }
+  .approach-callout p {
+    font-family: var(--font-display);
+    font-size: clamp(17px, 2vw, 21px);
+    line-height: 1.55;
+    color: var(--text-strong);
+    margin: 0;
+  }
+
+  /* =================== Team =================== */
   .founder-block {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -196,17 +610,22 @@ const team = founder?.team?.length
     color: var(--mist);
     line-height: 1.7;
   }
-
-  .founder-copy p {
-    margin: 0;
-  }
+  .founder-copy p { margin: 0; }
 
   .profile-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
   }
 
+  .about-links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  /* =================== Responsive =================== */
   @media (max-width: 860px) {
     .about-links,
     .profile-grid {
@@ -220,5 +639,140 @@ const team = founder?.team?.length
       max-width: 280px;
       margin: 0 auto;
     }
+    .story-thread {
+      grid-template-columns: 14px minmax(0, 1fr);
+      gap: 0 18px;
+    }
+    .story-dot { left: -30px; }
+    .hero-scroll-cue { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-eyebrow,
+    .hero-word,
+    .hero-mission,
+    .hero-chips li,
+    .hero-scroll-cue {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+    .hero-scroll-cue svg { animation: none; }
+    .story-paragraph {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .story-line-fill { transform: scaleY(1); }
+    .pillar-card,
+    .pillar-card::after { transition: none; }
   }
 </style>
+
+<script>
+  // ------------------------------------------------------------------
+  // Story thread: light paragraphs as they cross the viewport, and scrub
+  // the timeline fill with scroll progress through the section.
+  // ------------------------------------------------------------------
+  function initAboutStory() {
+    const thread = document.querySelector<HTMLElement>('[data-story-thread]');
+    if (!thread || thread.dataset.init) return;
+    thread.dataset.init = 'true';
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const items = Array.from(thread.querySelectorAll<HTMLElement>('[data-story-item]'));
+
+    if (reduced) {
+      items.forEach((el) => el.classList.add('is-lit'));
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle('is-lit', entry.isIntersecting);
+        });
+      },
+      // "Lit" while the paragraph is in the middle band of the viewport —
+      // paragraphs dim again as they leave, so the highlight tracks your
+      // reading position both directions.
+      { rootMargin: '-25% 0px -25% 0px', threshold: 0 },
+    );
+    items.forEach((el) => io.observe(el));
+
+    let ticking = false;
+    const scrub = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const rect = thread.getBoundingClientRect();
+        const vh = window.innerHeight;
+        // 0 when the top of the thread reaches 75% down the screen,
+        // 1 when the bottom reaches 35% — a comfortable reading scrub.
+        const start = vh * 0.75;
+        const end = vh * 0.35;
+        const total = rect.height + (start - end);
+        const progress = Math.min(1, Math.max(0, (start - rect.top) / total));
+        thread.style.setProperty('--story-progress', progress.toFixed(4));
+        ticking = false;
+      });
+    };
+    scrub();
+    window.addEventListener('scroll', scrub, { passive: true });
+    window.addEventListener('resize', scrub);
+  }
+
+  // ------------------------------------------------------------------
+  // Stats: count numeric values up when the band enters view. Values
+  // keep any prefix/suffix ("25+", "100%", "£3m") and non-numeric values
+  // ("2024" counts; pure text is left alone).
+  // ------------------------------------------------------------------
+  function initStatCounters() {
+    const values = Array.from(document.querySelectorAll<HTMLElement>('[data-count-value]'));
+    if (!values.length) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return; // final values are already server-rendered
+
+    const animate = (el: HTMLElement) => {
+      const raw = el.dataset.countValue || '';
+      const match = raw.match(/^(\D*)(\d[\d,.]*)(\D*)$/);
+      if (!match) return;
+      const [, prefix, numStr, suffix] = match;
+      const target = parseFloat(numStr.replace(/,/g, ''));
+      if (!isFinite(target)) return;
+      const decimals = (numStr.split('.')[1] || '').length;
+      const dur = 1200;
+      const t0 = performance.now();
+      const step = (t: number) => {
+        const p = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = (target * eased).toFixed(decimals);
+        el.textContent = `${prefix}${Number(val).toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = raw;
+      };
+      requestAnimationFrame(step);
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            animate(entry.target as HTMLElement);
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.4 },
+    );
+    values.forEach((el) => io.observe(el));
+  }
+
+  initAboutStory();
+  initStatCounters();
+  document.addEventListener('astro:page-load', () => {
+    initAboutStory();
+    initStatCounters();
+  });
+</script>

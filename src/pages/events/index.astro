@@ -56,7 +56,7 @@ const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.d
   <Section eyebrow={eventsPage?.eyebrow || 'Events'} heading={eventsPage?.heading || "Talks, workshops, and things we're part of"} subheading={eventsPage?.subheading || 'Managed independently from the blog/insights — add new ones any time in Keystatic, and pick any of them for the homepage hero carousel.'} />
 
   {upcoming.length > 0 ? (
-    <UpcomingEvents events={upcoming} eyebrow="Upcoming" heading="What's next" id="events-upcoming" />
+    <UpcomingEvents events={upcoming} eyebrow={eventsPage?.upcomingEyebrow || 'Upcoming'} heading={eventsPage?.upcomingHeading || "What's next"} id="events-upcoming" />
   ) : (
     <Section>
       <p class="events-empty">{eventsPage?.emptyMessage || 'Nothing on the calendar right now — check back soon.'}</p>
@@ -64,7 +64,7 @@ const pageImage = resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.d
   )}
 
   {past.length > 0 && (
-    <UpcomingEvents events={past} eyebrow="Archive" heading="Past events" id="events-past" />
+    <UpcomingEvents events={past} eyebrow={eventsPage?.pastEyebrow || 'Archive'} heading={eventsPage?.pastHeading || 'Past events'} id="events-past" />
   )}
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />

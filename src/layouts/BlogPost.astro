@@ -16,11 +16,19 @@ const {
     updatedDate,
     heroImage,
     heroImageUrl: heroImageUrlField,
+    audioFile,
+    audioUrl,
+    audioTitle,
     link,
     seoTitle,
     seoDescription,
     slug,
 } = Astro.props;
+
+// Audio narration — Keystatic upload (served from /audio/) takes
+// precedence over an external URL, mirroring the image-pair convention.
+const audioSrc = audioFile || audioUrl || undefined;
+const audioLabel = audioTitle || 'Listen to this article';
 
 // heroImage (local upload) and heroImageUrl (external URL alternative) are
 // two separate, independent fields — see lib/keystatic.ts for why this
@@ -140,6 +148,143 @@ const articleJsonLd = {
                 max-width: calc(100% - 2em);
                 margin: 3rem auto;
                 color: var(--mist);
+            }
+
+            /* --- Audio narration dock ---
+               Wide screens: a compact card pinned to the LEFT gutter that
+               stays put while you scroll (position: fixed). Narrower
+               screens (no spare gutter beside the 960px prose column): it
+               sits inline at the top of the article instead. Same DOM
+               node, purely CSS repositioning. --- */
+            .audio-dock {
+                background: var(--forest);
+                border: 1px solid var(--hairline);
+                border-radius: var(--radius-md);
+                padding: 14px 16px;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 2rem;
+            }
+
+            @media (min-width: 1420px) {
+                .audio-dock {
+                    position: fixed;
+                    left: 24px;
+                    top: 170px;
+                    width: 200px;
+                    margin-bottom: 0;
+                    z-index: 30;
+                }
+            }
+
+            .audio-dock-head {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+
+            .audio-dock-icon {
+                display: flex;
+                color: var(--signal);
+            }
+
+            .audio-dock-label {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: var(--mist-muted);
+                line-height: 1.3;
+            }
+
+            .audio-dock-controls {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .audio-play {
+                flex-shrink: 0;
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                border: none;
+                background: var(--signal);
+                color: var(--canopy);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: background 0.2s ease, transform 0.2s ease;
+            }
+            .audio-play:hover {
+                background: var(--mint);
+                transform: scale(1.05);
+            }
+            .audio-play svg {
+                display: block;
+            }
+
+            .audio-timeline {
+                flex: 1;
+                min-width: 0;
+            }
+
+            #audio-seek {
+                width: 100%;
+                appearance: none;
+                -webkit-appearance: none;
+                height: 4px;
+                border-radius: 999px;
+                background: linear-gradient(
+                    to right,
+                    var(--signal) 0%,
+                    var(--signal) var(--audio-progress, 0%),
+                    var(--hairline-hover) var(--audio-progress, 0%),
+                    var(--hairline-hover) 100%
+                );
+                cursor: pointer;
+                outline-offset: 3px;
+            }
+            #audio-seek::-webkit-slider-thumb {
+                appearance: none;
+                -webkit-appearance: none;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--signal);
+                border: 2px solid var(--canopy);
+                box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+            }
+            #audio-seek::-moz-range-thumb {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--signal);
+                border: 2px solid var(--canopy);
+                box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+            }
+
+            .audio-times {
+                display: flex;
+                justify-content: space-between;
+                font-family: var(--font-mono);
+                font-size: 10.5px;
+                color: var(--mist-faint);
+                margin-top: 4px;
+            }
+
+            /* Stack the pinned variant vertically — it's narrow. */
+            @media (min-width: 1420px) {
+                .audio-dock-controls {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 10px;
+                }
+                .audio-play {
+                    align-self: center;
+                }
             }
 
             /* --- Read-on-Substack banner --- */
@@ -277,6 +422,34 @@ const articleJsonLd = {
                 </div>
 
                 <div class="prose">
+                    {audioSrc && (
+                        <aside class="audio-dock" id="audio-dock" aria-label="Audio version of this article">
+                            <div class="audio-dock-head">
+                                <span class="audio-dock-icon" aria-hidden="true">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                                    </svg>
+                                </span>
+                                <span class="audio-dock-label">{audioLabel}</span>
+                            </div>
+                            <div class="audio-dock-controls">
+                                <button type="button" id="audio-play" class="audio-play" aria-label="Play audio">
+                                    <svg id="audio-icon-play" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                                    <svg id="audio-icon-pause" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
+                                </button>
+                                <div class="audio-timeline">
+                                    <input type="range" id="audio-seek" min="0" max="100" step="0.1" value="0" aria-label="Seek" />
+                                    <div class="audio-times">
+                                        <span id="audio-current">0:00</span>
+                                        <span id="audio-duration">–:––</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <audio id="audio-el" src={audioSrc} preload="metadata"></audio>
+                        </aside>
+                    )}
+
                     {hasSourceLink && (
                         <div class="source-banner">
                             <span class="source-banner-icon" aria-hidden="true">↗</span>
@@ -298,6 +471,65 @@ const articleJsonLd = {
         <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
 
         <script>
+            // --- Audio narration player ---
+            (() => {
+                const audio = document.getElementById('audio-el') as HTMLAudioElement | null;
+                const playBtn = document.getElementById('audio-play');
+                const iconPlay = document.getElementById('audio-icon-play');
+                const iconPause = document.getElementById('audio-icon-pause');
+                const seek = document.getElementById('audio-seek') as HTMLInputElement | null;
+                const current = document.getElementById('audio-current');
+                const duration = document.getElementById('audio-duration');
+                if (!audio || !playBtn || !seek || !current || !duration || !iconPlay || !iconPause) return;
+
+                const fmt = (s: number) => {
+                    if (!isFinite(s)) return '–:––';
+                    const m = Math.floor(s / 60);
+                    const sec = Math.floor(s % 60);
+                    return `${m}:${String(sec).padStart(2, '0')}`;
+                };
+
+                const setIcon = (playing: boolean) => {
+                    iconPlay.style.display = playing ? 'none' : '';
+                    iconPause.style.display = playing ? '' : 'none';
+                    playBtn.setAttribute('aria-label', playing ? 'Pause audio' : 'Play audio');
+                };
+
+                playBtn.addEventListener('click', () => {
+                    if (audio.paused) audio.play();
+                    else audio.pause();
+                });
+                audio.addEventListener('play', () => setIcon(true));
+                audio.addEventListener('pause', () => setIcon(false));
+                audio.addEventListener('ended', () => setIcon(false));
+
+                audio.addEventListener('loadedmetadata', () => {
+                    duration.textContent = fmt(audio.duration);
+                });
+
+                let seeking = false;
+                const paint = () => {
+                    const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+                    if (!seeking) seek.value = String(pct);
+                    seek.style.setProperty('--audio-progress', `${pct}%`);
+                    current.textContent = fmt(audio.currentTime);
+                };
+                audio.addEventListener('timeupdate', paint);
+
+                seek.addEventListener('input', () => {
+                    seeking = true;
+                    if (audio.duration) {
+                        const t = (Number(seek.value) / 100) * audio.duration;
+                        current.textContent = fmt(t);
+                        seek.style.setProperty('--audio-progress', `${seek.value}%`);
+                    }
+                });
+                seek.addEventListener('change', () => {
+                    if (audio.duration) audio.currentTime = (Number(seek.value) / 100) * audio.duration;
+                    seeking = false;
+                });
+            })();
+
             document.addEventListener('DOMContentLoaded', () => {
                 const backBtn = document.getElementById('back-btn');
                 if (backBtn && history.length > 1) {

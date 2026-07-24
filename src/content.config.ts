@@ -52,6 +52,15 @@ const blog = defineCollection({
       pubDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
       ...imageFields('heroImage', image()),
+      // Audio narration — either a Keystatic upload served from /audio/
+      // (audioFile stores the public path string, e.g. "/audio/foo.mp3")
+      // or an external URL. Powers the pinned player in BlogPost.astro.
+      audioFile: z
+        .string()
+        .optional()
+        .transform((val) => (val === '' ? undefined : val)),
+      audioUrl: optionalUrl,
+      audioTitle: z.string().optional(),
       // Optional provenance link if a post originated on Substack — purely
       // informational, only renders the "Originally published on Substack"
       // banner in BlogPost.astro when present. Omit entirely for native posts.

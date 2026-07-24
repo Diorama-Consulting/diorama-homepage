@@ -272,6 +272,15 @@ export default config({
           description: 'Company registration details — pulls from Site Settings by default; override here only if this footer needs different wording.',
           multiline: true,
         }),
+        // --- Footer contact CTA block (shown on every page except /contact,
+        // which has its own full-size form). Previously hardcoded. ---
+        ctaEyebrow: fields.text({ label: 'Contact CTA — eyebrow', defaultValue: 'Get in touch' }),
+        ctaHeading: fields.text({ label: 'Contact CTA — heading', defaultValue: 'Get in touch to discuss your needs' }),
+        ctaSub: fields.text({
+          label: 'Contact CTA — supporting line',
+          multiline: true,
+          defaultValue: "Send a quick note — we'll reply within a couple of working days.",
+        }),
       },
     }),
 
@@ -387,6 +396,23 @@ export default config({
         eventsEyebrow: fields.text({ label: 'Events section eyebrow', defaultValue: 'Upcoming' }),
         eventsHeading: fields.text({ label: 'Events section heading', defaultValue: 'Events' }),
         eventsSubheading: fields.text({ label: 'Events section subheading', multiline: true }),
+
+        // -----------------------------------------------------------------
+        // "HOW THIS SITE IS BUILT" BAND (the wind-turbine animation) —
+        // previously hardcoded in index.astro with a "verified green
+        // hosting" claim; now fully editable so claims stay accurate.
+        // -----------------------------------------------------------------
+        craftBandEyebrow: fields.text({ label: 'Craft band — eyebrow', defaultValue: 'Built with care' }),
+        craftBandHeading: fields.text({
+          label: 'Craft band — heading',
+          defaultValue: 'Built with the same discipline we bring to client work',
+        }),
+        craftBandText: fields.text({
+          label: 'Craft band — text',
+          multiline: true,
+          defaultValue:
+            'A fast, static-first site with optimised images and a public per-page carbon measurement — the site itself is a small proof point for how we work.',
+        }),
       },
     }),
 
@@ -627,16 +653,68 @@ export default config({
       path: 'src/content/pages/about',
       schema: {
         ...seoFields('src/content/pages/about'),
+        // --- Act 1: opening statement (visible immediately, no scrolling) ---
         eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'About us' }),
-        heading: fields.text({ label: 'Heading', defaultValue: 'We are all in the diorama' }),
-        subheading: fields.text({ label: 'Subheading', multiline: true }),
+        heading: fields.text({
+          label: 'Opening statement (big headline)',
+          defaultValue: 'We are all in the diorama',
+        }),
+        subheading: fields.text({
+          label: 'Mission line (one clear sentence under the headline)',
+          multiline: true,
+          defaultValue:
+            'Diorama Consulting is an AI Technology Advisory practice — bridging product strategy, engineering and AI for Boards, Founders and Investors.',
+        }),
+        missionChips: fields.array(fields.text({ label: 'Chip' }), {
+          label: 'What-we-do chips (short phrases shown under the mission line)',
+          itemLabel: (props) => props.value || 'Chip',
+        }),
+        // --- Act 2: the story, revealed on scroll ---
+        storyEyebrow: fields.text({ label: 'Story section — eyebrow', defaultValue: 'Why "Diorama"' }),
         bodyParagraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
-          label: 'Body paragraphs',
+          label: 'Story paragraphs (revealed one by one on scroll)',
           itemLabel: (props) => (props.value || '').slice(0, 60) || 'Paragraph',
         }),
+        // --- Act 3: pillars / what we actually do ---
+        pillarsEyebrow: fields.text({ label: 'Pillars section — eyebrow', defaultValue: 'What we do' }),
+        pillarsHeading: fields.text({ label: 'Pillars section — heading', defaultValue: 'Four ways we help' }),
+        pillars: fields.array(
+          fields.object({
+            title: fields.text({ label: 'Title' }),
+            description: fields.text({ label: 'Description', multiline: true }),
+          }),
+          { label: 'Pillar cards', itemLabel: (props) => props.fields.title.value || 'Pillar' },
+        ),
+        // --- Act 4: numbers band ---
+        stats: fields.array(
+          fields.object({
+            value: fields.text({ label: 'Value (e.g. 25, 2024, 100%)' }),
+            label: fields.text({ label: 'Label' }),
+          }),
+          { label: 'Stats (count up on scroll when numeric)', itemLabel: (props) => props.fields.label.value || 'Stat' },
+        ),
+        // --- Approach callout (was hardcoded in the page) ---
+        approachEyebrow: fields.text({ label: 'Approach callout — eyebrow', defaultValue: 'Our approach' }),
+        approachText: fields.text({
+          label: 'Approach callout — text',
+          multiline: true,
+          defaultValue: "Thoughtful strategy, careful execution — we'd rather do fewer things well than everything at once.",
+        }),
+        // --- Quote banner ---
         quote: fields.text({ label: 'Pull quote', multiline: true }),
         quoteAuthor: fields.text({ label: 'Quote author' }),
         ...heroImageFieldsForSingleton('quoteImage', 'Pull-quote background image', 'src/content/pages/about'),
+        // --- Closing animated band (leaf-to-tree animation) ---
+        closingEyebrow: fields.text({ label: 'Closing band — eyebrow', defaultValue: 'Renewal' }),
+        closingHeading: fields.text({
+          label: 'Closing band — heading',
+          defaultValue: 'Small, deliberate, and growing',
+        }),
+        closingText: fields.text({
+          label: 'Closing band — text',
+          multiline: true,
+          defaultValue: 'A small practice by design — every engagement gets senior attention from start to finish.',
+        }),
         founderLinkTitle: fields.text({ label: '"Mal" link title', defaultValue: 'Mal' }),
         founderLinkDescription: fields.text({
           label: '"Mal" link description',
@@ -855,6 +933,10 @@ export default config({
         heading: fields.text({ label: 'Heading', defaultValue: "Talks, workshops, and things we're part of" }),
         subheading: fields.text({ label: 'Subheading', multiline: true, defaultValue: 'Managed independently from the blog/insights — add new ones any time in Keystatic, and pick any of them for the homepage hero carousel.' }),
         emptyMessage: fields.text({ label: 'Empty-state message', defaultValue: 'Nothing on the calendar right now — check back soon.' }),
+        upcomingEyebrow: fields.text({ label: 'Upcoming section — eyebrow', defaultValue: 'Upcoming' }),
+        upcomingHeading: fields.text({ label: 'Upcoming section — heading', defaultValue: "What's next" }),
+        pastEyebrow: fields.text({ label: 'Past section — eyebrow', defaultValue: 'Archive' }),
+        pastHeading: fields.text({ label: 'Past section — heading', defaultValue: 'Past events' }),
       },
     }),
 
@@ -902,6 +984,24 @@ export default config({
         pubDate: fields.date({ label: 'Published', validation: { isRequired: true } }),
         updatedDate: fields.date({ label: 'Last updated', description: 'Leave blank if never updated.' }),
         ...heroImageFields('heroImage', 'Hero image'),
+        // --- Audio narration — powers the pinned audio player on the
+        // article page. Same two-field pattern as images: a local upload
+        // (recommended, served from /audio/) OR an external URL. The
+        // player only renders when one of these is set. ---
+        audioFile: fields.file({
+          label: 'Audio narration (upload)',
+          description: 'MP3/M4A audio version of this article. When set, a pinned audio player appears alongside the article.',
+          directory: 'public/audio',
+          publicPath: '/audio/',
+        }),
+        audioUrl: fields.url({
+          label: 'Audio narration (external URL)',
+          description: 'Alternative to the upload above — a hosted MP3/M4A. Only used if no file is uploaded.',
+        }),
+        audioTitle: fields.text({
+          label: 'Audio player label',
+          description: 'Optional — defaults to "Listen to this article".',
+        }),
         link: fields.url({
           label: 'Original Substack URL',
           description: 'Only set this if the post originated on Substack. Leave blank for native posts.',
