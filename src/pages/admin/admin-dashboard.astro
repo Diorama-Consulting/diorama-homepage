@@ -1,0 +1,453 @@
+---
+// /admin/dashboard — the site's private analytics dashboard.
+//
+// Access: same gate as /admin/enquiries — the diorama_admin cookie (set
+// once via ?key=<CONTACT_ADMIN_TOKEN> on either admin page; the cookie is
+// scoped to /admin so it covers both). 404 to anyone else.
+//
+// Data comes from two places, both fetched server-side (no keys ever
+// reach the browser):
+//   1. PostHog's Query API (HogQL) — traffic, pages, referrers, devices,
+//      chat + contact events. Requires TWO new env vars (see below).
+//   2. The contact-service container — live enquiry counts + latest few.
+//
+// NEW ENV VARS required in /opt/apps/diorama/.env:
+//   POSTHOG_PERSONAL_API_KEY  — a *personal* API key (Settings → Personal
+//                               API keys in PostHog; scope: Query read).
+//                               NOT the public project token.
+//   POSTHOG_PROJECT_ID        — the numeric project id (visible in the
+//                               PostHog URL: /project/<id>/...).
+// Without them the page still renders, showing a setup notice in place
+// of the PostHog panels — the enquiries panel works regardless.
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { reader } from '../../lib/keystatic';
+import { secret } from '../../lib/env';
+
+export const prerender = false;
+
+const ADMIN_TOKEN = secret('CONTACT_ADMIN_TOKEN') || '';
+const SERVICE_URL = secret('CONTACT_SERVICE_URL') || 'http://contact-service:8104';
+const COOKIE = 'diorama_admin';
+
+// ---- Auth (identical to /admin/enquiries) -------------------------------
+const url = Astro.url;
+const keyParam = url.searchParams.get('key');
+const cookieToken = Astro.cookies.get(COOKIE)?.value;
+
+if (ADMIN_TOKEN && keyParam === ADMIN_TOKEN) {
+  Astro.cookies.set(COOKIE, ADMIN_TOKEN, {
+    path: '/admin',
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  return Astro.redirect('/admin/dashboard');
+}
+if (!ADMIN_TOKEN || cookieToken !== ADMIN_TOKEN) {
+  return new Response('Not found', { status: 404 });
+}
+
+// ---- PostHog query helper ------------------------------------------------
+// The Query API lives on the APP host (eu.posthog.com), not the ingestion
+// host (eu.i.posthog.com) the snippet uses — derive one from the other.
+const PH_KEY = secret('POSTHOG_PERSONAL_API_KEY');
+const PH_PROJECT = secret('POSTHOG_PROJECT_ID');
+const ingestHost = (import.meta.env.PUBLIC_POSTHOG_HOST as string) || 'https://eu.i.posthog.com';
+const PH_APP_HOST = ingestHost.replace('.i.posthog.com', '.posthog.com');
+const posthogConfigured = Boolean(PH_KEY && PH_PROJECT);
+
+type Row = (string | number | null)[];
+
+async function hogql(query: string): Promise<Row[]> {
+  if (!posthogConfigured) return [];
+  try {
+    const res = await fetch(`${PH_APP_HOST}/api/projects/${PH_PROJECT}/query/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${PH_KEY}`,
+      },
+      body: JSON.stringify({ query: { kind: 'HogQLQuery', query } }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) {
+      console.error(`dashboard: PostHog query failed ${res.status}: ${await res.text()}`);
+      return [];
+    }
+    return (await res.json())?.results ?? [];
+  } catch (e) {
+    console.error('dashboard: PostHog query error', e);
+    return [];
+  }
+}
+
+// ---- The queries (all last-30-days unless stated) -----------------------
+const [dailyViews, totals, topPages, referrers, devices, funnelCounts] = posthogConfigured
+  ? await Promise.all([
+      hogql(`
+        SELECT toDate(timestamp) AS day, count() AS views
+        FROM events
+        WHERE event = '$pageview' AND timestamp > now() - INTERVAL 30 DAY
+        GROUP BY day ORDER BY day ASC`),
+      hogql(`
+        SELECT
+          countIf(event = '$pageview'),
+          count(DISTINCT distinct_id),
+          countIf(event = '$pageview' AND timestamp > now() - INTERVAL 7 DAY),
+          countIf(event = 'chat_message_sent'),
+          countIf(event = 'contact_form_submitted')
+        FROM events
+        WHERE timestamp > now() - INTERVAL 30 DAY`),
+      hogql(`
+        SELECT properties.$pathname AS path, count() AS views
+        FROM events
+        WHERE event = '$pageview' AND timestamp > now() - INTERVAL 30 DAY
+        GROUP BY path ORDER BY views DESC LIMIT 8`),
+      hogql(`
+        SELECT coalesce(nullIf(properties.$referring_domain, ''), '(direct)') AS ref, count() AS views
+        FROM events
+        WHERE event = '$pageview' AND timestamp > now() - INTERVAL 30 DAY
+        GROUP BY ref ORDER BY views DESC LIMIT 8`),
+      hogql(`
+        SELECT coalesce(properties.$device_type, 'Unknown') AS device, count() AS views
+        FROM events
+        WHERE event = '$pageview' AND timestamp > now() - INTERVAL 30 DAY
+        GROUP BY device ORDER BY views DESC`),
+      hogql(`
+        SELECT
+          count(DISTINCT distinct_id),
+          count(DISTINCT if(properties.$pathname LIKE '%/contact%', distinct_id, NULL))
+        FROM events
+        WHERE event = '$pageview' AND timestamp > now() - INTERVAL 30 DAY`),
+    ])
+  : [[], [], [], [], [], []];
+
+const t = totals[0] ?? [0, 0, 0, 0, 0];
+const stats = {
+  pageviews30: Number(t[0] ?? 0),
+  visitors30: Number(t[1] ?? 0),
+  pageviews7: Number(t[2] ?? 0),
+  chatMessages30: Number(t[3] ?? 0),
+  contactSubmits30: Number(t[4] ?? 0),
+};
+const f = funnelCounts[0] ?? [0, 0];
+const funnel = {
+  visitors: Number(f[0] ?? 0),
+  reachedContact: Number(f[1] ?? 0),
+  submitted: stats.contactSubmits30,
+};
+
+// Sparkline geometry for the 30-day pageview bars
+const maxDaily = Math.max(1, ...dailyViews.map((r) => Number(r[1] ?? 0)));
+
+// ---- Live enquiries from contact-service --------------------------------
+let enquiries: Array<Record<string, unknown>> = [];
+let newCount = 0;
+let serviceOk = true;
+try {
+  const res = await fetch(`${SERVICE_URL}/api/submissions?limit=100`, {
+    headers: { 'X-Admin-Token': ADMIN_TOKEN },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`service ${res.status}`);
+  enquiries = (await res.json())?.submissions ?? [];
+  newCount = enquiries.filter((s) => s.status === 'new').length;
+} catch (e) {
+  console.error('dashboard: contact-service unreachable', e);
+  serviceOk = false;
+}
+
+const headerNav = await reader.singletons.headerNav.read();
+const footerNav = await reader.singletons.footerNav.read();
+const fmtDay = (iso: unknown) =>
+  typeof iso === 'string' ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+const pct = (n: number, of: number) => (of > 0 ? `${((n / of) * 100).toFixed(1)}%` : '—');
+---
+
+<Layout title="Dashboard — Admin" description="Site analytics" showChatWidget={false}>
+  <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+
+  <main class="container">
+    <div class="admin-head">
+      <div>
+        <p class="eyebrow">Admin</p>
+        <h1>Dashboard</h1>
+      </div>
+      <nav class="admin-nav" aria-label="Admin pages">
+        <a class="active" href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/enquiries">Enquiries{newCount > 0 ? ` (${newCount} new)` : ''}</a>
+      </nav>
+    </div>
+
+    {!posthogConfigured && (
+      <p class="notice">
+        Traffic panels need two env vars in <code>/opt/apps/diorama/.env</code>:
+        <code>POSTHOG_PERSONAL_API_KEY</code> (PostHog → Settings → Personal API keys, "Query read" scope)
+        and <code>POSTHOG_PROJECT_ID</code> (the number in the PostHog project URL) — then restart the container.
+        The enquiries panel below works regardless.
+      </p>
+    )}
+
+    {posthogConfigured && (
+      <>
+        <div class="stat-row">
+          <div class="stat">
+            <span class="stat-value">{stats.visitors30.toLocaleString()}</span>
+            <span class="stat-label">Unique visitors · 30d</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{stats.pageviews30.toLocaleString()}</span>
+            <span class="stat-label">Pageviews · 30d</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{stats.pageviews7.toLocaleString()}</span>
+            <span class="stat-label">Pageviews · 7d</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{stats.chatMessages30.toLocaleString()}</span>
+            <span class="stat-label">Chat messages · 30d</span>
+          </div>
+          <div class="stat stat--accent">
+            <span class="stat-value">{stats.contactSubmits30.toLocaleString()}</span>
+            <span class="stat-label">Contact submissions · 30d</span>
+          </div>
+        </div>
+
+        <section class="panel">
+          <h2>Daily pageviews — last 30 days</h2>
+          {dailyViews.length === 0 ? (
+            <p class="empty">No pageview data yet.</p>
+          ) : (
+            <div class="bars" role="img" aria-label="Daily pageviews bar chart">
+              {dailyViews.map((row) => (
+                <div class="bar-col" title={`${fmtDay(row[0])}: ${row[1]} views`}>
+                  <div class="bar" style={`height: ${Math.max(3, (Number(row[1]) / maxDaily) * 100)}%`}></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <div class="panel-grid">
+          <section class="panel">
+            <h2>Top pages · 30d</h2>
+            <table>
+              <tbody>
+                {topPages.map((row) => (
+                  <tr><td class="mono">{row[0]}</td><td class="num">{Number(row[1]).toLocaleString()}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section class="panel">
+            <h2>Referrers · 30d</h2>
+            <table>
+              <tbody>
+                {referrers.map((row) => (
+                  <tr><td class="mono">{row[0]}</td><td class="num">{Number(row[1]).toLocaleString()}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section class="panel">
+            <h2>Contact funnel · 30d</h2>
+            <div class="funnel">
+              <div class="funnel-step">
+                <span class="funnel-n">{funnel.visitors.toLocaleString()}</span>
+                <span class="funnel-l">Visitors</span>
+              </div>
+              <span class="funnel-arrow">→</span>
+              <div class="funnel-step">
+                <span class="funnel-n">{funnel.reachedContact.toLocaleString()}</span>
+                <span class="funnel-l">Reached /contact ({pct(funnel.reachedContact, funnel.visitors)})</span>
+              </div>
+              <span class="funnel-arrow">→</span>
+              <div class="funnel-step funnel-step--accent">
+                <span class="funnel-n">{funnel.submitted.toLocaleString()}</span>
+                <span class="funnel-l">Submitted ({pct(funnel.submitted, funnel.visitors)})</span>
+              </div>
+            </div>
+            <h2 style="margin-top: 22px;">Devices · 30d</h2>
+            <table>
+              <tbody>
+                {devices.map((row) => (
+                  <tr><td class="mono">{row[0]}</td><td class="num">{Number(row[1]).toLocaleString()}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </>
+    )}
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Enquiries{serviceOk ? ` — ${newCount} new` : ''}</h2>
+        <a class="panel-link" href="/admin/enquiries">Manage all →</a>
+      </div>
+      {!serviceOk ? (
+        <p class="empty">Couldn't reach the contact service.</p>
+      ) : enquiries.length === 0 ? (
+        <p class="empty">No enquiries yet.</p>
+      ) : (
+        <table>
+          <tbody>
+            {enquiries.slice(0, 5).map((s) => (
+              <tr>
+                <td><strong>{s.name}</strong> <span class="mono dim">{s.email}</span></td>
+                <td class="dim">{String(s.message).slice(0, 70)}{String(s.message).length > 70 ? '…' : ''}</td>
+                <td class="num"><span class:list={['pill', s.status === 'new' && 'pill--new']}>{s.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  </main>
+
+  <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+</Layout>
+
+<style>
+  main.container { padding-top: 56px; padding-bottom: 96px; }
+
+  .admin-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 8px;
+  }
+  .admin-nav { display: flex; gap: 6px; }
+  .admin-nav a {
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--mist-muted);
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+  }
+  .admin-nav a.active { background: var(--signal); border-color: var(--signal); color: hsl(0 0% 100%); }
+  .admin-nav a:not(.active):hover { border-color: var(--hairline-hover); background: var(--charcoal-soft); }
+
+  .notice {
+    color: var(--mist-muted);
+    border: 1px dashed var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    margin-bottom: var(--space-md);
+    line-height: 1.7;
+  }
+  .notice code { font-family: var(--font-mono); font-size: 0.88em; color: var(--mist); }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: var(--space-md);
+  }
+  .stat {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat--accent { border-top: 3px solid var(--signal); }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+  .stat-label { font-size: 12px; color: var(--mist-faint); }
+
+  .panel {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+  }
+  .panel h2 {
+    font-size: 14px;
+    color: var(--text-strong);
+    margin: 0 0 14px;
+  }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .panel-link { font-size: 13px; font-weight: 600; color: var(--signal); text-decoration: none; }
+  .panel-link:hover { text-decoration: underline; }
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .panel-grid .panel { margin-bottom: 0; }
+
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 120px;
+  }
+  .bar-col { flex: 1; display: flex; align-items: flex-end; height: 100%; }
+  .bar {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, var(--signal), var(--signal-soft));
+    min-height: 3px;
+  }
+  .bar-col:hover .bar { background: var(--mint); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  td { padding: 8px 6px; border-bottom: 1px solid var(--hairline); color: var(--mist-muted); }
+  tr:last-child td { border-bottom: none; }
+  .mono { font-family: var(--font-mono); font-size: 12.5px; }
+  .num { text-align: right; color: var(--mist); font-variant-numeric: tabular-nums; }
+  .dim { color: var(--mist-faint); }
+  .empty { color: var(--mist-faint); font-size: 14px; margin: 0; }
+
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+  }
+  .pill--new { background: var(--signal); border-color: var(--signal); color: hsl(0 0% 100%); }
+
+  .funnel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .funnel-step { display: flex; flex-direction: column; }
+  .funnel-n {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+  .funnel-step--accent .funnel-n { color: var(--signal); }
+  .funnel-l { font-size: 11.5px; color: var(--mist-faint); }
+  .funnel-arrow { color: var(--mist-faint); }
+
+  @media (max-width: 960px) {
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .panel-grid { grid-template-columns: 1fr; }
+  }
+</style>
