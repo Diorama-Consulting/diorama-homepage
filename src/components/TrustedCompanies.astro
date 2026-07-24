@@ -1,9 +1,15 @@
 ---
-// Homepage trust banner — a quiet row of client/partner logos. Logos are
-// desaturated to greyscale by default and warm to full colour + brand
-// green tint on hover, so the row stays calm until someone actually looks
-// at it. Content (name + logo, local upload or external URL) is managed
-// in Keystatic on the Homepage singleton.
+// Homepage trust banner — now a continuously scrolling right-to-left
+// marquee, the standard "logo wall" pattern on large B2B sites. Pure CSS:
+// the logo list is rendered TWICE back-to-back and the whole track is
+// translated by exactly -50% in a linear keyframe loop, so the moment the
+// first copy scrolls fully offscreen, the second (identical) copy is in
+// the exact position the first started — the seam is invisible and the
+// loop is truly continuous, not a snap-back.
+//
+// Pauses on hover/focus (lets someone actually click a logo) and stops
+// entirely for prefers-reduced-motion, falling back to the plain
+// wrapped-row layout this replaced.
 interface Company {
   name: string;
   logo: string;
@@ -22,19 +28,21 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
   <div class="trusted-banner">
     <div class="container trusted-inner">
       <p class="trusted-heading">{heading}</p>
-      <ul class="trusted-logos">
-        {companies.map((company) => (
-          <li>
+    </div>
+    <div class="marquee" role="list" aria-label={heading}>
+      <div class="marquee-track">
+        {[...companies, ...companies].map((company, i) => (
+          <div class="marquee-item" role="listitem" aria-hidden={i >= companies.length ? 'true' : undefined}>
             {company.href ? (
-              <a href={company.href} target="_blank" rel="noopener noreferrer" aria-label={company.name}>
+              <a href={company.href} target="_blank" rel="noopener noreferrer" aria-label={company.name} tabindex={i >= companies.length ? -1 : undefined}>
                 <img src={company.logo} alt={company.name} loading="lazy" decoding="async" />
               </a>
             ) : (
               <img src={company.logo} alt={company.name} loading="lazy" decoding="async" />
             )}
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   </div>
 )}
@@ -42,14 +50,10 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
 <style>
   .trusted-banner {
     padding-block: var(--space-lg);
-    border-bottom: 1px solid var(--hairline);
   }
 
   .trusted-inner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    flex-wrap: wrap;
+    margin-bottom: 18px;
   }
 
   .trusted-heading {
@@ -58,46 +62,75 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--mist-faint);
-    white-space: nowrap;
+    text-align: center;
     margin: 0;
   }
 
-  .trusted-logos {
+  /* ---- Marquee ---- */
+  .marquee {
+    overflow: hidden;
+    /* Fade the logos out at each edge rather than a hard clip. */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+  }
+
+  .marquee-track {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: var(--space-xl);
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    width: max-content;
+    animation: marquee-scroll 32s linear infinite;
   }
 
-  .trusted-logos img {
-    height: 26px;
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+
+  .marquee-item {
+    flex: 0 0 auto;
+    padding-inline: var(--space-lg);
+    display: flex;
+    align-items: center;
+  }
+
+  .marquee-item img {
+    height: 28px;
     width: auto;
-    max-width: 130px;
-    object-fit: contain;
-    filter: grayscale(1) brightness(1.8) contrast(0.8);
-    opacity: 0.55;
-    transition: filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    display: block;
+    filter: grayscale(1);
+    opacity: 0.6;
+    transition: opacity 0.2s ease, filter 0.2s ease;
   }
 
-  .trusted-logos li:hover img {
-    filter: none;
+  .marquee-item a:hover img,
+  .marquee-item a:focus-visible img {
+    filter: grayscale(0);
     opacity: 1;
-    transform: translateY(-1px);
   }
 
-  @media (max-width: 700px) {
-    .trusted-inner {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-sm);
+  /* The core loop: translate the doubled track exactly half its own
+     width, so copy #2 lands where copy #1 began — a seamless repeat. */
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      -webkit-mask-image: none;
+      mask-image: none;
+      overflow-x: auto;
     }
-    .trusted-logos {
-      gap: var(--space-lg);
+    .marquee-track {
+      animation: none;
+      flex-wrap: wrap;
       justify-content: center;
-      width: 100%;
+      width: auto;
+    }
+    /* Reduced motion: show only the first (non-duplicate, non-aria-hidden)
+       copy — the duplicate set exists purely for the animation loop. */
+    .marquee-item[aria-hidden='true'] {
+      display: none;
     }
   }
 </style>

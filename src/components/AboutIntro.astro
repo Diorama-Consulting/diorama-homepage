@@ -1,0 +1,123 @@
+---
+// AboutIntro — sits between the hero (carousel or static) and Trusted
+// Companies. Two "screens": a plain-language statement of what Diorama is
+// and what it does (exact supplied text, unedited), then the six
+// capability points as a light grid. This is the first real substance a
+// visitor reads after the hero — deliberately plain, no animation beyond
+// the site's standard scroll reveal.
+const bodyParagraphs = [
+  'Diorama Consulting Ltd is an AI Technology Advisory service led by <a href="https://www.linkedin.com/in/malminhas/" target="_blank" rel="noopener noreferrer">Mal Minhas</a> with a focus on D2C marketplaces and products.',
+  'We have unique industry experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.',
+  'We can help you create defensible growth, reduce risk and accelerate value creation through. We also advise UK charities on AI and Digital Strategy:',
+];
+
+const points = [
+  'Fractional/Interim leadership (CTO, CPTO)',
+  'Pragmatic AI and Data Strategy aligned to P&L',
+  'D2C marketplace optimisation and innovation',
+  'Platform and architecture modernisation without rewrite',
+  'Product Engineering team organisation design',
+  'Practical operationalisation of sustainability initiatives',
+];
+---
+
+<section class="about-intro container">
+  <div class="about-screen about-screen--statement" data-reveal>
+    <p class="eyebrow">Who we are</p>
+    {bodyParagraphs.map((p) => <p class="statement-line" set:html={p} />)}
+  </div>
+
+  <div class="about-screen about-screen--points">
+    <ul class="points-grid">
+      {points.map((point, i) => (
+        <li data-reveal data-reveal-delay={String((i % 3) + 1)}>
+          <span class="point-mark" aria-hidden="true"></span>
+          {point}
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .about-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding-block: var(--space-xl);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 14px;
+  }
+
+  .about-screen--statement {
+    max-width: 720px;
+  }
+
+  .statement-line {
+    font-size: clamp(16px, 1.8vw, 19px);
+    line-height: 1.7;
+    color: var(--mist);
+    margin: 0 0 1em;
+  }
+  .statement-line:last-child { margin-bottom: 0; }
+  .statement-line :global(a) {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .points-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .points-grid li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 16px 18px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--mist-muted);
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+  .points-grid li:hover {
+    border-color: var(--hairline-hover);
+    transform: translateY(-2px);
+  }
+
+  .point-mark {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 2px;
+    background: var(--signal);
+  }
+
+  @media (max-width: 860px) {
+    .points-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .points-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .points-grid li { transition: none; }
+    .points-grid li:hover { transform: none; }
+  }
+</style>
