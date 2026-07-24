@@ -24,4 +24,5 @@ export default defineConfig({
     integrations: [mdx(), sitemap(), react(), markdoc(), keystatic()],
     output: 'static',
     adapter: node({ mode: 'standalone' }),
+    security: { checkOrigin: false },
 });
