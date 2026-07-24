@@ -181,6 +181,49 @@ const closingText =
   </section>
 
   <!-- ============================================================
+       ACT [7] — the pull quote closes the page, right before the footer.
+  ============================================================= -->
+  <div class="container">
+    <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
+  </div>
+
+  <!-- ============================================================
+       ACT [6] — the team. Just the founder block — the three-person
+       profile grid (Paolo/Rowan/Mal) that used to sit below this has
+       been removed entirely; it wasn't earning its place on the page.
+  ============================================================= -->
+  <Section id="team" eyebrow="The team" heading={founder?.heading || 'Meet Mal'} subheading={founder?.teamHeading}>
+    <FallingLeaves count={14} seed={21} maxOpacity={0.08} />
+    <div class="founder-block" data-reveal>
+      <div class="founder-portrait">
+        <img src={portraitUrl} alt="A portrait of Mal smiling in a studio" loading="lazy" />
+      </div>
+      <div class="founder-copy">
+        {founderParagraphs.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+    </div>
+
+    <div class="about-links" data-reveal>
+      <LinkCard
+        href="/about/faq"
+        eyebrow="Questions"
+        title={page?.faqLinkTitle || 'FAQ'}
+        description={page?.faqLinkDescription || 'How we engage with clients and what to expect.'}
+        linkText="View FAQ"
+        size="compact"
+      />
+      <LinkCard
+        href="/contact"
+        eyebrow="Next step"
+        title="Start a conversation"
+        description={page?.founderLinkDescription || 'The story behind Diorama and the people building it.'}
+        linkText="Get in touch"
+        size="compact"
+      />
+    </div>
+  </Section>
+
+  <!-- ============================================================
        ACT 3 — pillars.
   ============================================================= -->
   <Section id="pillars" eyebrow={pillarsEyebrow} heading={pillarsHeading}>
@@ -226,49 +269,6 @@ const closingText =
   ============================================================= -->
   <div class="container">
     <LeafToTreeReveal eyebrow={closingEyebrow} heading={closingHeading} text={closingText} />
-  </div>
-
-  <!-- ============================================================
-       ACT 6 — the team. Just the founder block — the three-person
-       profile grid (Paolo/Rowan/Mal) that used to sit below this has
-       been removed entirely; it wasn't earning its place on the page.
-  ============================================================= -->
-  <Section id="team" eyebrow="The team" heading={founder?.heading || 'Meet Mal'} subheading={founder?.teamHeading}>
-    <FallingLeaves count={14} seed={21} maxOpacity={0.08} />
-    <div class="founder-block" data-reveal>
-      <div class="founder-portrait">
-        <img src={portraitUrl} alt="A portrait of Mal smiling in a studio" loading="lazy" />
-      </div>
-      <div class="founder-copy">
-        {founderParagraphs.map((paragraph) => <p>{paragraph}</p>)}
-      </div>
-    </div>
-
-    <div class="about-links" data-reveal>
-      <LinkCard
-        href="/about/faq"
-        eyebrow="Questions"
-        title={page?.faqLinkTitle || 'FAQ'}
-        description={page?.faqLinkDescription || 'How we engage with clients and what to expect.'}
-        linkText="View FAQ"
-        size="compact"
-      />
-      <LinkCard
-        href="/contact"
-        eyebrow="Next step"
-        title="Start a conversation"
-        description={page?.founderLinkDescription || 'The story behind Diorama and the people building it.'}
-        linkText="Get in touch"
-        size="compact"
-      />
-    </div>
-  </Section>
-
-  <!-- ============================================================
-       ACT 7 — the pull quote closes the page, right before the footer.
-  ============================================================= -->
-  <div class="container">
-    <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
   </div>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} ctaEyebrow={footerNav?.ctaEyebrow} ctaHeading={footerNav?.ctaHeading} ctaSub={footerNav?.ctaSub} />
