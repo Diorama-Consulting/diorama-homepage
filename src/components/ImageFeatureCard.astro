@@ -1,0 +1,167 @@
+---
+// ImageFeatureCard — a bigger, full-bleed-image version of the "box link"
+// pattern, used for the homepage's closing widgets (Charities / CxAI).
+// The plain text LinkCard felt small and flat for a closing section;
+// this is deliberately more dramatic: a large photo fills the whole
+// card, a scrim keeps the overlaid text readable, and hover lifts +
+// zooms the image and brightens the CTA — "dynamic and pretty" rather
+// than a static text tile.
+interface Props {
+  href: string;
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  linkText?: string;
+  image: string;
+  imageAlt?: string;
+  external?: boolean;
+}
+
+const { href, eyebrow, title, description, linkText = 'Learn more', image, imageAlt = '', external = false } = Astro.props;
+---
+
+<a
+  class="feature-card"
+  href={href}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener noreferrer' : undefined}
+>
+  <img src={image} alt={imageAlt} class="feature-card-bg" loading="lazy" decoding="async" />
+  <span class="feature-card-scrim" aria-hidden="true"></span>
+  <span class="feature-card-body">
+    {eyebrow && <span class="feature-card-eyebrow">{eyebrow}</span>}
+    <span class="feature-card-title">{title}</span>
+    {description && <span class="feature-card-desc">{description}</span>}
+    <span class="feature-card-cta">
+      {linkText}
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </span>
+  </span>
+</a>
+
+<style>
+  .feature-card {
+    position: relative;
+    display: block;
+    min-height: 320px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+  }
+
+  .feature-card:hover,
+  .feature-card:focus-visible {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .feature-card:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+  }
+
+  .feature-card-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .feature-card:hover .feature-card-bg {
+    transform: scale(1.07);
+  }
+
+  .feature-card-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, hsl(var(--hue-green) 30% 6% / 0.94) 0%, hsl(var(--hue-green) 30% 6% / 0.55) 45%, hsl(var(--hue-green) 30% 6% / 0.1) 75%, transparent 100%);
+    transition: background 0.35s ease;
+  }
+
+  .feature-card:hover .feature-card-scrim {
+    background: linear-gradient(0deg, hsl(var(--hue-green) 30% 5% / 0.97) 0%, hsl(var(--hue-green) 30% 6% / 0.62) 45%, hsl(var(--hue-green) 30% 6% / 0.15) 78%, transparent 100%);
+  }
+
+  .feature-card-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+    min-height: 320px;
+    justify-content: flex-end;
+  }
+
+  .feature-card-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-accent-hover);
+  }
+
+  .feature-card-title {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 700;
+    line-height: 1.15;
+    color: hsl(0 0% 100%);
+  }
+
+  .feature-card-desc {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: hsl(0 0% 100% / 0.82);
+    max-width: 46ch;
+  }
+
+  .feature-card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: hsl(0 0% 100%);
+    transition: gap 0.25s ease, color 0.25s ease;
+  }
+
+  .feature-card:hover .feature-card-cta {
+    gap: 11px;
+    color: var(--ink-accent-hover);
+  }
+
+  @media (max-width: 560px) {
+    .feature-card,
+    .feature-card-body {
+      min-height: 260px;
+    }
+    .feature-card-body {
+      padding: var(--space-md) var(--space-sm) var(--space-sm);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feature-card,
+    .feature-card-bg,
+    .feature-card-scrim,
+    .feature-card-cta {
+      transition: none;
+    }
+    .feature-card:hover {
+      transform: none;
+    }
+    .feature-card:hover .feature-card-bg {
+      transform: none;
+    }
+  }
+</style>

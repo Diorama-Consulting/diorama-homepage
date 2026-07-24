@@ -5,7 +5,6 @@ import Section from '../../components/Section.astro';
 import Footer from '../../components/Footer.astro';
 import QuoteBanner from '../../components/QuoteBanner.astro';
 import LinkCard from '../../components/LinkCard.astro';
-import Profile from '../../components/Profile.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
 import LeafToTreeReveal from '../../components/animated/LeafToTreeReveal.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
@@ -16,12 +15,16 @@ import defaultHeroPhoto from '../../assets/hero/dark-background.jpg';
 //
 //   Act 1  Statement hero: who we are + the mission, readable the instant
 //          the page opens (word-by-word entrance on load, no scroll needed).
+//          Background is the site's stock hero photo, not a flat gradient.
 //   Act 2  The story: each paragraph is a full-width statement that lights
 //          up as it crosses the viewport, threaded on a growing timeline.
 //   Act 3  Pillars: what we actually do, as staggered cards.
 //   Act 4  Numbers: stats that count up when they enter view.
-//   Act 5  Quote banner (smaller, more readable text) + team.
-//   Act 6  The leaf-to-tree scroll animation as the closing band.
+//   Act 5  Approach callout, then the leaf-to-tree closing animation.
+//   Act 6  Team ("Meet Mal") immediately below that animation — no longer
+//          followed by the three-person profile grid, which added little
+//          and is gone entirely; just the founder block.
+//   Act 7  The pull quote closes the page, right before the footer.
 //
 // EVERY string on this page comes from the `about` / `aboutFounder`
 // Keystatic singletons (with sensible fallbacks) — nothing is hardcoded.
@@ -48,6 +51,16 @@ const missionChips = page?.missionChips?.length
   ? page.missionChips
   : ['Fractional CTO/CPTO leadership', 'AI & data strategy', 'Platform modernisation', 'Organisation design'];
 const headingWords = heading.split(/\s+/);
+
+// The hero used to be a flat dark gradient with a couple of radial glows;
+// now it's a real stock photo, with a scrim for text legibility. Editable
+// via its own Keystatic field (heroBackgroundImage) so it's independent
+// from the quote banner's own backdrop further down the page — falls back
+// to the same default hero photo used across the rest of the site, so
+// this never renders with nothing behind it.
+const heroBackgroundUrl =
+  resolveImageUrl(page?.heroBackgroundImage, page?.heroBackgroundImageUrl) ||
+  (defaultHeroPhoto as unknown as { src: string }).src;
 
 // --- Act 2 ---
 const storyEyebrow = page?.storyEyebrow || 'Why "Diorama"';
@@ -103,13 +116,6 @@ const founderParagraphs = founder?.paragraphs?.length
       'Mal Minhas founded Diorama Consulting in 2024 to help Boards, Founders and Investors turn product, technology and AI strategy into commercial outcomes through fractional CTO/CPTO leadership and AI enablement including platform modernisation and organisation design, with a particular focus on D2C marketplaces and consumer products.',
       'Alongside advisory work, Mal serves as a Trustee for two UK charities: Helpforce, which supports NHS trusts and community organisations to build high-impact volunteering programmes across the health system, and Aston-Mansfield, which supports children, young people and families in Newham and east London.',
     ];
-const team = founder?.team?.length
-  ? founder.team
-  : [
-      { name: 'Mal Minhas', role: 'Founder & Everything Else', bio: 'AI Technology Advisor, charity Trustee, and occasional Substack writer.', socials: [{ label: 'LinkedIn', href: 'https://linkedin.com/malminhas' }] },
-      { name: 'Paolo Minhas', role: 'Website & Engineering', bio: 'Builds and maintains the Diorama site and tooling.', socials: [{ label: 'GitHub', href: 'https://github.com/paolominhas' }, { label: 'LinkedIn', href: 'https://linkedin.com/in/paolo-m' }] },
-      { name: 'Rowan Caulfield', role: 'Logo Design', bio: 'Makes logos.', socials: [{ label: 'LinkedIn', href: 'https://linkedin.com' }] },
-    ];
 
 // --- Act 6: closing animated band ---
 const closingEyebrow = page?.closingEyebrow || 'Renewal';
@@ -128,7 +134,8 @@ const closingText =
        scroll one — no interaction required to read the mission).
   ============================================================= -->
   <section class="about-hero" id="about-hero">
-    <div class="about-hero-glow" aria-hidden="true"></div>
+    <img src={heroBackgroundUrl} alt="" class="about-hero-bg" />
+    <div class="about-hero-scrim" aria-hidden="true"></div>
     <div class="container about-hero-inner">
       <p class="hero-eyebrow">{eyebrow}</p>
       <h1 class="hero-heading" aria-label={heading}>
@@ -164,10 +171,10 @@ const closingText =
       <div class="story-line" aria-hidden="true"><span class="story-line-fill" data-story-fill></span></div>
       <div class="story-items">
         {bodyParagraphs.map((paragraph) => (
-          <p class="story-paragraph" data-story-item>
+          <div class="story-row" data-story-item>
             <span class="story-dot" aria-hidden="true"></span>
-            {paragraph}
-          </p>
+            <p class="story-paragraph">{paragraph}</p>
+          </div>
         ))}
       </div>
     </div>
@@ -212,12 +219,19 @@ const closingText =
     </div>
   </div>
 
+  <!-- ============================================================
+       ACT 5 — the classic leaf-to-tree scroll animation ("the old
+       animation effects, utilised towards the bottom"), now followed
+       immediately by the team section rather than preceding it.
+  ============================================================= -->
   <div class="container">
-    <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
+    <LeafToTreeReveal eyebrow={closingEyebrow} heading={closingHeading} text={closingText} />
   </div>
 
   <!-- ============================================================
-       ACT 5 — the team.
+       ACT 6 — the team. Just the founder block — the three-person
+       profile grid (Paolo/Rowan/Mal) that used to sit below this has
+       been removed entirely; it wasn't earning its place on the page.
   ============================================================= -->
   <Section id="team" eyebrow="The team" heading={founder?.heading || 'Meet Mal'} subheading={founder?.teamHeading}>
     <FallingLeaves count={14} seed={21} maxOpacity={0.08} />
@@ -228,14 +242,6 @@ const closingText =
       <div class="founder-copy">
         {founderParagraphs.map((paragraph) => <p>{paragraph}</p>)}
       </div>
-    </div>
-
-    <div class="profile-grid">
-      {team.map((member, i) => (
-        <div data-reveal data-reveal-delay={String(Math.min(i + 1, 4))}>
-          <Profile name={member.name} role={member.role} bio={member.bio} socials={member.socials} />
-        </div>
-      ))}
     </div>
 
     <div class="about-links" data-reveal>
@@ -259,11 +265,10 @@ const closingText =
   </Section>
 
   <!-- ============================================================
-       ACT 6 — the classic leaf-to-tree scroll animation closes the
-       page ("the old animation effects, utilised towards the bottom").
+       ACT 7 — the pull quote closes the page, right before the footer.
   ============================================================= -->
   <div class="container">
-    <LeafToTreeReveal eyebrow={closingEyebrow} heading={closingHeading} text={closingText} />
+    <QuoteBanner quote={quote} author={quoteAuthor} image={quoteImage} imageAlt="" />
   </div>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} ctaEyebrow={footerNav?.ctaEyebrow} ctaHeading={footerNav?.ctaHeading} ctaSub={footerNav?.ctaSub} />
@@ -276,21 +281,30 @@ const closingText =
     min-height: calc(100svh - 120px);
     display: flex;
     align-items: center;
-    background: linear-gradient(180deg, var(--ink-bg-2) 0%, var(--ink-bg) 100%);
     overflow: hidden;
   }
 
-  .about-hero-glow {
+  .about-hero-bg {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .about-hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     background:
-      radial-gradient(60% 80% at 75% 15%, hsl(var(--hue-green) 55% 40% / 0.16), transparent 65%),
-      radial-gradient(45% 60% at 15% 90%, hsl(var(--hue-amber) 70% 50% / 0.08), transparent 60%);
-    pointer-events: none;
+      radial-gradient(60% 80% at 75% 15%, hsl(var(--hue-green) 55% 30% / 0.25), transparent 65%),
+      linear-gradient(180deg, hsl(var(--hue-green) 30% 6% / 0.55) 0%, hsl(var(--hue-green) 30% 5% / 0.86) 100%);
   }
 
   .about-hero-inner {
     position: relative;
+    z-index: 2;
     padding-block: var(--space-2xl) var(--space-xl);
   }
 
@@ -406,17 +420,31 @@ const closingText =
   }
 
   .story-thread {
+    /* THE ALIGNMENT FIX: previously the line lived in a separate 24px
+       grid column (centred within it) while each dot was positioned with
+       a hand-picked negative-pixel offset relative to the paragraph text
+       column — two independent numbers that had to happen to agree, and
+       quietly didn't (worse at the mobile breakpoint, where the column
+       width/gap/offset were all reduced by different, unrelated
+       amounts). Now there is exactly ONE number, --story-gutter, and
+       both the line (via `left`) and every dot (via `left`) reference
+       it with a matching negative margin equal to half their own
+       thickness — so they are mathematically guaranteed to share the
+       same centre at every breakpoint, because there's only one
+       measurement to get right instead of two that have to match.
+    */
+    --story-gutter: 20px;
     position: relative;
-    display: grid;
-    grid-template-columns: 24px minmax(0, 1fr);
-    gap: 0 28px;
     max-width: 820px;
   }
 
   .story-line {
-    position: relative;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--story-gutter);
     width: 2px;
-    justify-self: center;
+    margin-left: -1px; /* half the line's own width — centres it exactly on the gutter */
     background: var(--hairline);
     border-radius: 999px;
     overflow: hidden;
@@ -438,8 +466,12 @@ const closingText =
     padding-block: 8px;
   }
 
-  .story-paragraph {
+  .story-row {
     position: relative;
+    padding-left: calc(var(--story-gutter) + 24px);
+  }
+
+  .story-paragraph {
     font-family: var(--font-display);
     font-size: clamp(19px, 2.5vw, 27px);
     font-weight: 500;
@@ -452,23 +484,24 @@ const closingText =
     transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .story-paragraph.is-lit {
+  .story-row.is-lit .story-paragraph {
     opacity: 1;
     transform: translateY(0);
   }
 
   .story-dot {
     position: absolute;
-    left: -41px;
+    left: var(--story-gutter);
     top: 0.55em;
     width: 10px;
     height: 10px;
+    margin-left: -5px; /* half the dot's own width — same centring logic as the line, above */
     border-radius: 50%;
     background: var(--canopy);
     border: 2px solid var(--hairline-hover);
     transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
   }
-  .story-paragraph.is-lit .story-dot {
+  .story-row.is-lit .story-dot {
     background: var(--signal);
     border-color: var(--signal);
     box-shadow: 0 0 0 5px var(--signal-soft);
@@ -612,13 +645,6 @@ const closingText =
   }
   .founder-copy p { margin: 0; }
 
-  .profile-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
-  }
-
   .about-links {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -627,8 +653,7 @@ const closingText =
 
   /* =================== Responsive =================== */
   @media (max-width: 860px) {
-    .about-links,
-    .profile-grid {
+    .about-links {
       grid-template-columns: 1fr;
     }
     .founder-block {
@@ -640,11 +665,21 @@ const closingText =
       margin: 0 auto;
     }
     .story-thread {
-      grid-template-columns: 14px minmax(0, 1fr);
-      gap: 0 18px;
+      --story-gutter: 12px;
     }
-    .story-dot { left: -30px; }
+    .story-row {
+      padding-left: calc(var(--story-gutter) + 18px);
+    }
     .hero-scroll-cue { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .story-thread {
+      --story-gutter: 8px;
+    }
+    .story-row {
+      padding-left: calc(var(--story-gutter) + 16px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

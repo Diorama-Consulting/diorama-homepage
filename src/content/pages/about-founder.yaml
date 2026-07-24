@@ -20,24 +20,3 @@ paragraphs:
     Get in touch to discuss a consulting engagement, or a Non-Executive Director
     or Trustee appointment or to learn more about what we are working on.
 teamHeading: A small team, for tailored support
-team:
-  - name: Mal Minhas
-    role: Founder & Everything Else
-    bio: AI Technology Advisor, charity Trustee, and occasional Substack writer.
-    socials:
-      - label: LinkedIn
-        href: https://linkedin.com/malminhas
-  - name: Paolo Minhas
-    role: Website & Engineering
-    bio: Builds and maintains the Diorama site and tooling.
-    socials:
-      - label: GitHub
-        href: https://github.com/paolominhas
-      - label: LinkedIn
-        href: https://linkedin.com/in/paolo-m
-  - name: Rowan Caulfield
-    role: Logo Design
-    bio: Makes logos.
-    socials:
-      - label: LinkedIn
-        href: https://linkedin.com

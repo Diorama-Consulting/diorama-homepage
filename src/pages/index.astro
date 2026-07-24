@@ -7,7 +7,7 @@ import HeroCarousel from '../components/HeroCarousel.astro';
 import TrustedCompanies from '../components/TrustedCompanies.astro';
 import Section from '../components/Section.astro';
 import FeatureToggle from '../components/FeatureToggle.astro';
-import LinkCard from '../components/LinkCard.astro';
+import ImageFeatureCard from '../components/ImageFeatureCard.astro';
 import Footer from '../components/Footer.astro';
 import WindTurbineReveal from '../components/animated/WindTurbineReveal.astro';
 import AboutIntro from '../components/AboutIntro.astro';
@@ -148,6 +148,14 @@ const charityWidget = await reader.singletons.homeCharityWidget.read();
 const cxaiWidget = await reader.singletons.homeCxaiWidget.read();
 const showCharityWidget = page?.showCharityWidget ?? true;
 const showCxaiWidget = page?.showCxaiWidget ?? true;
+
+// Both widget images fall back to the same default hero photo everything
+// else on the site falls back to, so the new bigger image-led cards never
+// render with a blank background before a real photo is uploaded.
+const charityWidgetImage =
+  resolveImageUrl(charityWidget?.image, charityWidget?.imageUrl) || defaultHeroPhotoUrl;
+const cxaiWidgetImage =
+  resolveImageUrl(cxaiWidget?.image, cxaiWidget?.imageUrl) || defaultHeroPhotoUrl;
 ---
 
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
@@ -210,7 +218,10 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
   <!-- ===================================================================
        HOMEPAGE WIDGETS
        Standalone content widgets, independently editable in Keystatic.
-       Add further widgets here following the same LinkCard pattern.
+       Bigger, image-led cards (ImageFeatureCard) rather than the plain
+       text LinkCard — this closing section is meant to feel more like a
+       "come explore" moment than a footnote. Add further widgets here
+       following the same ImageFeatureCard pattern.
   ==================================================================== -->
   <OutcomesBand />
 
@@ -219,12 +230,14 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
       <div class="widget-grid">
         {showCharityWidget && charityWidget && (
           <div data-reveal>
-            <LinkCard
+            <ImageFeatureCard
               href={charityWidget.ctaHref}
               eyebrow="Charities"
               title={charityWidget.heading}
               description={charityWidget.body}
               linkText={charityWidget.ctaText}
+              image={charityWidgetImage}
+              imageAlt=""
               external={charityWidget.ctaHref?.startsWith('http')}
             />
           </div>
@@ -232,12 +245,14 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
 
         {showCxaiWidget && cxaiWidget && (
           <div data-reveal data-reveal-delay="1">
-            <LinkCard
+            <ImageFeatureCard
               href={cxaiWidget.ctaHref}
               eyebrow="Newsletter"
               title={cxaiWidget.heading}
               description={cxaiWidget.body}
               linkText={cxaiWidget.ctaText}
+              image={cxaiWidgetImage}
+              imageAlt=""
               external={cxaiWidget.ctaHref?.startsWith('http')}
             />
           </div>
@@ -263,12 +278,13 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
   .widget-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
+    gap: var(--space-lg);
   }
 
   @media (max-width: 860px) {
     .widget-grid {
       grid-template-columns: 1fr;
+      gap: var(--space-md);
     }
   }
 </style>
