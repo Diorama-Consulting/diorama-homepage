@@ -23,6 +23,7 @@ const upcoming = allEvents
     description: e.data.description,
     href: e.data.href,
     linkText: e.data.linkText,
+    heroImage: resolveImageUrl(e.data.heroImage, e.data.heroImageUrl),
   }));
 
 const past = allEvents
@@ -35,6 +36,7 @@ const past = allEvents
     description: e.data.description,
     href: e.data.href,
     linkText: e.data.linkText,
+    heroImage: resolveImageUrl(e.data.heroImage, e.data.heroImageUrl),
   }));
 
 const headerNav = await reader.singletons.headerNav.read();

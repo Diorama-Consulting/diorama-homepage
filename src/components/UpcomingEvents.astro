@@ -1,11 +1,15 @@
 ---
-// Events grid — used on /events (see src/pages/events/index.astro) for
-// both the "upcoming" and "past" sections (called twice, with different
-// heading/eyebrow props and pre-filtered event lists). Previously lived
-// on the homepage in the #2 position; moved off the homepage entirely —
-// see the comment in src/pages/index.astro for why. Whole-card-clickable
-// per the site's box-link convention; each card leads to an external
-// registration link, a write-up, or a plain details href.
+// Events list — redesigned as an image-led vertical list (was a compact
+// date-tile grid). Each event is now a full-width row: a photo on one
+// side, the date/title/description/CTA on the other, alternating sides
+// down the page for rhythm rather than a repetitive grid. Events without
+// a hero image fall back to a token-built date panel (no broken-image
+// gaps, no layout collapse) rather than being visually demoted.
+//
+// Still called twice from /events (upcoming + past, different heading/
+// eyebrow, pre-filtered lists) — same prop shape as before, plus
+// `heroImage`/`heroImageUrl`, which the page now actually passes through
+// (previously in the schema but never read).
 import Section from './Section.astro';
 
 interface EventItem {
@@ -15,6 +19,7 @@ interface EventItem {
   description?: string;
   href?: string;
   linkText?: string;
+  heroImage?: string;
 }
 
 interface Props {
@@ -39,21 +44,36 @@ function formatEventDate(iso: string) {
 
 {events.length > 0 && (
   <Section id={id} eyebrow={eyebrow} heading={heading} subheading={subheading}>
-    <div class="events-grid">
-      {events.map((event) => {
+    <div class="events-list">
+      {events.map((event, i) => {
         const { day, month, full } = formatEventDate(event.date);
         const Tag = event.href ? 'a' : 'div';
         return (
-          <Tag class="event-card" href={event.href} {...(event.href?.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-            <div class="event-date">
-              <span class="event-day">{day}</span>
-              <span class="event-month">{month}</span>
+          <Tag
+            class:list={['event-row', i % 2 === 1 && 'event-row--flip']}
+            href={event.href}
+            {...(event.href?.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            data-reveal
+          >
+            <div class="event-media">
+              {event.heroImage ? (
+                <img src={event.heroImage} alt="" loading={i === 0 ? 'eager' : 'lazy'} />
+              ) : (
+                <div class="event-media-fallback" aria-hidden="true">
+                  <span class="fallback-day">{day}</span>
+                  <span class="fallback-month">{month}</span>
+                </div>
+              )}
+              <span class="event-date-chip">
+                <span class="chip-day">{day}</span>
+                <span class="chip-month">{month}</span>
+              </span>
             </div>
             <div class="event-body">
               <p class="event-full-date">{full}{event.location ? ` · ${event.location}` : ''}</p>
               <h3>{event.title}</h3>
               {event.description && <p class="event-description">{event.description}</p>}
-              {event.href && <span class="event-cta">{event.linkText ?? 'Details'} →</span>}
+              {event.href && <span class="event-cta">{event.linkText ?? 'Details'}<span class="arrow">→</span></span>}
             </div>
           </Tag>
         );
@@ -63,69 +83,123 @@ function formatEventDate(iso: string) {
 )}
 
 <style>
-  .events-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--space-md);
+  .events-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
   }
 
-  .event-card {
-    display: flex;
-    gap: var(--space-md);
-    background: var(--forest);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-lg);
-    padding: var(--space-md);
+  .event-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--space-lg);
+    align-items: center;
     text-decoration: none;
     color: inherit;
-    transition: border-color 0.25s ease, transform 0.25s ease;
   }
 
-  a.event-card:hover {
-    border-color: var(--moss);
-    transform: translateY(-2px);
+  .event-row--flip {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+  .event-row--flip .event-media { order: 2; }
+  .event-row--flip .event-body { order: 1; }
+
+  /* ---- Media ---- */
+  .event-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    background: var(--gradient-surface);
+    transition: box-shadow 0.3s ease;
   }
 
-  .event-date {
-    flex: 0 0 auto;
+  .event-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  a.event-row:hover .event-media img {
+    transform: scale(1.04);
+  }
+  a.event-row:hover .event-media {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .event-media-fallback {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-md);
-    background: var(--signal-soft);
-    border: 1px solid hsl(var(--hue-green) 48% 46% / 0.3);
+    gap: 4px;
+    background: linear-gradient(150deg, var(--signal-soft), var(--gradient-surface));
   }
-
-  .event-day {
+  .fallback-day {
     font-family: var(--font-display);
-    font-size: 22px;
+    font-size: clamp(40px, 5vw, 58px);
     font-weight: 700;
     color: var(--text-strong);
     line-height: 1;
   }
-
-  .event-month {
+  .fallback-month {
     font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
+    font-size: 13px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--mint);
-    margin-top: 3px;
+    color: var(--mist-muted);
   }
 
+  /* Small date chip overlaid on the image itself — present whether or
+     not there's a photo, so the date reads at a glance either way. */
+  .event-date-chip {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.05;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background: hsl(var(--hue-green) 30% 9% / 0.72);
+    backdrop-filter: blur(6px);
+    color: var(--ink-text);
+  }
+  .event-media:has(.event-media-fallback) .event-date-chip {
+    display: none; /* fallback panel already shows the date, full-size */
+  }
+  .chip-day {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .chip-month {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  /* ---- Body ---- */
   .event-body {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     min-width: 0;
   }
 
   .event-full-date {
     font-family: var(--font-mono);
-    font-size: 11.5px;
+    font-size: 12px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--mist-faint);
@@ -133,23 +207,61 @@ function formatEventDate(iso: string) {
   }
 
   .event-body h3 {
-    font-size: 17px;
-  }
-
-  .event-description {
-    font-size: 14px;
-    color: var(--mist-muted);
+    font-size: clamp(19px, 2.2vw, 25px);
+    color: var(--text-strong);
     margin: 0;
   }
 
-  .event-cta {
-    margin-top: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--signal);
+  .event-description {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--mist-muted);
+    max-width: 46ch;
+    margin: 4px 0 0;
   }
 
-  a.event-card:hover .event-cta {
+  .event-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--signal);
+    width: fit-content;
+  }
+  .event-cta .arrow {
+    transition: transform 0.2s ease;
+  }
+  a.event-row:hover .event-cta {
     color: var(--mint);
+  }
+  a.event-row:hover .event-cta .arrow {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 760px) {
+    .event-row,
+    .event-row--flip {
+      grid-template-columns: 1fr;
+      gap: var(--space-sm);
+    }
+    .event-row--flip .event-media,
+    .event-row--flip .event-body {
+      order: initial;
+    }
+    .event-media {
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .event-media img,
+    .event-cta .arrow {
+      transition: none;
+    }
+    a.event-row:hover .event-media img {
+      transform: none;
+    }
   }
 </style>
