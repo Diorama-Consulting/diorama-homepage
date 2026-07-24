@@ -10,7 +10,7 @@ companyNumber: '16137029'
 vatNumber: '483184277'
 sameAs: []
 showSustainabilitySection: true
-showGreenBadges: true
+showGreenBadges: false
 showCarbonBadge: true
 showCo2Estimate: true
 showHostingInfo: true
@@ -19,8 +19,10 @@ showSustainabilityNotes: true
 showMethodologyLink: false
 hostingProvider: DigitalOcean & Cloudflare
 hostingRegion: LON1
-greenHostingVerified: true
+greenHostingVerified: false
 sustainabilityNotes: >-
-  We optimise every image on this site (AVIF/WebP with responsive sizing), use a
-  static-first architecture that minimises server compute, and are evaluating a
-  move to UK-based, renewable-powered hosting.
+  We optimise every image on this site (AVIF/WebP with responsive sizing) and
+  use a static-first architecture that minimises server compute. We are not
+  currently on hosting verified as running on renewable energy by the Green
+  Web Foundation — we're evaluating a move to certified green hosting and
+  will update this page the moment that changes.

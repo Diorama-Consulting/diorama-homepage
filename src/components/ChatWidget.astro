@@ -29,6 +29,17 @@ const welcomeMessage =
   </button>
 
   <div id="chat-panel" role="dialog" aria-label="Chat with Diorama Consulting" aria-hidden="true">
+    <div
+      id="chat-resize-handle"
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label="Resize chat window — drag, or use arrow keys"
+      tabindex="0"
+    >
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+        <path d="M9.5 9.5 9.5 1.5M9.5 9.5 1.5 9.5M9.5 9.5 5.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+      </svg>
+    </div>
     <header class="chat-header">
       <span>Diorama Assistant</span>
       <button id="chat-close" type="button" aria-label="Close chat">✕</button>
@@ -85,11 +96,16 @@ const welcomeMessage =
   }
 
   #chat-panel {
+    /* Defaults — identical to the previous fixed min()s, just promoted to
+       custom properties so the resize handle below can override them
+       per-user without fighting a hardcoded value. */
+    --chat-width: min(360px, calc(100vw - 40px));
+    --chat-height: min(480px, calc(100vh - 140px));
     position: absolute;
     right: 0;
     bottom: 72px;
-    width: min(360px, calc(100vw - 40px));
-    height: min(480px, calc(100vh - 140px));
+    width: var(--chat-width);
+    height: var(--chat-height);
     background: var(--forest);
     border: 1px solid var(--hairline);
     border-radius: var(--radius-lg);
@@ -103,21 +119,53 @@ const welcomeMessage =
     transition: opacity 0.18s ease, transform 0.18s ease;
   }
 
+  #chat-panel.is-resizing {
+    transition: none;
+  }
+
   #chat-widget.open #chat-panel {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
   }
 
+  /* Grows toward the top-left — the panel's right/bottom edges stay put
+     (anchored above the toggle button), so the handle sits in the
+     opposite corner from where it's anchored. */
+  #chat-resize-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 4px;
+    color: var(--mist-faint);
+    cursor: nwse-resize;
+    touch-action: none;
+    z-index: 2;
+    border-radius: var(--radius-lg) 0 var(--radius-sm) 0;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  #chat-resize-handle:hover,
+  #chat-resize-handle:focus-visible {
+    color: var(--signal);
+    background: rgba(255, 255, 255, 0.04);
+    outline: none;
+  }
+
   .chat-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
+    padding: 14px 16px 14px 30px;
     border-bottom: 1px solid var(--hairline);
     color: var(--text-strong);
     font-weight: 600;
     font-size: 14.5px;
+    position: relative;
   }
 
   .chat-header button {
@@ -161,6 +209,30 @@ const welcomeMessage =
   .chat-bubble.assistant strong {
     color: var(--text-strong);
     font-weight: 700;
+  }
+
+  /* Markdown ATX headings (#, ##, ###…) from the assistant's replies —
+     rendered as a small styled heading rather than literal "#" characters
+     or a plain bold run-in line. Capped visually at two size tiers since
+     a chat bubble is too small a canvas for six distinct heading sizes. */
+  .chat-bubble.assistant .chat-heading {
+    display: block;
+    font-weight: 700;
+    color: var(--text-strong);
+    line-height: 1.35;
+    margin: 10px 0 4px;
+  }
+  .chat-bubble.assistant .chat-heading:first-child {
+    margin-top: 0;
+  }
+  .chat-bubble.assistant .chat-heading-1,
+  .chat-bubble.assistant .chat-heading-2 {
+    font-size: 15.5px;
+  }
+  .chat-bubble.assistant .chat-heading-3,
+  .chat-bubble.assistant .chat-heading-4 {
+    font-size: 14.5px;
+    color: var(--mist);
   }
 
   .chat-bubble.assistant a {
@@ -267,13 +339,13 @@ const welcomeMessage =
   let hasGreeted = false;
   let sending = false;
 
-  // Claude's replies use light Markdown (**bold**, _italic_, line breaks,
-  // occasional links) — textContent was rendering that literally as raw
-  // asterisks instead of formatting. This escapes HTML first (so anything
-  // in the text, including a pasted <script> or the user's own message,
-  // can never inject markup), THEN applies a small, deliberately narrow
-  // set of Markdown patterns — not a full Markdown parser, just what a
-  // short chat reply plausibly uses.
+  // Claude's replies use light Markdown (**bold**, _italic_, headings,
+  // line breaks, occasional links) — textContent was rendering that
+  // literally as raw asterisks/hashes instead of formatting. This escapes
+  // HTML first (so anything in the text, including a pasted <script> or
+  // the user's own message, can never inject markup), THEN applies a
+  // small, deliberately narrow set of Markdown patterns — not a full
+  // Markdown parser, just what a short chat reply plausibly uses.
   function escapeHtml(str: string): string {
     return str
       .replace(/&/g, '&amp;')
@@ -283,10 +355,11 @@ const welcomeMessage =
       .replace(/'/g, '&#39;');
   }
 
-  function formatMessage(text: string): string {
-    let html = escapeHtml(text);
-    // Links first (before bold/italic, so `**[text](url)**` doesn't get
-    // mangled) — only http(s), and rel/target kept safe for a new tab.
+  // Inline-only formatting (links, bold, italic) — applied per line so
+  // headings (below) can reuse it on their own content without also
+  // picking up a stray line-break conversion.
+  function formatInline(line: string): string {
+    let html = line;
     html = html.replace(
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
@@ -294,7 +367,36 @@ const welcomeMessage =
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
     html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
+  const HEADING_RE = /^(#{1,6})\s+(.*)$/;
+
+  function formatMessage(text: string): string {
+    const escaped = escapeHtml(text);
+    const lines = escaped.split('\n');
+    let html = '';
+    let prevWasHeading = false;
+
+    lines.forEach((line, i) => {
+      const match = line.match(HEADING_RE);
+      if (match) {
+        // "# Heading" etc. — never shown as literal hash characters; the
+        // level still controls size (capped to two visual tiers) so the
+        // structure/emphasis the assistant intended is preserved, just
+        // rendered rather than left as raw Markdown syntax.
+        const level = Math.min(match[1].length, 4);
+        html += `<strong class="chat-heading chat-heading-${level}">${formatInline(match[2])}</strong>`;
+        prevWasHeading = true;
+        return;
+      }
+      // Headings are block-level already, so no extra <br> is needed
+      // immediately before/after one — only between two ordinary lines.
+      if (i > 0 && !prevWasHeading) html += '<br>';
+      html += formatInline(line);
+      prevWasHeading = false;
+    });
+
     return html;
   }
 
@@ -391,4 +493,146 @@ const welcomeMessage =
       form.requestSubmit();
     }
   });
+
+  // ------------------------------------------------------------------
+  // Drag-to-resize: the panel is anchored bottom-right (right:0,
+  // bottom:72px), so the handle sits at the OPPOSITE corner (top-left)
+  // and dragging it out grows the panel toward the top-left — the only
+  // direction that doesn't push the panel off-anchor or under the toggle
+  // button. Width/height are held as CSS custom properties so the panel's
+  // existing transform/opacity transitions are untouched; only size
+  // changes, position logic stays exactly as it was.
+  // ------------------------------------------------------------------
+  const handle = document.getElementById('chat-resize-handle');
+  const SIZE_KEY = 'diorama-chat-size';
+  const MIN_W = 300;
+  const MIN_H = 340;
+
+  function maxSize() {
+    return { w: window.innerWidth - 40, h: window.innerHeight - 140 };
+  }
+
+  function clamp(w: number, h: number) {
+    const { w: maxW, h: maxH } = maxSize();
+    return {
+      w: Math.min(Math.max(w, MIN_W), Math.max(maxW, MIN_W)),
+      h: Math.min(Math.max(h, MIN_H), Math.max(maxH, MIN_H)),
+    };
+  }
+
+  function applySize(w: number, h: number) {
+    const c = clamp(w, h);
+    panel.style.setProperty('--chat-width', `${c.w}px`);
+    panel.style.setProperty('--chat-height', `${c.h}px`);
+    return c;
+  }
+
+  function saveSize(w: number, h: number) {
+    try {
+      localStorage.setItem(SIZE_KEY, JSON.stringify({ w, h }));
+    } catch {
+      // Private browsing / storage disabled — resizing still works for
+      // this session, it just won't be remembered next visit.
+    }
+  }
+
+  // Restore a remembered size on load, if any (still clamped to the
+  // current viewport in case the window is smaller than it was before).
+  try {
+    const saved = localStorage.getItem(SIZE_KEY);
+    if (saved) {
+      const { w, h } = JSON.parse(saved);
+      if (typeof w === 'number' && typeof h === 'number') applySize(w, h);
+    }
+  } catch {
+    // Corrupt/blocked storage — fall back to the CSS default size.
+  }
+
+  if (handle) {
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+
+    const onMove = (clientX: number, clientY: number) => {
+      const next = applySize(startW + (startX - clientX), startH + (startY - clientY));
+      return next;
+    };
+
+    handle.addEventListener('pointerdown', (event) => {
+      const e = event as PointerEvent;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = panel.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      panel.classList.add('is-resizing');
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+
+    handle.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      const e = event as PointerEvent;
+      onMove(e.clientX, e.clientY);
+    });
+
+    const endDrag = (event: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      panel.classList.remove('is-resizing');
+      const final = onMove(event.clientX, event.clientY);
+      saveSize(final.w, final.h);
+    };
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+
+    // Double-click/tap the handle to reset to the default size.
+    handle.addEventListener('dblclick', () => {
+      panel.style.removeProperty('--chat-width');
+      panel.style.removeProperty('--chat-height');
+      try {
+        localStorage.removeItem(SIZE_KEY);
+      } catch {
+        /* ignore */
+      }
+    });
+
+    // Keyboard alternative for anyone who can't drag: arrow keys resize
+    // in fixed steps while the handle has focus.
+    handle.addEventListener('keydown', (event) => {
+      const STEP = 16;
+      const rect = panel.getBoundingClientRect();
+      let w = rect.width;
+      let h = rect.height;
+      switch (event.key) {
+        case 'ArrowLeft':
+          w += STEP;
+          break;
+        case 'ArrowRight':
+          w -= STEP;
+          break;
+        case 'ArrowUp':
+          h += STEP;
+          break;
+        case 'ArrowDown':
+          h -= STEP;
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+      const final = applySize(w, h);
+      saveSize(final.w, final.h);
+    });
+
+    // Re-clamp on viewport resize so a stored size can't push the panel
+    // off-screen after e.g. rotating a device or shrinking the window.
+    window.addEventListener('resize', () => {
+      const rect = panel.getBoundingClientRect();
+      applySize(rect.width, rect.height);
+    });
+  }
 </script>

@@ -13,20 +13,24 @@ interface Props {
   location?: string;
   external?: boolean;
   featured?: boolean;
+  /** Events only — true once the event date has passed. */
+  past?: boolean;
 }
 
-const { type, title, excerpt, href, image, date, location, external = false, featured = false } = Astro.props;
+const { type, title, excerpt, href, image, date, location, external = false, featured = false, past } = Astro.props;
 
 const d = new Date(date);
 const formattedDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const isLinkable = Boolean(href);
 const Tag = isLinkable ? 'a' : 'div';
+const badgeText = type === 'event' ? (past === true ? 'Past event' : past === false ? 'Upcoming event' : 'Event') : 'Article';
 ---
 
 <Tag
   class:list={['insight-card', `insight-card--${type}`, featured && 'insight-card--featured', !isLinkable && 'insight-card--static']}
   data-type={type}
   data-title={title.toLowerCase()}
+  data-excerpt={excerpt ? excerpt.toLowerCase() : undefined}
   href={isLinkable ? href : undefined}
   target={isLinkable && external ? '_blank' : undefined}
   rel={isLinkable && external ? 'noopener noreferrer' : undefined}
@@ -37,7 +41,7 @@ const Tag = isLinkable ? 'a' : 'div';
     ) : (
       <span class="insight-media-placeholder" aria-hidden="true">{type === 'event' ? '◆' : '✎'}</span>
     )}
-    <span class:list={['insight-badge', `insight-badge--${type}`]}>{type === 'event' ? 'Event' : 'Article'}</span>
+    <span class:list={['insight-badge', `insight-badge--${type}`, past && 'insight-badge--past']}>{badgeText}</span>
   </span>
   <span class="insight-body">
     <span class="insight-meta">{formattedDate}{location ? ` · ${location}` : ''}</span>
@@ -123,6 +127,9 @@ const Tag = isLinkable ? 'a' : 'div';
   }
   .insight-badge--event {
     background: hsl(var(--hue-amber) 55% 20% / 0.8);
+  }
+  .insight-badge--past {
+    background: hsl(var(--hue-green) 10% 30% / 0.8);
   }
 
   .insight-body {

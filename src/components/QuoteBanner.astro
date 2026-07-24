@@ -54,20 +54,27 @@ const { quote, author, image, imageAlt = '' } = Astro.props;
   .quote-banner-content {
     position: relative;
     z-index: 2;
-    max-width: 780px;
+    max-width: 640px;
     padding-block: var(--space-xl);
   }
 
   .quote-mark {
     color: var(--ink-accent);
-    opacity: 0.9;
+    opacity: 0.85;
+    width: 30px;
+    height: 24px;
     margin-bottom: var(--space-sm);
   }
 
   .quote-banner-text {
     font-family: var(--font-display);
-    font-size: clamp(22px, 3vw, 34px);
-    line-height: 1.4;
+    /* Was clamp(22px, 3vw, 34px) — display-heading sized, which made a
+       long pull-quote hard to read as running prose. Sized down to a
+       comfortable reading size, closer to large body text than a
+       headline, with a touch more line-height to match. */
+    font-size: clamp(16px, 1.6vw, 20px);
+    font-weight: 400;
+    line-height: 1.6;
     color: var(--ink-text);
     margin: 0 0 var(--space-sm);
   }

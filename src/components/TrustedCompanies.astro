@@ -1,15 +1,23 @@
 ---
-// Homepage trust banner — now a continuously scrolling right-to-left
-// marquee, the standard "logo wall" pattern on large B2B sites. Pure CSS:
-// the logo list is rendered TWICE back-to-back and the whole track is
-// translated by exactly -50% in a linear keyframe loop, so the moment the
-// first copy scrolls fully offscreen, the second (identical) copy is in
-// the exact position the first started — the seam is invisible and the
-// loop is truly continuous, not a snap-back.
+// Homepage trust banner — a continuously scrolling logo marquee, the
+// standard "logo wall" pattern on large B2B sites.
+//
+// HOW THE LOOP STAYS SEAMLESS (and why it used to "regenerate in the
+// middle of the page"): the classic trick is to render the logo list
+// twice and translate the track by exactly -50%, so copy #2 lands where
+// copy #1 started. That only works if ONE copy is at least as wide as
+// the container — with a handful of logos it wasn't, so the whole track
+// (both copies) fit on screen and the -50% snap-back was plainly visible
+// mid-viewport. Fix: a tiny progressive-enhancement script measures one
+// logo set against the container and clones the set into BOTH halves
+// until each half fills the container, then restarts the animation. The
+// animation itself is still pure CSS (translateX(-50%) linear loop); JS
+// only decides how many copies each half needs. No JS → the two
+// server-rendered copies still animate exactly as before.
 //
 // Pauses on hover/focus (lets someone actually click a logo) and stops
-// entirely for prefers-reduced-motion, falling back to the plain
-// wrapped-row layout this replaced.
+// entirely for prefers-reduced-motion, falling back to a plain wrapped
+// row.
 interface Company {
   name: string;
   logo: string;
@@ -30,16 +38,26 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
       <p class="trusted-heading">{heading}</p>
     </div>
     <div class="marquee" role="list" aria-label={heading}>
-      <div class="marquee-track">
-        {[...companies, ...companies].map((company, i) => (
-          <div class="marquee-item" role="listitem" aria-hidden={i >= companies.length ? 'true' : undefined}>
-            {company.href ? (
-              <a href={company.href} target="_blank" rel="noopener noreferrer" aria-label={company.name} tabindex={i >= companies.length ? -1 : undefined}>
-                <img src={company.logo} alt={company.name} loading="lazy" decoding="async" />
-              </a>
-            ) : (
-              <img src={company.logo} alt={company.name} loading="lazy" decoding="async" />
-            )}
+      <div class="marquee-track" data-marquee-track>
+        {[0, 1].map((half) => (
+          <div class="marquee-half" data-marquee-half aria-hidden={half === 1 ? 'true' : undefined}>
+            {companies.map((company) => (
+              <div class="marquee-item" role={half === 0 ? 'listitem' : undefined}>
+                {company.href ? (
+                  <a
+                    href={company.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={company.name}
+                    tabindex={half === 1 ? -1 : undefined}
+                  >
+                    <img src={company.logo} alt={half === 0 ? company.name : ''} loading="lazy" decoding="async" />
+                  </a>
+                ) : (
+                  <img src={company.logo} alt={half === 0 ? company.name : ''} loading="lazy" decoding="async" />
+                )}
+              </div>
+            ))}
           </div>
         ))}
       </div>
@@ -53,7 +71,7 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
   }
 
   .trusted-inner {
-    margin-bottom: 18px;
+    margin-bottom: 22px;
   }
 
   .trusted-heading {
@@ -70,15 +88,22 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
   .marquee {
     overflow: hidden;
     /* Fade the logos out at each edge rather than a hard clip. */
-    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%);
   }
 
   .marquee-track {
     display: flex;
     align-items: center;
     width: max-content;
-    animation: marquee-scroll 32s linear infinite;
+    animation: marquee-scroll var(--marquee-duration, 36s) linear infinite;
+    will-change: transform;
+  }
+
+  .marquee-half {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
   }
 
   .marquee:hover .marquee-track,
@@ -88,28 +113,34 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
 
   .marquee-item {
     flex: 0 0 auto;
-    padding-inline: var(--space-lg);
+    padding-inline: clamp(28px, 4vw, 56px);
     display: flex;
     align-items: center;
   }
 
   .marquee-item img {
-    height: 28px;
+    height: 30px;
     width: auto;
+    max-width: 150px;
+    object-fit: contain;
     display: block;
     filter: grayscale(1);
-    opacity: 0.6;
-    transition: opacity 0.2s ease, filter 0.2s ease;
+    opacity: 0.55;
+    /* Knocks out white logo backgrounds (JPEG uploads) on the light page
+       so every mark sits directly on the paper, like a real logo wall. */
+    mix-blend-mode: multiply;
+    transition: opacity 0.25s ease, filter 0.25s ease;
   }
 
-  .marquee-item a:hover img,
+  .marquee-item:hover img,
   .marquee-item a:focus-visible img {
     filter: grayscale(0);
     opacity: 1;
   }
 
-  /* The core loop: translate the doubled track exactly half its own
-     width, so copy #2 lands where copy #1 began — a seamless repeat. */
+  /* The core loop: translate the (two identical halves) track by exactly
+     half its own width, so half #2 lands where half #1 began — a
+     seamless, continuous repeat with no visible restart. */
   @keyframes marquee-scroll {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
@@ -119,18 +150,112 @@ const { companies, heading = 'Trusted by teams at' } = Astro.props;
     .marquee {
       -webkit-mask-image: none;
       mask-image: none;
-      overflow-x: auto;
     }
     .marquee-track {
       animation: none;
+      width: auto;
+      justify-content: center;
+    }
+    .marquee-half {
       flex-wrap: wrap;
       justify-content: center;
-      width: auto;
     }
-    /* Reduced motion: show only the first (non-duplicate, non-aria-hidden)
-       copy — the duplicate set exists purely for the animation loop. */
-    .marquee-item[aria-hidden='true'] {
+    /* Show only the first (real) copy — duplicates exist purely for the
+       animation loop. */
+    .marquee-half[aria-hidden='true'] {
       display: none;
     }
   }
 </style>
+
+<script>
+  // Progressive enhancement: make sure each half of the track is at least
+  // as wide as the marquee container, cloning the base logo set as many
+  // times as needed — otherwise the -50% loop visibly restarts on wide
+  // screens with few logos. Re-checked on resize (debounced).
+  function padMarquees() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    document.querySelectorAll<HTMLElement>('[data-marquee-track]').forEach((track) => {
+      const marquee = track.parentElement;
+      const halves = Array.from(track.querySelectorAll<HTMLElement>('[data-marquee-half]'));
+      if (!marquee || halves.length !== 2) return;
+
+      const [first, second] = halves;
+
+      // Remember the original set once, so repeated calls (resize) always
+      // rebuild from the base list instead of compounding clones.
+      if (!track.dataset.baseCount) {
+        track.dataset.baseCount = String(first.children.length);
+      }
+      const baseCount = Number(track.dataset.baseCount);
+      const baseItems = Array.from(first.children).slice(0, baseCount);
+
+      // Width of one base set (children are equal-width flex items).
+      const setWidth = baseItems.reduce((w, el) => w + (el as HTMLElement).offsetWidth, 0);
+      if (!setWidth) return;
+
+      const copiesNeeded = Math.max(1, Math.ceil(marquee.offsetWidth / setWidth));
+      const currentCopies = first.children.length / baseCount;
+      if (copiesNeeded === currentCopies) return;
+
+      const buildHalf = (target: HTMLElement, hidden: boolean) => {
+        target.innerHTML = '';
+        for (let c = 0; c < copiesNeeded; c++) {
+          baseItems.forEach((item) => {
+            const clone = item.cloneNode(true) as HTMLElement;
+            if (hidden || c > 0) {
+              clone.removeAttribute('role');
+              clone.querySelectorAll('a').forEach((a) => a.setAttribute('tabindex', '-1'));
+              clone.querySelectorAll('img').forEach((img) => img.setAttribute('alt', ''));
+            }
+            target.appendChild(clone);
+          });
+        }
+      };
+
+      buildHalf(first, false);
+      buildHalf(second, true);
+
+      // Keep perceived speed constant regardless of how long the track
+      // ended up: ~55px/second.
+      const halfWidth = setWidth * copiesNeeded;
+      track.style.setProperty('--marquee-duration', `${Math.max(18, Math.round(halfWidth / 55))}s`);
+
+      // Restart the animation cleanly from 0 so the rebuilt halves line up.
+      track.style.animation = 'none';
+      void track.offsetWidth;
+      track.style.animation = '';
+    });
+  }
+
+  function initMarquee() {
+    // Wait for logo images so offsetWidth measurements are real.
+    const imgs = Array.from(document.querySelectorAll<HTMLImageElement>('[data-marquee-track] img'));
+    const pending = imgs.filter((img) => !img.complete);
+    if (pending.length === 0) {
+      padMarquees();
+    } else {
+      let remaining = pending.length;
+      const done = () => {
+        remaining -= 1;
+        if (remaining <= 0) padMarquees();
+      };
+      pending.forEach((img) => {
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+      // Safety net if some image never resolves.
+      setTimeout(padMarquees, 2500);
+    }
+
+    let resizeId: ReturnType<typeof setTimeout> | null = null;
+    window.addEventListener('resize', () => {
+      if (resizeId) clearTimeout(resizeId);
+      resizeId = setTimeout(padMarquees, 200);
+    });
+  }
+
+  initMarquee();
+  document.addEventListener('astro:page-load', initMarquee);
+</script>

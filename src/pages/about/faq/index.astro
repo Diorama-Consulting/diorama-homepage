@@ -113,21 +113,39 @@ const faqJsonLd = {
       </p>
     </section>
 
-    {categories.map((category) => (
-      <section class="faq-category">
-        <h2>{category.name}</h2>
-        <div class="faq-list">
-          {(category.questions ?? []).map((item) => (
-            <details class="faq-item">
-              <summary>{item.question}</summary>
-              <div class="faq-answer">
-                <div class="faq-answer-inner" set:html={renderAnswer(item.answer)} />
-              </div>
-            </details>
-          ))}
-        </div>
-      </section>
-    ))}
+    <div class="faq-shell">
+    {categories.map((category, ci) => {
+      const questions = category.questions ?? [];
+      return (
+        <details class="faq-section" data-faq-section open={ci === 0 ? true : undefined}>
+          <summary class="faq-section-summary">
+            <span class="faq-section-icon" aria-hidden="true">{String(ci + 1).padStart(2, '0')}</span>
+            <span class="faq-section-title">
+              <span class="faq-section-name">{category.name}</span>
+              <span class="faq-section-count">
+                {questions.length} question{questions.length === 1 ? '' : 's'}
+              </span>
+            </span>
+            <span class="faq-section-chevron" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </span>
+          </summary>
+          <div class="faq-section-body">
+            <div class="faq-section-inner">
+              {questions.map((item, qi) => (
+                <div class="faq-qa" style={`--qa-i: ${qi}`}>
+                  <h3 class="faq-question">{item.question}</h3>
+                  <div class="faq-answer" set:html={renderAnswer(item.answer)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
+      );
+    })}
+    </div>
   </main>
 
   <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
@@ -161,102 +179,257 @@ const faqJsonLd = {
     color: var(--signal);
   }
 
-  .faq-category {
-    margin-bottom: 40px;
-  }
-
-  .faq-category h2 {
-    font-size: 1.1rem;
-    margin-bottom: 16px;
-    color: var(--mint);
-  }
-
-  .faq-list {
+  .faq-shell {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
   }
 
-  .faq-item {
+  /* ---- Section (category) accordion — the primary expand/collapse unit
+     now, replacing the old per-question <details>. Each category is a
+     card; clicking its header reveals every question inside at once. ---- */
+  .faq-section {
     background: var(--forest);
     border: 1px solid var(--hairline);
-    border-radius: var(--radius-md);
-    padding: 18px 22px;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
   }
-
-  /* Hover = visual affordance only. It signals "this is clickable" without
-     opening anything — actual opening still requires a real click/tap, which
-     is what keeps this accessible and consistent between desktop and mobile. */
-  .faq-item:hover {
+  .faq-section:hover {
     border-color: var(--moss);
-    background-color: rgba(255, 255, 255, 0.02);
+    box-shadow: var(--shadow-sm);
+  }
+  .faq-section[open] {
+    background: var(--pine);
   }
 
-  .faq-item summary {
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--text-strong);
+  .faq-section-summary {
     list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 26px;
+    -webkit-tap-highlight-color: transparent;
   }
-
-  .faq-item summary::-webkit-details-marker {
+  .faq-section-summary::-webkit-details-marker {
     display: none;
   }
+  .faq-section-summary::marker {
+    content: '';
+  }
+  .faq-section-summary:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: -2px;
+  }
 
-  .faq-item summary::before {
-    content: '+';
-    display: inline-block;
-    width: 1.2em;
+  .faq-section-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
     color: var(--signal);
-    transition: transform 0.2s ease, color 0.2s ease;
+    background: var(--signal-soft);
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .faq-section[open] .faq-section-icon {
+    background: var(--signal);
+    color: var(--canopy);
+    transform: scale(1.06);
   }
 
-  .faq-item:hover summary::before {
-    color: var(--mint);
+  .faq-section-title {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
   }
 
-  .faq-item[open] summary::before {
-    content: '−';
+  .faq-section-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--text-strong);
+  }
+
+  .faq-section-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mist-faint);
+  }
+
+  .faq-section-chevron {
+    flex-shrink: 0;
+    display: flex;
+    color: var(--mist-muted);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+  }
+  .faq-section[open] .faq-section-chevron {
+    transform: rotate(180deg);
+    color: var(--signal);
+  }
+
+  /* Height is animated by JS (WAAPI) on this wrapper — see the script
+     below. Falls back to the browser's native instant show/hide if JS
+     never runs, so the accordion still fully works without it. */
+  .faq-section-body {
+    overflow: hidden;
+  }
+
+  .faq-section-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 2px 26px 26px;
+  }
+
+  .faq-qa {
+    padding-top: 18px;
+    border-top: 1px solid var(--hairline);
+  }
+  .faq-qa:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* Staggered reveal — only played when a section is opened via JS (the
+     .is-revealing class is added right as the height animation starts and
+     removed once it's done), never on ordinary reflow/resize. */
+  .faq-section-inner.is-revealing .faq-qa {
+    animation: faq-qa-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--qa-i, 0) * 55ms);
+  }
+  @keyframes faq-qa-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .faq-question {
+    font-family: var(--font-display);
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--text-strong);
+    margin: 0 0 8px;
   }
 
   .faq-answer {
-    padding-left: 1.2em;
     color: var(--mist-muted);
-    line-height: 1.6;
+    line-height: 1.65;
+    font-size: 14.5px;
   }
-
-  .faq-answer-inner {
-    overflow: hidden;
-    max-height: 0;
-    opacity: 0;
-    transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.2s ease;
-  }
-
-  .faq-answer-inner :global(p) {
+  .faq-answer :global(p) {
     margin: 0 0 0.6em 0;
   }
-
-  .faq-answer-inner :global(p:last-child) {
+  .faq-answer :global(p:last-child) {
     margin-bottom: 0;
   }
-
-  .faq-answer-inner :global(ol) {
+  .faq-answer :global(ol) {
     margin: 0.4em 0 0 1.2em;
-    padding: 1.4em;
+    padding: 0;
   }
-
-  .faq-answer-inner :global(a) {
+  .faq-answer :global(a) {
     color: var(--signal);
   }
-
-  .faq-answer-inner :global(a:hover) {
+  .faq-answer :global(a:hover) {
     color: var(--mint);
   }
 
-  .faq-item[open] .faq-answer-inner {
-    max-height: 600px; /* generous ceiling — real content is always shorter */
-    opacity: 1;
-    margin-top: 12px;
+  @media (prefers-reduced-motion: reduce) {
+    .faq-section,
+    .faq-section-icon,
+    .faq-section-chevron {
+      transition: none;
+    }
+    .faq-section-inner.is-revealing .faq-qa {
+      animation: none;
+    }
   }
 </style>
+
+<script>
+  // ------------------------------------------------------------------
+  // Section-level accordion with a smooth WAAPI height animation layered
+  // on top of native <details>/<summary> — the native element still does
+  // all the accessibility/keyboard-activation work, this script only
+  // makes the show/hide transition smooth instead of an instant snap.
+  // Fully functional with JS disabled (falls back to the browser's
+  // default instant toggle).
+  // ------------------------------------------------------------------
+  function initFaqAccordion() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    document.querySelectorAll<HTMLDetailsElement>('[data-faq-section]').forEach((details) => {
+      if (details.dataset.faqInit) return;
+      details.dataset.faqInit = 'true';
+
+      const summary = details.querySelector<HTMLElement>(':scope > summary');
+      const body = details.querySelector<HTMLElement>(':scope > .faq-section-body');
+      const inner = details.querySelector<HTMLElement>(':scope > .faq-section-body > .faq-section-inner');
+      if (!summary || !body || !inner) return;
+
+      let animation: Animation | null = null;
+
+      const revealItems = () => {
+        inner.classList.remove('is-revealing');
+        void inner.offsetWidth; // restart the stagger animation cleanly
+        inner.classList.add('is-revealing');
+      };
+
+      const settle = (isOpen: boolean) => {
+        details.open = isOpen;
+        animation = null;
+        body.style.height = '';
+        body.style.overflow = '';
+      };
+
+      const shrink = () => {
+        const startHeight = `${body.offsetHeight}px`;
+        animation?.cancel();
+        if (reduced) {
+          settle(false);
+          return;
+        }
+        body.style.overflow = 'hidden';
+        animation = body.animate({ height: [startHeight, '0px'] }, { duration: 260, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+        animation.onfinish = () => settle(false);
+      };
+
+      const grow = () => {
+        // The browser needs `open` set before the content has real height
+        // to measure — this makes it visible immediately, but we still
+        // control the perceived motion via the height animation below.
+        details.open = true;
+        requestAnimationFrame(() => {
+          const endHeight = `${body.scrollHeight}px`;
+          if (reduced) {
+            settle(true);
+            return;
+          }
+          body.style.overflow = 'hidden';
+          animation?.cancel();
+          animation = body.animate({ height: ['0px', endHeight] }, { duration: 320, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+          animation.onfinish = () => settle(true);
+          revealItems();
+        });
+      };
+
+      summary.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (details.open) shrink();
+        else grow();
+      });
+    });
+  }
+
+  initFaqAccordion();
+  document.addEventListener('astro:page-load', initFaqAccordion);
+</script>

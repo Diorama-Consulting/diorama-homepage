@@ -30,7 +30,7 @@ const {
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="site-header" id="site-header">
+<header class="site-header header-preload" id="site-header">
   <div class="container nav">
     <a href="/" class="logo">
       <span class="logo-mark-wrap">
@@ -75,37 +75,67 @@ const currentPath = Astro.url.pathname;
   </nav>
 </header>
 
+<!-- Runs synchronously, immediately after the header exists in the DOM and
+     BEFORE first paint: sets the condensed state if the page loads already
+     scrolled (browser scroll restoration on reload), then lifts the
+     transition freeze on the next frame so normal animation resumes.
+     This is what stops the bar visibly "enlarging then shrinking" on
+     reload. -->
+<script is:inline>
+  (function () {
+    var h = document.getElementById('site-header');
+    if (!h) return;
+    if (window.scrollY > 90) h.classList.add('is-scrolled');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        h.classList.remove('header-preload');
+      });
+    });
+  })();
+</script>
+
 <style>
+  /* SCROLL-GLITCH FIX (the "white fading in at the top" on light pages):
+     two things caused it and both are gone.
+       1. backdrop-filter: blur() on a sticky bar over a near-white page —
+          the blur samples the light content beneath/around the bar's
+          edge, which reads as a white haze bleeding in from the top the
+          moment the compositor promotes the layer (~the is-scrolled
+          toggle, i.e. after about 2cm of scroll). The header background
+          is fully opaque, so the blur contributed nothing visually —
+          removed entirely.
+       2. `background` was in the transition list while toggling between
+          a GRADIENT (base) and a semi-transparent color-mix (scrolled).
+          Gradients and flat colours can't interpolate, so the browser
+          snapped between them mid-"transition" — a visible flicker, and
+          the 6% transparency let the white page glow through. The bar is
+          now opaque in both states and `background` is no longer
+          transitioned at all.
+     RELOAD-JUMP FIX: the scrolled state is applied by a tiny inline
+     script (below, runs before first paint) AND transitions are disabled
+     until the first frame via .header-preload — so reloading mid-page
+     renders the condensed bar instantly instead of animating from the
+     tall one. */
   .site-header {
     position: sticky;
     top: 0;
     z-index: 50;
     background: linear-gradient(180deg, var(--ink-bg) 0%, var(--ink-bg-2) 100%);
     border-bottom: 1px solid var(--ink-border);
-    /* backdrop-filter is constant (see below) precisely so it never has
-       to be transitioned — see the comment on .is-scrolled for why. */
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    transition: padding 0.35s ease,
-      border-color 0.35s ease, box-shadow 0.35s ease, background 0.35s ease;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
   }
 
-  /* Slightly darker and condensed once scrolled — same bar, just tightened up.
-     THE SCROLL GLITCH FIX: backdrop-filter used to live only here and was
-     included in the transition list above, meaning the browser animated it
-     from "none" to "blur(16px)" over 0.35s every time is-scrolled toggled.
-     Animating backdrop-filter is a known cross-browser flicker source — the
-     GPU has to build a new blur-sampling compositor layer mid-transition,
-     and on a light-background page behind a dark header that showed up as
-     exactly the "white band blurring in" glitch described. Fix: backdrop-
-     filter is now constant on the base rule above (harmless there since the
-     base background is fully opaque, so blur has nothing to show through
-     yet) — only background opacity/border/shadow animate here now, all of
-     which are simple colour interpolations with no equivalent flicker risk. */
+  /* Condensed once scrolled — same bar, just tightened up. Fully opaque. */
   .site-header.is-scrolled {
-    background: color-mix(in srgb, var(--ink-bg-2) 94%, transparent);
     border-bottom-color: var(--ink-border-hover);
     box-shadow: 0 4px 24px hsl(var(--hue-green) 60% 4% / 0.35);
+  }
+
+  /* Kill ALL descendant transitions for the very first frame so a reload
+     mid-scroll paints the final (condensed) geometry with zero motion. */
+  .site-header.header-preload,
+  .site-header.header-preload * {
+    transition: none !important;
   }
 
   .nav {
@@ -335,14 +365,24 @@ const currentPath = Astro.url.pathname;
   });
 
   if (header) {
-    const THRESHOLD = 80;
+    // Hysteresis: the bar condenses at 90px but only expands again below
+    // 30px. Shrinking the sticky bar changes the page's own height, which
+    // nudges scrollY — with a single threshold that could oscillate the
+    // class on/off in a loop right at the boundary (another source of the
+    // reported top-of-page glitching). Two well-separated thresholds make
+    // that impossible.
+    const ENTER = 90;
+    const EXIT = 30;
     let ticking = false;
 
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        header.classList.toggle('is-scrolled', window.scrollY > THRESHOLD);
+        const y = window.scrollY;
+        const scrolled = header.classList.contains('is-scrolled');
+        if (!scrolled && y > ENTER) header.classList.add('is-scrolled');
+        else if (scrolled && y < EXIT) header.classList.remove('is-scrolled');
         ticking = false;
       });
     };

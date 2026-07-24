@@ -201,8 +201,9 @@ const showCxaiWidget = page?.showCxaiWidget ?? true;
 
   <div class="container">
     <WindTurbineReveal
-      heading="Built with the same discipline we bring to client work"
-      text="Fast, static-first architecture and verified green hosting — the site itself is a small proof point for how we work."
+      eyebrow={page?.craftBandEyebrow || 'Built with care'}
+      heading={page?.craftBandHeading || 'Built with the same discipline we bring to client work'}
+      text={page?.craftBandText || 'A fast, static-first site with optimised images and a public per-page carbon measurement — the site itself is a small proof point for how we work.'}
     />
   </div>
 
