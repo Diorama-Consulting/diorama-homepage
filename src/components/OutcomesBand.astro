@@ -9,6 +9,10 @@ interface Props {
   heading?: string;
   intro?: string;
   showProofStrip?: boolean;
+  /** Set false when nesting inside a page's own <Section> (which already
+      renders its own eyebrow/heading/subheading) to avoid a duplicate
+      heading + doubled-up vertical padding stacking on top of it. */
+  showHead?: boolean;
 }
 
 const {
@@ -16,6 +20,7 @@ const {
   heading = 'Four key business outcomes',
   intro = 'Services provided by Diorama Consulting cover a broad spectrum of fractional and interim advisory focussed on four key business outcomes.',
   showProofStrip = true,
+  showHead = true,
 } = Astro.props;
 
 const outcomes = [
@@ -38,12 +43,14 @@ const outcomes = [
 ];
 ---
 
-<section class="outcomes container">
-  <div class="outcomes-head" data-reveal>
-    <p class="eyebrow">{eyebrow}</p>
-    <h2>{heading}</h2>
-    <p class="outcomes-intro">{intro} <a href="/contact">Get in touch</a> if you'd like help with any of them.</p>
-  </div>
+<section class:list={['outcomes', 'container', !showHead && 'outcomes--nested']}>
+  {showHead && (
+    <div class="outcomes-head" data-reveal>
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>{heading}</h2>
+      <p class="outcomes-intro">{intro} <a href="/contact">Get in touch</a> if you'd like help with any of them.</p>
+    </div>
+  )}
 
   <div class="outcomes-grid">
     {outcomes.map((outcome, i) => (
@@ -70,6 +77,19 @@ const outcomes = [
 <style>
   .outcomes {
     padding-block: var(--space-xl);
+  }
+
+  /* Nested inside a page's own <Section>: that Section already supplies
+     the container width and vertical rhythm, so this instance shouldn't
+     add a second layer of either — that stacking is what caused the
+     oversized gap when this was placed directly under a plain <Section>
+     on /services/consulting. */
+  .outcomes--nested {
+    padding-block: 0;
+    max-width: none;
+    width: auto;
+    margin-inline: 0;
+    padding-inline: 0;
   }
 
   .outcomes-head {
