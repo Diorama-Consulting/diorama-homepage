@@ -1,0 +1,129 @@
+---
+// SiteBanner — fetches /api/banner once per page load and, if active,
+// slides in a slim bar above the header. The rest of the page stays
+// static-prerendered; this is the one small dynamic piece. See
+// src/lib/site-banner.ts for why it works this way.
+//
+// Dismissal persists in localStorage keyed by the banner's own updatedAt
+// timestamp, so dismissing one banner doesn't also hide the NEXT one the
+// admin publishes (a new message = a new timestamp = shows again).
+---
+
+<div id="site-banner" hidden></div>
+
+<style>
+  #site-banner {
+    position: relative;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 44px 10px 16px;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-align: center;
+    color: hsl(0 0% 100%);
+    background: var(--signal);
+    transform: translateY(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #site-banner.is-visible {
+    transform: translateY(0);
+  }
+  #site-banner[data-tone='amber'] {
+    background: var(--ink-amber);
+    color: hsl(30 60% 12%);
+  }
+  #site-banner[data-tone='neutral'] {
+    background: var(--ink-bg-2);
+    color: var(--ink-text);
+  }
+  #site-banner a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  #site-banner button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.75;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 4px;
+  }
+  #site-banner button:hover {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #site-banner {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  async function initSiteBanner() {
+    const el = document.getElementById('site-banner');
+    if (!el || el.dataset.init) return;
+    el.dataset.init = 'true';
+
+    try {
+      const res = await fetch('/api/banner', { cache: 'no-store' });
+      if (!res.ok) return;
+      const banner = await res.json();
+      if (!banner?.active || !banner?.message) return;
+
+      const dismissKey = `diorama-banner-dismissed-${banner.updatedAt}`;
+      try {
+        if (localStorage.getItem(dismissKey)) return;
+      } catch {
+        /* storage blocked — just show it every time, no harm done */
+      }
+
+      el.dataset.tone = banner.tone || 'accent';
+      el.innerHTML = '';
+      const text = document.createElement('span');
+      text.textContent = banner.message;
+      el.appendChild(text);
+
+      if (banner.linkHref) {
+        const a = document.createElement('a');
+        a.href = banner.linkHref;
+        a.textContent = banner.linkText || 'Learn more →';
+        el.appendChild(a);
+      }
+
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.setAttribute('aria-label', 'Dismiss banner');
+      closeBtn.textContent = '✕';
+      closeBtn.addEventListener('click', () => {
+        el.classList.remove('is-visible');
+        try {
+          localStorage.setItem(dismissKey, '1');
+        } catch {
+          /* ignore */
+        }
+      });
+      el.appendChild(closeBtn);
+
+      el.hidden = false;
+      requestAnimationFrame(() => el.classList.add('is-visible'));
+    } catch {
+      // Network hiccup — fail silently, the rest of the page is unaffected.
+    }
+  }
+
+  initSiteBanner();
+  document.addEventListener('astro:page-load', initSiteBanner);
+</script>

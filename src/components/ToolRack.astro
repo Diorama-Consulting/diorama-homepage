@@ -60,6 +60,7 @@ const isExternal = (url?: string) => !!url && /^https?:\/\//.test(url);
       <article
         class:list={['slat', { 'is-open': tool.open }]}
         data-accent={tool.accent}
+        data-tool-flag={`tool-${tool.id}`}
         role="listitem"
       >
         <button
@@ -98,6 +99,10 @@ const isExternal = (url?: string) => !!url && /^https?:\/\//.test(url);
                   href={tool.externalUrl}
                   target="_blank"
                   rel={isExternal(tool.externalUrl) ? 'noopener noreferrer' : undefined}
+                  data-track-tool-open
+                  data-tool-id={tool.id}
+                  data-tool-title={tool.title}
+                  data-tool-location="rack"
                 >
                   Open tool<span class="arrow">→</span>
                 </a>

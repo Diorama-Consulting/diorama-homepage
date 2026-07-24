@@ -24,6 +24,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { reader } from '../../lib/keystatic';
 import { secret } from '../../lib/env';
+import { ADMIN_PAGES } from '../../lib/admin-auth';
 
 export const prerender = false;
 
@@ -177,8 +178,11 @@ const pct = (n: number, of: number) => (of > 0 ? `${((n / of) * 100).toFixed(1)}
         <h1>Dashboard</h1>
       </div>
       <nav class="admin-nav" aria-label="Admin pages">
-        <a class="active" href="/admin/dashboard">Dashboard</a>
-        <a href="/admin/enquiries">Enquiries{newCount > 0 ? ` (${newCount} new)` : ''}</a>
+        {ADMIN_PAGES.map((page) => (
+          <a class:list={[{ active: page.href === '/admin/dashboard' }]} href={page.href}>
+            {page.label}{page.href === '/admin/enquiries' && newCount > 0 ? ` (${newCount})` : ''}
+          </a>
+        ))}
       </nav>
     </div>
 

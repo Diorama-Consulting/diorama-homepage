@@ -8,7 +8,11 @@ import ToolPage from '../../layouts/ToolPage.astro';
 import Iframe from '../../components/Iframe.astro';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects', ({ data }) => !data.draft);
+  // Restricted tools don't get a public static page at all — they're
+  // only reachable through /tools/gated/<slug>?token=... (see that route
+  // for the access check). A direct visit to /tools/<restricted-slug>
+  // 404s, same as any URL Astro never generated.
+  const projects = await getCollection('projects', ({ data }) => !data.draft && !data.restricted);
   return projects.map((project) => ({
     params: { slug: project.id },
     props: project,

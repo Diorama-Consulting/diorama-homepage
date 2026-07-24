@@ -111,6 +111,9 @@ const projects = defineCollection({
       status: z.enum(['live', 'in-progress', 'archived']).default('live'),
       externalUrl: optionalLink,
       repoUrl: optionalUrl,
+      // --- Docker Tool Telemetry (admin /admin/tools) ---
+      healthCheckUrl: optionalUrl,
+      restricted: z.boolean().default(false),
       techStack: z.array(z.string()).default([]),
       features: z
         .array(z.object({ title: z.string(), description: z.string().optional() }))

@@ -131,7 +131,7 @@ const trustedCompanies = (page?.trustedCompanies ?? [])
 // the CxAI Substack — see README for the reasoning.
 // Featured live tools for the LiveProof section — first three
 // applications by sort order from the same collection that drives /tools.
-const liveTools = (await getCollection('projects', ({ data }) => !data.draft && data.category === 'application'))
+const liveTools = (await getCollection('projects', ({ data }) => !data.draft && !data.restricted && data.category === 'application'))
   .sort((a, b) => a.data.order - b.data.order)
   .slice(0, 3)
   .map((t) => ({

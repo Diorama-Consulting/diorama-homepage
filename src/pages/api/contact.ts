@@ -67,10 +67,24 @@ export const POST: APIRoute = async ({ request }) => {
 
   const sessionId = request.headers.get('X-PostHog-Session-Id') || undefined;
   const distinctId = request.headers.get('X-PostHog-Distinct-Id') || `contact-anon-${submissionId}`;
+  const pagePath = request.headers.get('X-Page-Path') || undefined;
   getPostHogServer().capture({
     distinctId,
     event: 'contact_form_received',
-    properties: { $session_id: sessionId, submission_id: submissionId },
+    properties: {
+      $session_id: sessionId,
+      submission_id: submissionId,
+      // Deliberately included so /admin/leads can correlate a
+      // contact-service submission (which may not itself store
+      // distinct_id/session_id — it's an external service this repo
+      // doesn't own the source of) back to the visitor's PostHog
+      // identity and journey, purely by querying PostHog for this same
+      // event. Nothing here is more sensitive than what the visitor just
+      // typed into the public form.
+      email,
+      name,
+      page_path: pagePath,
+    },
   });
 
   return respond(isJson, { ok: true });

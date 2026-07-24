@@ -1,0 +1,144 @@
+---
+// /tools/gated/<slug> — the magic-link redemption route for tools marked
+// "Restricted" in Keystatic (see the projects/Tools collection). This is
+// deliberately a SEPARATE, SSR (prerender=false) route rather than making
+// the whole /tools section server-rendered: the public tool pages stay
+// static (fast, cheap, consistent with the rest of the site), and only
+// this opt-in path — used for a small number of gated tools — pays the
+// per-request cost of checking a token.
+//
+// A magic link looks like: /tools/gated/<slug>?token=<token>
+// Grants live in the `clientAccess` Keystatic collection (managed at
+// /keystatic, viewed at /admin/access) — see keystatic.config.ts for the
+// full field list. On a valid, non-revoked, non-expired grant that
+// includes this tool, this sets a cookie so the token doesn't need to be
+// in the URL on every subsequent visit, then renders the exact same
+// ToolPage content as the public route.
+import { getCollection, render } from 'astro:content';
+import ToolPage from '../../../layouts/ToolPage.astro';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import Iframe from '../../../components/Iframe.astro';
+import { reader } from '../../../lib/keystatic';
+
+export const prerender = false;
+
+const COOKIE_PREFIX = 'diorama_tool_access_';
+
+const slugParam = Astro.params.slug;
+if (!slugParam) {
+  return new Response('Not found', { status: 404 });
+}
+
+const projects = await getCollection('projects', ({ data }) => !data.draft);
+const project = projects.find((p) => p.id === slugParam);
+
+if (!project) {
+  return new Response('Not found', { status: 404 });
+}
+
+// Non-restricted tools have a real public page already — send visitors
+// there instead of serving a second copy of it under /gated.
+if (!project.data.restricted) {
+  return Astro.redirect(`/tools/${project.id}/`, 302);
+}
+
+const cookieName = `${COOKIE_PREFIX}${project.id}`;
+const tokenParam = Astro.url.searchParams.get('token');
+const cookieToken = Astro.cookies.get(cookieName)?.value;
+const candidateToken = tokenParam || cookieToken;
+
+let authorized = false;
+
+if (candidateToken) {
+  const grants = await reader.collections.clientAccess.all().catch(() => []);
+  const now = Date.now();
+  const grant = grants.find((g) => {
+    const d = g.entry;
+    if (d.token !== candidateToken) return false;
+    if (d.revoked) return false;
+    if (d.expiresAt && new Date(d.expiresAt).getTime() < now) return false;
+    return (d.grantedTools ?? []).includes(project.id);
+  });
+
+  if (grant) {
+    authorized = true;
+    // Remember this for next time so the token doesn't need to stay in
+    // the URL (bookmarking the bare /tools/gated/<slug> URL then works
+    // for the cookie's lifetime). 30 days, or until the grant's own
+    // expiry if that's sooner.
+    const grantExpiry = grant.entry.expiresAt ? new Date(grant.entry.expiresAt).getTime() : null;
+    const defaultMaxAge = 60 * 60 * 24 * 30;
+    const maxAge = grantExpiry
+      ? Math.max(60, Math.min(defaultMaxAge, Math.floor((grantExpiry - now) / 1000)))
+      : defaultMaxAge;
+    Astro.cookies.set(cookieName, candidateToken, {
+      path: `/tools/gated/${project.id}`,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax', // lax, not strict — this cookie must ride along on a top-level nav from an emailed link
+      maxAge,
+    });
+  }
+}
+
+if (!authorized) {
+  Astro.response.status = 403;
+}
+
+const headerNav = authorized ? null : await reader.singletons.headerNav.read();
+const footerNav = authorized ? null : await reader.singletons.footerNav.read();
+const { Content } = authorized ? await render(project) : { Content: null };
+---
+
+{authorized ? (
+  <ToolPage {...project.data} slug={project.id}>
+    {Content && <Content components={{ Iframe }} />}
+  </ToolPage>
+) : (
+  <Layout title={`Access required — ${project.data.title}`} description="This tool requires a client access link." showChatWidget={false}>
+    <Header logoText={headerNav?.logoText} links={headerNav?.links} ctaText={headerNav?.ctaText} ctaHref={headerNav?.ctaHref} />
+    <main class="container access-denied">
+      <p class="eyebrow">Restricted tool</p>
+      <h1>Access required</h1>
+      <p>
+        <strong>{project.data.title}</strong> is only available to clients with a valid access link. If you were sent
+        one, double-check the full URL was copied — otherwise, get in touch and we'll set you up.
+      </p>
+      <a class="cta" href="/contact">Request access →</a>
+    </main>
+    <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+  </Layout>
+)}
+
+<style>
+  .access-denied {
+    padding-block: 96px;
+    max-width: 560px;
+    text-align: center;
+    margin-inline: auto;
+  }
+  .access-denied .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 10px;
+  }
+  .access-denied p {
+    color: var(--mist-muted);
+    line-height: 1.65;
+    margin: 16px 0 28px;
+  }
+  .access-denied .cta {
+    display: inline-flex;
+    font-weight: 600;
+    color: var(--signal);
+    text-decoration: none;
+  }
+  .access-denied .cta:hover {
+    color: var(--mint);
+  }
+</style>

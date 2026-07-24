@@ -464,6 +464,7 @@ const welcomeMessage =
           'Content-Type': 'application/json',
           'X-PostHog-Session-Id': sessionId,
           'X-PostHog-Distinct-Id': distinctId,
+          'X-Page-Path': window.location.pathname,
         },
         body: JSON.stringify({ messages: history }),
       });

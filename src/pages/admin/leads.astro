@@ -1,0 +1,263 @@
+---
+// /admin/leads — "Contextualize the Contact Forms."
+//
+// Contact-service (an external container this repo doesn't own the
+// source of) is the durable record of who submitted what. Rather than
+// hoping that service persists arbitrary new fields, every submission is
+// ALSO captured as a `contact_form_received` PostHog event (see
+// api/contact.ts) carrying distinct_id, $session_id and submission_id —
+// so this page recovers the journey by querying PostHog directly and
+// matching on submission_id, with zero changes needed to contact-service.
+//
+// For each of the most recent submissions (capped — see JOURNEY_LIMIT
+// below, to keep this to a handful of PostHog queries per page load, not
+// one per historical enquiry):
+//   1. Look up its contact_form_received event → distinct_id + session_id.
+//   2. Pull that visitor's last 5 events anywhere on the site.
+//   3. Render a "Session replay" + "Full profile" link straight into
+//      PostHog, plus the mini journey inline next to their message.
+import AdminShell from '../../components/AdminShell.astro';
+import { requireAdmin } from '../../lib/admin-auth';
+import { secret } from '../../lib/env';
+import { hogql, escapeHogQL, posthogConfigured, personUrl, replayUrl } from '../../lib/posthog-query';
+
+export const prerender = false;
+
+const gate = await requireAdmin(Astro, '/admin/leads');
+if (gate instanceof Response) return gate;
+const { ADMIN_TOKEN } = gate;
+
+const SERVICE_URL = secret('CONTACT_SERVICE_URL') || 'http://contact-service:8104';
+const JOURNEY_LIMIT = 20; // most-recent submissions to enrich with PostHog data
+
+// ---- Submissions (same source as /admin/enquiries) -----------------------
+let submissions: Array<Record<string, unknown>> = [];
+let serviceOk = true;
+try {
+  const res = await fetch(`${SERVICE_URL}/api/submissions?limit=100`, {
+    headers: { 'X-Admin-Token': ADMIN_TOKEN },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`service ${res.status}`);
+  submissions = (await res.json())?.submissions ?? [];
+} catch (e) {
+  console.error('leads: contact-service unreachable', e);
+  serviceOk = false;
+}
+
+const enriched = submissions.slice(0, JOURNEY_LIMIT);
+
+// ---- Match each submission to its PostHog identity ------------------------
+type Identity = { distinctId: string; sessionId?: string };
+const idBySubmission = new Map<string, Identity>();
+
+if (posthogConfigured && enriched.length > 0) {
+  const ids = enriched
+    .map((s) => String(s.id ?? ''))
+    .filter(Boolean)
+    .map((id) => `'${escapeHogQL(id)}'`);
+
+  if (ids.length > 0) {
+    const rows = await hogql(`
+      SELECT properties.submission_id, distinct_id, properties.$session_id
+      FROM events
+      WHERE event = 'contact_form_received' AND properties.submission_id IN (${ids.join(',')})
+      ORDER BY timestamp DESC
+    `);
+    for (const row of rows) {
+      const sid = String(row[0] ?? '');
+      if (!sid || idBySubmission.has(sid)) continue; // keep the most recent match only
+      idBySubmission.set(sid, { distinctId: String(row[1] ?? ''), sessionId: row[2] ? String(row[2]) : undefined });
+    }
+  }
+}
+
+// ---- Last 5 events per matched visitor ------------------------------------
+type JourneyEvent = { event: string; timestamp: string; pathname?: string };
+const journeyByDistinctId = new Map<string, JourneyEvent[]>();
+
+if (posthogConfigured) {
+  const distinctIds = Array.from(new Set(Array.from(idBySubmission.values()).map((i) => i.distinctId).filter(Boolean)));
+  await Promise.all(
+    distinctIds.map(async (id) => {
+      const rows = await hogql(`
+        SELECT event, timestamp, properties.$pathname
+        FROM events
+        WHERE distinct_id = '${escapeHogQL(id)}'
+        ORDER BY timestamp DESC
+        LIMIT 5
+      `);
+      journeyByDistinctId.set(
+        id,
+        rows.map((r) => ({ event: String(r[0] ?? ''), timestamp: String(r[1] ?? ''), pathname: r[2] ? String(r[2]) : undefined })),
+      );
+    }),
+  );
+}
+
+function eventLabel(e: JourneyEvent): string {
+  const names: Record<string, string> = {
+    $pageview: e.pathname ? `Viewed ${e.pathname}` : 'Viewed a page',
+    chat_opened: 'Opened the chat assistant',
+    chat_message_sent: 'Sent a chat message',
+    blog_post_viewed: 'Read an insights article',
+    tool_opened: 'Opened a tool',
+    contact_form_submitted: 'Submitted the contact form',
+    hero_cta_clicked: 'Clicked the homepage hero CTA',
+  };
+  return names[e.event] || e.event;
+}
+
+const fmt = (iso: unknown) =>
+  typeof iso === 'string' ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const fmtShort = (iso: string) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+---
+
+<AdminShell title="Leads & Journeys" eyebrow="Admin" activeHref="/admin/leads">
+  {!serviceOk && <p class="notice">Couldn't reach the contact service — check that the <code>contact-service</code> container is running.</p>}
+
+  {!posthogConfigured && (
+    <p class="notice">
+      Journey enrichment needs <code>POSTHOG_PERSONAL_API_KEY</code> and <code>POSTHOG_PROJECT_ID</code> in
+      <code>/opt/apps/diorama/.env</code> (PostHog → Settings → Personal API keys, "Query read" scope). Submissions
+      below still show without it, just without the journey/replay context.
+    </p>
+  )}
+
+  {serviceOk && enriched.length === 0 && <p class="notice">No enquiries yet. Once someone uses the contact form, they'll show up here with their site journey alongside their message.</p>}
+
+  <div class="cards">
+    {enriched.map((s) => {
+      const identity = idBySubmission.get(String(s.id ?? ''));
+      const journey = identity ? journeyByDistinctId.get(identity.distinctId) ?? [] : [];
+      return (
+        <article class="lead-card">
+          <header>
+            <div class="who">
+              <strong>{String(s.name ?? '')}</strong>
+              <a href={`mailto:${s.email}`}>{String(s.email ?? '')}</a>
+            </div>
+            <time class="dim mono">{fmt(s.submitted_at)}</time>
+          </header>
+
+          <p class="message">{String(s.message ?? '')}</p>
+
+          {identity ? (
+            <div class="journey-block">
+              <div class="journey-links">
+                {identity.sessionId && (
+                  <a class="admin-btn" href={replayUrl(identity.sessionId)} target="_blank" rel="noopener noreferrer">▶ Session replay</a>
+                )}
+                <a class="admin-btn" href={personUrl(identity.distinctId)} target="_blank" rel="noopener noreferrer">Full profile →</a>
+              </div>
+
+              {journey.length > 0 ? (
+                <ol class="journey-list">
+                  {journey.map((e) => (
+                    <li>
+                      <span class="journey-dot" aria-hidden="true"></span>
+                      <span class="journey-label">{eventLabel(e)}</span>
+                      <span class="journey-time mono dim">{fmtShort(e.timestamp)}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p class="empty">No prior activity found for this visitor.</p>
+              )}
+            </div>
+          ) : (
+            posthogConfigured && <p class="empty">Couldn't match this submission to a PostHog session — it may predate analytics enrichment.</p>
+          )}
+        </article>
+      );
+    })}
+  </div>
+
+  {submissions.length > JOURNEY_LIMIT && (
+    <p class="dim" style="margin-top: 14px; font-size: 13px;">
+      Showing the {JOURNEY_LIMIT} most recent of {submissions.length} submissions with journey data. See <a href="/admin/enquiries">Enquiries</a> for the full list.
+    </p>
+  )}
+</AdminShell>
+
+<style>
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .lead-card {
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--signal);
+    border-radius: var(--radius-md);
+    background: var(--forest);
+    padding: 18px 22px;
+  }
+  .lead-card header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .who {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .who strong {
+    color: var(--text-strong);
+  }
+  .who a {
+    color: var(--signal);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .message {
+    white-space: pre-wrap;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--mist);
+    margin: 0 0 14px;
+  }
+  .journey-block {
+    border-top: 1px solid var(--hairline);
+    padding-top: 14px;
+  }
+  .journey-links {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .journey-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .journey-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .journey-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--signal);
+    flex-shrink: 0;
+  }
+  .journey-label {
+    color: var(--mist);
+    flex: 1;
+  }
+  .journey-time {
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+</style>

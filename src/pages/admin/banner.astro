@@ -1,0 +1,142 @@
+---
+// /admin/banner — "Dynamic Banner Management."
+//
+// Pushes a site-wide alert bar ("New tool added", "Accepting new clients
+// for August") live, with no redeploy — see src/lib/site-banner.ts for
+// why this needs its own tiny in-memory store + public API route rather
+// than going through Keystatic (this site is static-first; Keystatic
+// content only reaches the running site on the next build).
+import AdminShell from '../../components/AdminShell.astro';
+import { requireAdmin } from '../../lib/admin-auth';
+import { getSiteBanner, setSiteBanner, type BannerTone } from '../../lib/site-banner';
+
+export const prerender = false;
+
+const gate = await requireAdmin(Astro, '/admin/banner');
+if (gate instanceof Response) return gate;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  if (action === 'publish') {
+    setSiteBanner({
+      active: true,
+      message: String(form.get('message') ?? ''),
+      linkHref: String(form.get('linkHref') ?? ''),
+      linkText: String(form.get('linkText') ?? ''),
+      tone: (String(form.get('tone') ?? 'accent') as BannerTone),
+    });
+  } else if (action === 'deactivate') {
+    const current = getSiteBanner();
+    setSiteBanner({ ...current, active: false });
+  }
+  return Astro.redirect('/admin/banner');
+}
+
+const banner = getSiteBanner();
+const fmt = (iso: string) => (iso && iso !== new Date(0).toISOString() ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'never published');
+---
+
+<AdminShell title="Site Banner" eyebrow="Admin" activeHref="/admin/banner">
+  <p class="notice">
+    Changes here appear on the live site within about 15 seconds (every page checks once on load — see
+    <code>/api/banner</code> and <code>SiteBanner.astro</code>) and reset if the server restarts, since nothing here
+    is written to Keystatic/git. Good for a fast "accepting new clients this month" nudge; anything more permanent
+    belongs in the page copy itself.
+  </p>
+
+  <section class="panel">
+    <h2>Current state</h2>
+    <p class="dim" style="font-size: 13px; margin: 0 0 4px;">
+      <span class:list={['pill', banner.active ? 'pill--active' : 'pill--muted']}><span class="pill-dot" />{banner.active ? 'Live' : 'Off'}</span>
+      {' '}Last updated {fmt(banner.updatedAt)}
+    </p>
+    {banner.active && (
+      <div class:list={['preview', `preview--${banner.tone}`]}>
+        {banner.message} {banner.linkHref && <a href={banner.linkHref}>{banner.linkText || 'Learn more →'}</a>}
+      </div>
+    )}
+  </section>
+
+  <section class="panel">
+    <h2>Publish a new banner</h2>
+    <form method="POST">
+      <input type="hidden" name="action" value="publish" />
+      <div class="admin-field">
+        <label for="message">Message</label>
+        <input type="text" id="message" name="message" value={banner.message} placeholder="Accepting new clients for August" required />
+      </div>
+      <div class="field-row">
+        <div class="admin-field">
+          <label for="linkText">Link text (optional)</label>
+          <input type="text" id="linkText" name="linkText" value={banner.linkText} placeholder="Learn more →" />
+        </div>
+        <div class="admin-field">
+          <label for="linkHref">Link URL (optional)</label>
+          <input type="text" id="linkHref" name="linkHref" value={banner.linkHref} placeholder="/tools/new-thing" />
+        </div>
+      </div>
+      <div class="admin-field">
+        <label for="tone">Tone</label>
+        <select id="tone" name="tone">
+          <option value="accent" selected={banner.tone === 'accent'}>Green (announcement)</option>
+          <option value="amber" selected={banner.tone === 'amber'}>Amber (notice)</option>
+          <option value="neutral" selected={banner.tone === 'neutral'}>Neutral (dark)</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="admin-btn primary">Publish — live in ~15 seconds</button>
+      </div>
+    </form>
+    {banner.active && (
+      <form method="POST" style="margin-top: 10px;">
+        <input type="hidden" name="action" value="deactivate" />
+        <button type="submit" class="admin-btn danger">Take down banner</button>
+      </form>
+    )}
+  </section>
+</AdminShell>
+
+<style>
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  select {
+    background: var(--canopy);
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    padding: 9px 13px;
+    color: var(--mist);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+  .preview {
+    margin-top: 10px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    background: var(--signal);
+    color: hsl(0 0% 100%);
+  }
+  .preview--amber {
+    background: var(--ink-amber);
+    color: hsl(30 60% 12%);
+  }
+  .preview--neutral {
+    background: var(--ink-bg-2);
+    color: var(--ink-text);
+  }
+  .preview a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    margin-left: 8px;
+  }
+  @media (max-width: 600px) {
+    .field-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

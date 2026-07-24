@@ -1,0 +1,243 @@
+---
+// /admin/chatbot — the "Chatbot Command Center."
+//
+// Transcripts aren't stored in a separate database in this architecture —
+// every exchange is captured as a `chat_message_processed` PostHog event
+// carrying the user's message, the bot's reply, and a heuristic
+// "flagged" verdict (see src/lib/chat-quality.ts), computed the moment
+// the reply is generated in api/chat.ts. This page queries PostHog for
+// those events to reconstruct a searchable, filterable transcript view.
+//
+// The persona/context editor at the top writes to an IN-MEMORY override
+// (src/lib/chatbot-override.ts) — takes effect on the very next chat
+// message, no redeploy, but resets if the server restarts. Anything
+// worth keeping permanently should still be copied into the real
+// chatbotSettings entry in Keystatic afterwards.
+import AdminShell from '../../components/AdminShell.astro';
+import { requireAdmin } from '../../lib/admin-auth';
+import { reader } from '../../lib/keystatic';
+import { hogql, escapeHogQL, posthogConfigured } from '../../lib/posthog-query';
+import { getChatbotOverride, setChatbotOverride, clearChatbotOverride } from '../../lib/chatbot-override';
+
+export const prerender = false;
+
+const gate = await requireAdmin(Astro, '/admin/chatbot');
+if (gate instanceof Response) return gate;
+
+const url = Astro.url;
+
+// ---- Actions ---------------------------------------------------------
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  if (action === 'save-override') {
+    setChatbotOverride({
+      personaInstructions: String(form.get('personaInstructions') ?? ''),
+      extraContext: String(form.get('extraContext') ?? ''),
+    });
+  } else if (action === 'clear-override') {
+    clearChatbotOverride();
+  }
+  return Astro.redirect(`/admin/chatbot${url.search}`);
+}
+
+// ---- Effective prompt (override wins, else Keystatic) -----------------
+const chatbotSettings = await reader.singletons.chatbotSettings.read();
+const override = getChatbotOverride();
+const effectivePersona = override?.personaInstructions || chatbotSettings?.personaInstructions || '';
+const effectiveExtra = override?.extraContext || chatbotSettings?.extraContext || '';
+
+// ---- Transcript query ---------------------------------------------------
+const q = url.searchParams.get('q')?.trim() || '';
+const flaggedOnly = url.searchParams.get('flagged') === '1';
+
+let rows: Awaited<ReturnType<typeof hogql>> = [];
+let totalCount = 0;
+let flaggedCount = 0;
+
+if (posthogConfigured) {
+  const whereClauses = ["event = 'chat_message_processed'", 'timestamp > now() - INTERVAL 30 DAY'];
+  if (flaggedOnly) whereClauses.push("(properties.flagged = 'true' OR properties.flagged = true)");
+  if (q) {
+    const safe = escapeHogQL(q.toLowerCase());
+    whereClauses.push(`(lower(properties.user_message) LIKE '%${safe}%' OR lower(properties.assistant_reply) LIKE '%${safe}%')`);
+  }
+  const where = whereClauses.join(' AND ');
+
+  const [transcriptRows, counts] = await Promise.all([
+    hogql(`
+      SELECT timestamp, distinct_id, properties.$session_id, properties.page_path,
+             properties.user_message, properties.assistant_reply, properties.flagged, properties.flag_reason
+      FROM events
+      WHERE ${where}
+      ORDER BY timestamp DESC
+      LIMIT 100
+    `),
+    hogql(`
+      SELECT count(), countIf(properties.flagged = 'true' OR properties.flagged = true)
+      FROM events
+      WHERE event = 'chat_message_processed' AND timestamp > now() - INTERVAL 30 DAY
+    `),
+  ]);
+  rows = transcriptRows;
+  const c = counts[0] ?? [0, 0];
+  totalCount = Number(c[0] ?? 0);
+  flaggedCount = Number(c[1] ?? 0);
+}
+
+const fmt = (iso: unknown) =>
+  typeof iso === 'string' ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const flagPct = totalCount > 0 ? `${((flaggedCount / totalCount) * 100).toFixed(1)}%` : '—';
+---
+
+<AdminShell title="Chatbot" eyebrow="Admin" activeHref="/admin/chatbot">
+  {!posthogConfigured && (
+    <p class="notice">
+      Transcripts need <code>POSTHOG_PERSONAL_API_KEY</code> and <code>POSTHOG_PROJECT_ID</code> in
+      <code>/opt/apps/diorama/.env</code>. The prompt editor below works regardless.
+    </p>
+  )}
+
+  {override && (
+    <p class="notice notice--warn">
+      A <strong>temporary override</strong> is active (set {fmt(override.updatedAt)}) — the bot is using the text
+      below instead of the Keystatic <code>chatbotSettings</code> entry. This resets if the server restarts; copy it
+      into Keystatic if you want to keep it permanently.
+    </p>
+  )}
+
+  <section class="panel">
+    <h2>Persona &amp; knowledge — quick edit</h2>
+    <form method="POST">
+      <input type="hidden" name="action" value="save-override" />
+      <div class="admin-field">
+        <label for="personaInstructions">Persona / tone instructions (system prompt)</label>
+        <textarea id="personaInstructions" name="personaInstructions" rows="5">{effectivePersona}</textarea>
+      </div>
+      <div class="admin-field">
+        <label for="extraContext">Extra context (Markdown)</label>
+        <textarea id="extraContext" name="extraContext" rows="4">{effectiveExtra}</textarea>
+        <span class="admin-field-hint">Anything the bot should know right now that isn't already public copy elsewhere — e.g. "the /invoice-forge tool is down for maintenance until Friday."</span>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="admin-btn primary">Save — takes effect on the next message</button>
+      </div>
+    </form>
+    {override && (
+      <form method="POST" style="margin-top: 10px;">
+        <input type="hidden" name="action" value="clear-override" />
+        <button type="submit" class="admin-btn danger">Clear override (revert to Keystatic)</button>
+      </form>
+    )}
+  </section>
+
+  {posthogConfigured && (
+    <>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-value">{totalCount.toLocaleString()}</span>
+          <span class="stat-label">Messages · 30d</span>
+        </div>
+        <div class="stat stat--warn">
+          <span class="stat-value">{flaggedCount.toLocaleString()}</span>
+          <span class="stat-label">Flagged · 30d</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{flagPct}</span>
+          <span class="stat-label">Flag rate</span>
+        </div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Transcripts</h2>
+          <form class="search-form" method="GET">
+            {flaggedOnly && <input type="hidden" name="flagged" value="1" />}
+            <input type="search" name="q" placeholder="Search messages…" value={q} aria-label="Search transcripts" />
+            <button type="submit" class="admin-btn">Search</button>
+          </form>
+        </div>
+        <div class="filter-row">
+          <a class:list={['admin-btn', { primary: !flaggedOnly }]} href={`/admin/chatbot${q ? `?q=${encodeURIComponent(q)}` : ''}`}>All</a>
+          <a class:list={['admin-btn', { primary: flaggedOnly }]} href={`/admin/chatbot?flagged=1${q ? `&q=${encodeURIComponent(q)}` : ''}`}>
+            Flagged / unanswered only
+          </a>
+        </div>
+
+        {rows.length === 0 ? (
+          <p class="empty">No messages match — try a different search, or check back once the bot's had some traffic.</p>
+        ) : (
+          <div class="transcript-list">
+            {rows.map((row) => {
+              const [timestamp, distinctId, , pagePath, userMessage, assistantReply, flagged, flagReason] = row;
+              return (
+                <article class:list={['transcript-item', { 'is-flagged': flagged === 'true' || flagged === true }]}>
+                  <header>
+                    <span class="mono dim">{fmt(timestamp)}</span>
+                    {pagePath ? <span class="dim">{String(pagePath)}</span> : null}
+                    {(flagged === 'true' || flagged === true) && <span class="pill pill--flagged">{String(flagReason ?? 'Flagged')}</span>}
+                  </header>
+                  <p class="turn turn-user"><strong>Visitor:</strong> {String(userMessage ?? '')}</p>
+                  <p class="turn turn-bot"><strong>Bot:</strong> {String(assistantReply ?? '')}</p>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </>
+  )}
+</AdminShell>
+
+<style>
+  .search-form {
+    display: flex;
+    gap: 8px;
+  }
+  .search-form input {
+    background: var(--canopy);
+    border: 1.5px solid var(--hairline);
+    border-radius: 999px;
+    padding: 7px 14px;
+    color: var(--mist);
+    font-size: 13.5px;
+    min-width: 220px;
+  }
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0;
+  }
+  .transcript-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .transcript-item {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }
+  .transcript-item.is-flagged {
+    border-left: 3px solid var(--rose);
+  }
+  .transcript-item header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .turn {
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 0 0 6px;
+    color: var(--mist);
+  }
+  .turn:last-child {
+    margin-bottom: 0;
+  }
+  .turn strong {
+    color: var(--text-strong);
+  }
+</style>

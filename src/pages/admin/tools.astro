@@ -1,0 +1,247 @@
+---
+// /admin/tools — "Docker Tool Telemetry & Control."
+//
+// Three independent panels, each degrading gracefully on its own if its
+// dependency isn't configured:
+//   1. Health dashboard — pings each tool's `healthCheckUrl` (a Keystatic
+//      field on the Tools/projects entry) from THIS container's own
+//      Docker network, same pattern already used to reach contact-service
+//      elsewhere in /admin. Tools without the field set show as
+//      "Not monitored" rather than a false negative.
+//   2. Feature flags — a PostHog flag per tool (key: tool-<slug>) used as
+//      a site-wide kill switch; see src/lib/posthog-flags.ts and
+//      src/components/ToolVisibility.astro for the client-side gating
+//      this drives.
+//   3. Usage leaderboard — HogQL over the `tool_opened` event (captured
+//      by src/components/ToolOpenTracking.astro whenever someone clicks
+//      through to a tool from the rack or its own page).
+import { getCollection } from 'astro:content';
+import AdminShell from '../../components/AdminShell.astro';
+import { requireAdmin } from '../../lib/admin-auth';
+import { hogql, posthogConfigured } from '../../lib/posthog-query';
+import { listFeatureFlags, ensureToolFlag, setFlagActive } from '../../lib/posthog-flags';
+
+export const prerender = false;
+
+const gate = await requireAdmin(Astro, '/admin/tools');
+if (gate instanceof Response) return gate;
+
+const url = Astro.url;
+
+// ---- Actions: create/toggle a tool's feature flag -------------------------
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  const flagKey = String(form.get('flagKey') ?? '');
+  const toolTitle = String(form.get('toolTitle') ?? flagKey);
+
+  if (action === 'ensure-flag' && flagKey) {
+    await ensureToolFlag(flagKey, `Tool visibility — ${toolTitle}`);
+  } else if (action === 'toggle-flag' && flagKey) {
+    const nextActive = form.get('nextActive') === '1';
+    const flags = await listFeatureFlags();
+    const flag = flags.find((f) => f.key === flagKey);
+    if (flag) await setFlagActive(flag.id, nextActive);
+    else await ensureToolFlag(flagKey, `Tool visibility — ${toolTitle}`);
+  }
+  return Astro.redirect('/admin/tools');
+}
+
+// ---- Tools -----------------------------------------------------------------
+const tools = (await getCollection('projects', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+
+// ---- Health checks ----------------------------------------------------------
+type HealthResult = { status: 'up' | 'down' | 'unmonitored'; latencyMs?: number; detail?: string };
+const health = new Map<string, HealthResult>();
+
+await Promise.all(
+  tools.map(async (tool) => {
+    const checkUrl = tool.data.healthCheckUrl;
+    if (!checkUrl) {
+      health.set(tool.id, { status: 'unmonitored' });
+      return;
+    }
+    const start = Date.now();
+    try {
+      const res = await fetch(checkUrl, { signal: AbortSignal.timeout(4_000) });
+      const latencyMs = Date.now() - start;
+      health.set(tool.id, res.ok ? { status: 'up', latencyMs } : { status: 'down', latencyMs, detail: `HTTP ${res.status}` });
+    } catch (e) {
+      health.set(tool.id, { status: 'down', detail: e instanceof Error ? e.message : 'Unreachable' });
+    }
+  }),
+);
+
+// ---- Feature flags -----------------------------------------------------------
+const allFlags = posthogConfigured ? await listFeatureFlags() : [];
+const flagByKey = new Map(allFlags.map((f) => [f.key, f]));
+
+// ---- Usage leaderboard --------------------------------------------------------
+let leaderboard: { toolId: string; count7d: number; count30d: number }[] = [];
+if (posthogConfigured) {
+  const rows = await hogql(`
+    SELECT properties.tool_id,
+           countIf(timestamp > now() - INTERVAL 7 DAY),
+           countIf(timestamp > now() - INTERVAL 30 DAY)
+    FROM events
+    WHERE event = 'tool_opened' AND timestamp > now() - INTERVAL 30 DAY
+    GROUP BY properties.tool_id
+    ORDER BY countIf(timestamp > now() - INTERVAL 30 DAY) DESC
+  `);
+  leaderboard = rows
+    .filter((r) => r[0])
+    .map((r) => ({ toolId: String(r[0]), count7d: Number(r[1] ?? 0), count30d: Number(r[2] ?? 0) }));
+}
+const maxCount30d = Math.max(1, ...leaderboard.map((l) => l.count30d));
+const titleById = new Map(tools.map((t) => [t.id, t.data.title]));
+---
+
+<AdminShell title="Tools & Health" eyebrow="Admin" activeHref="/admin/tools">
+  <section class="panel">
+    <h2>Health dashboard</h2>
+    <table>
+      <thead>
+        <tr><th>Tool</th><th>Status</th><th>Detail</th><th class="num">Latency</th></tr>
+      </thead>
+      <tbody>
+        {tools.map((tool) => {
+          const h = health.get(tool.id) ?? { status: 'unmonitored' as const };
+          return (
+            <tr>
+              <td><strong>{tool.data.title}</strong></td>
+              <td>
+                <span class:list={['pill', `pill--${h.status}`]}>
+                  <span class="pill-dot" />
+                  {h.status === 'up' ? 'Up' : h.status === 'down' ? 'Down' : 'Not monitored'}
+                </span>
+              </td>
+              <td class="dim">
+                {h.status === 'unmonitored' ? (
+                  <>Add "Health-check URL" on this Tool in Keystatic to monitor it.</>
+                ) : (
+                  h.detail || '—'
+                )}
+              </td>
+              <td class="num mono">{h.latencyMs != null ? `${h.latencyMs}ms` : '—'}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Feature flags — per-tool kill switch</h2>
+    {!posthogConfigured ? (
+      <p class="notice">Needs <code>POSTHOG_PERSONAL_API_KEY</code> (with Feature Flag write access) and <code>POSTHOG_PROJECT_ID</code> in <code>/opt/apps/diorama/.env</code>.</p>
+    ) : (
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>Visible on site</th><th></th></tr>
+        </thead>
+        <tbody>
+          {tools.map((tool) => {
+            const key = `tool-${tool.id}`;
+            const flag = flagByKey.get(key);
+            return (
+              <tr>
+                <td><strong>{tool.data.title}</strong> <span class="mono dim">{key}</span></td>
+                <td>
+                  {flag ? (
+                    <span class:list={['pill', flag.active ? 'pill--active' : 'pill--down']}>
+                      <span class="pill-dot" />
+                      {flag.active ? 'Visible' : 'Hidden'}
+                    </span>
+                  ) : (
+                    <span class="pill pill--muted">Not created yet</span>
+                  )}
+                </td>
+                <td>
+                  <form method="POST" class="inline">
+                    <input type="hidden" name="toolTitle" value={tool.data.title} />
+                    <input type="hidden" name="flagKey" value={key} />
+                    {flag ? (
+                      <>
+                        <input type="hidden" name="action" value="toggle-flag" />
+                        <input type="hidden" name="nextActive" value={flag.active ? '0' : '1'} />
+                        <button type="submit" class:list={['admin-btn', flag.active ? 'danger' : 'primary']}>
+                          {flag.active ? 'Hide (maintenance)' : 'Make visible'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input type="hidden" name="action" value="ensure-flag" />
+                        <button type="submit" class="admin-btn">Create flag</button>
+                      </>
+                    )}
+                  </form>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    )}
+  </section>
+
+  <section class="panel">
+    <h2>Usage leaderboard · last 30 days</h2>
+    {!posthogConfigured ? (
+      <p class="notice">Needs the same PostHog env vars as above.</p>
+    ) : leaderboard.length === 0 ? (
+      <p class="empty">No tool-open events yet — this fills in once visitors start clicking "Open tool."</p>
+    ) : (
+      <div class="leaderboard">
+        {leaderboard.map((l) => (
+          <div class="lb-row">
+            <span class="lb-name">{titleById.get(l.toolId) || l.toolId}</span>
+            <div class="lb-bar-track">
+              <div class="lb-bar" style={`width: ${Math.max(4, (l.count30d / maxCount30d) * 100)}%`}></div>
+            </div>
+            <span class="lb-count mono">{l.count30d} <span class="dim">({l.count7d} this week)</span></span>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+</AdminShell>
+
+<style>
+  .leaderboard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .lb-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    gap: 12px;
+  }
+  .lb-name {
+    font-size: 13.5px;
+    color: var(--text-strong);
+    font-weight: 600;
+  }
+  .lb-bar-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--pine);
+    overflow: hidden;
+  }
+  .lb-bar {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--signal), var(--leaf));
+  }
+  .lb-count {
+    font-size: 12.5px;
+    text-align: right;
+    color: var(--mist);
+  }
+  @media (max-width: 700px) {
+    .lb-row {
+      grid-template-columns: 100px 1fr 100px;
+    }
+  }
+</style>
