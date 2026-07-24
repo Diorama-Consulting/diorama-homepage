@@ -32,7 +32,7 @@ interface Props {
 }
 
 const {
-  hostingProvider = 'DigitalOcean & Cloudflare',
+  hostingProvider = 'DigitalOcean',
   hostingRegion,
   greenHostingVerified = false,
   greenHostingEvidenceUrl,
@@ -46,7 +46,7 @@ const {
   showMethodologyLink = false,
 } = Astro.props;
 
-const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
+const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramaconsulting.uk';
 const greenCheckImageUrl = `https://app.greenweb.org/api/v3/greencheckimage/${siteDomain}?nocache=true`;
 const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`;
 const showExpandedGrid = showHostingInfo || showVerificationStatus;

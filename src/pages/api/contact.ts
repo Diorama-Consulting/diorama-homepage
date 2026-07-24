@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
     submissionId = (await res.json())?.id;
   } catch (error) {
     console.error('contact-service unreachable or failed:', error);
-    const domain = secret('SITE_DOMAIN') || 'dioramas.uk';
+    const domain = secret('SITE_DOMAIN') || 'dioramaconsulting.co.uk';
     return respond(
       isJson,
       { ok: false, error: `Something went wrong on our end — please try again, or email hello@${domain} directly.` },

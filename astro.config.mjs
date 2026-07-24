@@ -20,7 +20,7 @@ const { SITE_DOMAIN } = loadEnv(process.env.NODE_ENV || 'production', process.cw
 
 // https://astro.build/config
 export default defineConfig({
-    site: `https://${SITE_DOMAIN || 'dioramas.uk'}`,
+    site: `https://${SITE_DOMAIN || 'dioramaconsulting.co.uk'}`,
     integrations: [mdx(), sitemap(), react(), markdoc(), keystatic()],
     output: 'static',
     adapter: node({ mode: 'standalone' }),
