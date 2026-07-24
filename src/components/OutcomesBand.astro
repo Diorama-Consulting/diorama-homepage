@@ -1,4 +1,6 @@
 ---
+import { reader } from '../lib/keystatic';
+import { resolveOutcomes } from '../lib/site-content';
 // OutcomesBand — the four key business outcomes Diorama's advisory work
 // targets, plus a named-proof strip (real trustee roles and a delivered
 // 2026 programme). Wording of the four outcomes is the exact supplied
@@ -23,24 +25,11 @@ const {
   showHead = true,
 } = Astro.props;
 
-const outcomes = [
-  {
-    title: 'Defensible growth',
-    description: 'Data, platforms, and network effects measured in revenue, retention, and margin.',
-  },
-  {
-    title: 'Lower delivery risk',
-    description: 'Guardrails, governance, and observability to reduce incidents and compliance exposure.',
-  },
-  {
-    title: 'Faster time-to-value',
-    description: 'Lean roadmaps, paved paths, and automation to accelerate impact.',
-  },
-  {
-    title: 'Resilience at scale',
-    description: 'Architectures that evolve without wholesale rewrites.',
-  },
-];
+// Outcomes come from the positioning singleton when set in Keystatic,
+// otherwise the exact shared defaults (src/lib/site-content.ts) — the
+// same source the chatbot reads.
+const positioning = await reader.singletons.positioning.read().catch(() => null);
+const outcomes = resolveOutcomes(positioning?.outcomes);
 ---
 
 <section class:list={['outcomes', 'container', !showHead && 'outcomes--nested']}>

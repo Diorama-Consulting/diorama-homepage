@@ -60,6 +60,7 @@ const [spotlight, ...afterSpotlight] = items;
 const railItems = afterSpotlight.slice(0, 4);
 const gridItems = items;
 
+const insightsPage = await reader.singletons.insightsIndex.read().catch(() => null);
 const headerNav = await reader.singletons.headerNav.read();
 const footerNav = await reader.singletons.footerNav.read();
 const siteSettings = await reader.singletons.siteSettings.read();
@@ -75,7 +76,7 @@ function formatDate(iso: string) {
   <head>
     <BaseHead
       title={`Insights — ${siteSettings?.siteName ?? 'Diorama Consulting'}`}
-      description={siteSettings?.defaultSeoDescription ?? 'Writing, talks, and events on AI strategy, technology, and the occasional side project.'}
+      description={insightsPage?.seoDescription || siteSettings?.defaultSeoDescription || 'Writing, talks, and events on AI strategy, technology, and the occasional side project.'}
       image={pageImage}
     />
   </head>
@@ -88,8 +89,8 @@ function formatDate(iso: string) {
     />
     <main class="container">
       <div class="insights-intro">
-        <p class="insights-eyebrow">Insights</p>
-        <h1>Writing, talks, and events — in one place</h1>
+        <p class="insights-eyebrow">{insightsPage?.eyebrow || 'Insights'}</p>
+        <h1>{insightsPage?.heading || 'Writing, talks, and events — in one place'}</h1>
       </div>
 
       {spotlight && (

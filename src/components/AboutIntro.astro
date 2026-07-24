@@ -1,24 +1,20 @@
 ---
+import { reader } from '../lib/keystatic';
+import { resolvePositioning } from '../lib/site-content';
 // AboutIntro — sits between the hero (carousel or static) and Trusted
 // Companies. Two "screens": a plain-language statement of what Diorama is
 // and what it does (exact supplied text, unedited), then the six
 // capability points as a light grid. This is the first real substance a
 // visitor reads after the hero — deliberately plain, no animation beyond
 // the site's standard scroll reveal.
-const bodyParagraphs = [
-  'Diorama Consulting Ltd is an AI Technology Advisory service led by <a href="https://www.linkedin.com/in/malminhas/" target="_blank" rel="noopener noreferrer">Mal Minhas</a> with a focus on D2C marketplaces and products.',
-  'We have unique industry experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.',
-  'We can help you create defensible growth, reduce risk and accelerate value creation through. We also advise UK charities on AI and Digital Strategy:',
-];
-
-const points = [
-  'Fractional/Interim leadership (CTO, CPTO)',
-  'Pragmatic AI and Data Strategy aligned to P&L',
-  'D2C marketplace optimisation and innovation',
-  'Platform and architecture modernisation without rewrite',
-  'Product Engineering team organisation design',
-  'Practical operationalisation of sustainability initiatives',
-];
+// Copy comes from the positioning singleton when set in Keystatic,
+// otherwise the exact shared defaults. Mal's name auto-links.
+const positioning = await reader.singletons.positioning.read().catch(() => null);
+const resolved = resolvePositioning(positioning);
+const bodyParagraphs = resolved.paragraphs.map((p) =>
+  p.replace('Mal Minhas', '<a href="https://www.linkedin.com/in/malminhas/" target="_blank" rel="noopener noreferrer">Mal Minhas</a>'),
+);
+const points = resolved.points;
 ---
 
 <section class="about-intro container">

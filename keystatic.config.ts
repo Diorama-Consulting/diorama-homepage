@@ -89,6 +89,26 @@ const iframeEmbedComponent = {
 export default config({
   storage: { kind: 'github', repo: 'Diorama-Consulting/diorama-homepage' },
 
+  // -----------------------------------------------------------------------
+  // SIDEBAR ORGANISATION — grouped by page, in the order pages appear on
+  // the site, so "I want to change X on page Y" maps directly to one
+  // group. Site-wide things (settings, header, footer, brand positioning,
+  // chatbot) live in their own groups because they affect every page.
+  // -----------------------------------------------------------------------
+  ui: {
+    brand: { name: 'Diorama Consulting' },
+    navigation: {
+      'Site-wide': ['siteSettings', 'positioning', 'headerNav', 'footerNav'],
+      'Homepage': ['home', 'homeCharityWidget', 'homeCxaiWidget'],
+      'Services pages': ['servicesIndex', 'servicesConsulting', 'servicesCharities', 'charities'],
+      'Tools': ['projectsIndex', 'projects'],
+      'Insights & Events': ['insightsIndex', 'blog', 'eventsIndex', 'events'],
+      'About & Contact': ['about', 'aboutFounder', 'faqPage', 'teachingPage', 'contactPage'],
+      'Legal pages': ['legalPages'],
+      'Chat assistant': ['chatbotSettings'],
+    },
+  },
+
   singletons: {
     // -------------------------------------------------------------------
     // SITE SETTINGS — global defaults used everywhere: fallback SEO copy,
@@ -223,7 +243,7 @@ export default config({
     }),
 
     footerNav: singleton({
-      label: 'Footer',
+      label: 'Footer (site-wide)',
       path: 'src/content/pages/footer-nav',
       schema: {
         brandBlurb: fields.text({
@@ -259,7 +279,7 @@ export default config({
     // HOMEPAGE
     // -------------------------------------------------------------------
     home: singleton({
-      label: 'Homepage',
+      label: 'Homepage — Hero & sections',
       path: 'src/content/pages/home',
       schema: {
         ...seoFields('src/content/pages/home'),
@@ -396,7 +416,7 @@ export default config({
     // SERVICES
     // -------------------------------------------------------------------
     servicesIndex: singleton({
-      label: 'Services — Hub',
+      label: 'Services — Overview page (/services)',
       path: 'src/content/pages/services-index',
       schema: {
         ...seoFields('src/content/pages/services-index'),
@@ -444,7 +464,7 @@ export default config({
 
     // Pricing intentionally removed — see README "Pricing removed" note.
     servicesConsulting: singleton({
-      label: 'Services — Consulting',
+      label: 'Services — Consulting page (/services/consulting)',
       path: 'src/content/pages/services-consulting',
       schema: {
         ...seoFields('src/content/pages/services-consulting'),
@@ -536,7 +556,7 @@ export default config({
     }),
 
     servicesCharities: singleton({
-      label: 'Services — Charities',
+      label: 'Services — Charities page (/services/charities)',
       path: 'src/content/pages/services-charities',
       schema: {
         ...seoFields('src/content/pages/services-charities'),
@@ -751,7 +771,7 @@ export default config({
     // it should know that isn't public copy, and the widget's UI strings.
     // -------------------------------------------------------------------
     chatbotSettings: singleton({
-      label: 'Chatbot',
+      label: 'Chat assistant',
       path: 'src/content/pages/chatbot-settings',
       schema: {
         enabled: fields.checkbox({
@@ -775,6 +795,89 @@ export default config({
           multiline: true,
           description: 'Anything the bot should know that is not already public copy elsewhere on the site — e.g. how to book a call, response-time expectations.',
         }),
+      },
+    }),
+
+    // -------------------------------------------------------------------
+    // POSITIONING — the exact brand copy used across the homepage intro,
+    // the outcomes band, and the chat assistant's knowledge base. Leave
+    // fields empty to use the built-in exact defaults (src/lib/
+    // site-content.ts); anything set here overrides them EVERYWHERE at
+    // once, including what the chatbot knows.
+    // -------------------------------------------------------------------
+    positioning: singleton({
+      label: 'Brand positioning (site-wide)',
+      path: 'src/content/pages/positioning',
+      schema: {
+        paragraphs: fields.array(fields.text({ label: 'Paragraph', multiline: true }), {
+          label: 'Core positioning paragraphs (homepage intro + chatbot)',
+          description: 'Leave empty to use the exact built-in text.',
+          itemLabel: (props) => (props.value || 'Paragraph').slice(0, 60),
+        }),
+        points: fields.array(fields.text({ label: 'Point' }), {
+          label: 'The six capability points',
+          description: 'Leave empty to use the exact built-in list.',
+          itemLabel: (props) => props.value || 'Point',
+        }),
+        outcomes: fields.array(
+          fields.object({
+            title: fields.text({ label: 'Title' }),
+            description: fields.text({ label: 'Description', multiline: true }),
+          }),
+          {
+            label: 'The four key business outcomes',
+            description: 'Leave empty to use the exact built-in four.',
+            itemLabel: (props) => props.fields.title.value || 'Outcome',
+          },
+        ),
+      },
+    }),
+
+    insightsIndex: singleton({
+      label: 'Insights — Hub page (/insights)',
+      path: 'src/content/pages/insights-index',
+      schema: {
+        eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Insights' }),
+        heading: fields.text({ label: 'Heading', defaultValue: 'Writing, talks, and events — in one place' }),
+        seoDescription: fields.text({
+          label: 'SEO — Meta description',
+          multiline: true,
+          description: 'Leave blank to use the site-wide default description.',
+        }),
+      },
+    }),
+
+    eventsIndex: singleton({
+      label: 'Events — Hub page (/events)',
+      path: 'src/content/pages/events-index',
+      schema: {
+        eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Events' }),
+        heading: fields.text({ label: 'Heading', defaultValue: "Talks, workshops, and things we're part of" }),
+        subheading: fields.text({ label: 'Subheading', multiline: true, defaultValue: 'Managed independently from the blog/insights — add new ones any time in Keystatic, and pick any of them for the homepage hero carousel.' }),
+        emptyMessage: fields.text({ label: 'Empty-state message', defaultValue: 'Nothing on the calendar right now — check back soon.' }),
+      },
+    }),
+
+    // -------------------------------------------------------------------
+    // LEGAL PAGES — the Privacy/Terms/Cookies body text is fixed exact
+    // legal wording (edited only deliberately, in the page files, with
+    // sign-off), so it is intentionally NOT free-edited here. What IS
+    // controlled here: whether each page is live, and its "Last updated"
+    // date. Accessibility and Sustainability are site-descriptive, so
+    // they follow the same toggle model.
+    // -------------------------------------------------------------------
+    legalPages: singleton({
+      label: 'Legal pages (/legal/*)',
+      path: 'src/content/pages/legal-pages',
+      schema: {
+        privacyEnabled: fields.checkbox({ label: 'Privacy Policy — page live', defaultValue: true }),
+        privacyLastUpdated: fields.text({ label: 'Privacy Policy — last updated', defaultValue: '12 October 2025' }),
+        termsEnabled: fields.checkbox({ label: 'Terms of Use — page live', defaultValue: true }),
+        termsLastUpdated: fields.text({ label: 'Terms of Use — last updated', defaultValue: '12 October 2025' }),
+        cookiesEnabled: fields.checkbox({ label: 'Cookies Policy — page live', defaultValue: true }),
+        cookiesLastUpdated: fields.text({ label: 'Cookies Policy — last updated', defaultValue: '12 October 2025' }),
+        accessibilityEnabled: fields.checkbox({ label: 'Accessibility — page live', defaultValue: true }),
+        sustainabilityEnabled: fields.checkbox({ label: 'Sustainability — page live', defaultValue: true }),
       },
     }),
   },
@@ -823,6 +926,20 @@ export default config({
       path: 'src/content/projects/*/',
       entryLayout: 'content',
       format: { contentField: 'content' },
+      // ADDING A NEW TOOL (e.g. a new Docker container on the droplet):
+      //   1. Deploy the container (add it to /opt/apps/docker-compose.yml,
+      //      publish on 127.0.0.1:<port>) and add its route in the
+      //      Caddyfile (e.g. handle_path /my-tool/* -> 127.0.0.1:<port>).
+      //   2. Create an entry here: Title, Tagline, Category
+      //      (application = a live tool, learning = a write-up/experiment),
+      //      Accent + Monogram (how its tile looks in the rack),
+      //      "External URL" = the site-relative route from step 1
+      //      (e.g. /my-tool — NOT the raw port), Tech stack, Features.
+      //   3. Set Order for its position; tick Featured to open by default.
+      //   Untick nothing to launch — entries are live unless Draft is on;
+      //   Draft lets you stage an entry before its container exists.
+      // The homepage LiveProof strip automatically shows the first three
+      // "application" tools by Order — no separate homepage edit needed.
       schema: {
         title: fields.slug({ name: { label: 'Title', validation: { isRequired: true } } }),
         tagline: fields.text({

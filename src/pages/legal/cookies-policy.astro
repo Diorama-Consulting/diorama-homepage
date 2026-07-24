@@ -3,11 +3,21 @@
 // must be preserved verbatim; only structure and the contact link were
 // added, per instruction.
 import LegalPage from '../../layouts/LegalPage.astro';
+import { reader } from '../../lib/keystatic';
+
+export const prerender = false;
+
+// Page toggle — controlled from Keystatic > Legal pages. Off = 404.
+const legal = await reader.singletons.legalPages.read().catch(() => null);
+if (legal && legal.cookiesEnabled === false) {
+  return new Response('Not found', { status: 404 });
+}
+const lastUpdated = legal?.cookiesLastUpdated || '12 October 2025';
 ---
 
 <LegalPage
   title="Cookies Policy"
-  lastUpdated="12 October 2025"
+  lastUpdated={lastUpdated}
   description="How cookies are (and aren't) used on the Diorama Consulting website."
 >
   <section data-reveal>

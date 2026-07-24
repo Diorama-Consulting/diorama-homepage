@@ -7,6 +7,8 @@
 import LegalPage from '../../layouts/LegalPage.astro';
 import { reader } from '../../lib/keystatic';
 
+export const prerender = false;
+
 const siteSettings = await reader.singletons.siteSettings.read();
 
 const hostingProvider = siteSettings?.hostingProvider || 'DigitalOcean & Cloudflare';
@@ -19,6 +21,12 @@ const siteDomain = import.meta.env.SITE_DOMAIN || 'dioramas.uk';
 const greenCheckImageUrl = `https://app.greenweb.org/api/v3/greencheckimage/${siteDomain}?nocache=true`;
 const greenCheckLinkUrl = `https://www.thegreenwebfoundation.org/green-web-check/?url=${siteDomain}`;
 
+
+// Page toggle — controlled from Keystatic > Legal pages. Off = 404.
+const legal = await reader.singletons.legalPages.read().catch(() => null);
+if (legal && legal.sustainabilityEnabled === false) {
+  return new Response('Not found', { status: 404 });
+}
 const toc = [
   { id: 'why', label: 'Why it matters' },
   { id: 'measurement', label: 'Live measurement' },

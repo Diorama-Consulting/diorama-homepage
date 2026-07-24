@@ -2,7 +2,17 @@
 // /legal/terms-of-use — exact supplied wording (12 Oct 2025); only
 // structure and links added.
 import LegalPage from '../../layouts/LegalPage.astro';
+import { reader } from '../../lib/keystatic';
 
+export const prerender = false;
+
+
+// Page toggle — controlled from Keystatic > Legal pages. Off = 404.
+const legal = await reader.singletons.legalPages.read().catch(() => null);
+if (legal && legal.termsEnabled === false) {
+  return new Response('Not found', { status: 404 });
+}
+const lastUpdated = legal?.termsLastUpdated || '12 October 2025';
 const toc = [
   { id: 'purpose', label: '1. Purpose of the Site' },
   { id: 'changes', label: '2. Changes to these Terms' },
@@ -24,7 +34,7 @@ const toc = [
 
 <LegalPage
   title="Terms of Use"
-  lastUpdated="12 October 2025"
+  lastUpdated={lastUpdated}
   description="The terms governing your use of the Diorama Consulting website."
   toc={toc}
 >

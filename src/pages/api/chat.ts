@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import Anthropic from '@anthropic-ai/sdk';
 import { reader } from '../../lib/keystatic';
-import { buildKnowledgeBase } from '../../lib/chatbot-context';
+import { buildKnowledgeBase, minimumKnowledge } from '../../lib/chatbot-context';
 import { getPostHogServer } from '../../lib/posthog-server';
 import { secret } from '../../lib/env';
 
@@ -105,7 +105,14 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'No message provided.' }, 400);
   }
 
-  const knowledgeBase = await buildKnowledgeBase();
+  let knowledgeBase = await buildKnowledgeBase();
+  // Guard: if content reads failed and the KB is implausibly small, fall
+  // back to the exact core positioning so the assistant always knows the
+  // basics of the site rather than claiming it has no information.
+  if (knowledgeBase.trim().length < 400) {
+    console.error('/api/chat: knowledge base suspiciously small — using minimum fallback.');
+    knowledgeBase = minimumKnowledge();
+  }
   const persona =
     chatbotSettings?.personaInstructions ||
     'You are the website assistant for Diorama Consulting Ltd. Answer only from the context provided.';

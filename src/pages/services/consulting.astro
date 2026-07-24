@@ -21,6 +21,7 @@ import OutcomesBand from '../../components/OutcomesBand.astro';
 import Footer from '../../components/Footer.astro';
 import Button from '../../components/Button.astro';
 import { reader, resolveImageUrl } from '../../lib/keystatic';
+import { resolveServiceAreas } from '../../lib/site-content';
 
 const page = await reader.singletons.servicesConsulting.read();
 const headerNav = await reader.singletons.headerNav.read();
@@ -36,110 +37,11 @@ const pageImage =
   resolveImageUrl(page?.seoImage, page?.seoImageUrl) ||
   resolveImageUrl(siteSettings?.defaultSeoImage, siteSettings?.defaultSeoImageUrl);
 
-// ---------------------------------------------------------------------
-// THE SERVICE CATALOGUE — exact supplied wording. Bullets are Markdown
-// (one per line) so links survive round-trips through Keystatic.
-// ---------------------------------------------------------------------
-const defaultServiceAreas = [
-  {
-    title: 'Board and Investor Advisory',
-    intro: 'Strategic guidance from pre-deal due diligence through post-investment value creation.',
-    bullets: [
-      'Technical & product due diligence and post-acquisition',
-      '100-day acceleration plans',
-      'Operating models, OKRs, and governance',
-      'Risk reviews and executive readouts',
-    ],
-  },
-  {
-    title: 'Non-Executive and Trustee',
-    intro: 'Board-level governance experience as a Non-Executive Director and charity Trustee, alongside advisory work.',
-    bullets: [
-      'Trustee at [Helpforce](https://helpforce.community/), a national NHS and community volunteering charity.',
-      'Trustee at [Aston-Mansfield](https://www.aston-mansfield.org.uk/), a community charity supporting children, young people and families in Newham, London.',
-      'Governance, risk, and digital/AI oversight at Board level',
-      'Available for NED appointments, particularly where technology, AI or data strategy is on the agenda.',
-    ],
-  },
-  {
-    title: 'Marketplaces and Consumer Products',
-    intro: 'Technology to support you from discovery and trust to growth loops, pricing, and unit economics.',
-    bullets: [
-      'Onsite and offsite advertising. SEO/GEO strategy.',
-      'Search/discovery and conversion improvements',
-      'Trust and safety: review integrity, identity/KYC, fraud detection',
-      'Operational Tooling to support product catalog, disputes',
-      'Product Experimentation and growth modelling',
-      'Sustaining and Disruptive Product Innovation',
-    ],
-  },
-  {
-    title: 'AI and Data Strategy',
-    intro: 'Pragmatic, safe adoption of AI tied directly to commercial outcomes based on our 3 step [AI Future Ready](https://dioramaconsulting.co.uk/ai-future-ready/) framework.',
-    bullets: [
-      'Agentic AI coding adoption support',
-      'Use-case discovery and prioritisation',
-      'Evaluation, guardrails, and observability',
-      'Data platforms and AI-ready architectures',
-      'Cost, safety, and ROI modelling',
-      'Personalised AI executive training',
-    ],
-  },
-  {
-    title: 'AI Leadership Readiness (AILR)',
-    intro: 'Our [AI Leadership Readiness (AILR)](/ailr) is a structured self-assessment that benchmarks individual and team readiness to lead with AI, built on our REACH™ framework.',
-    bullets: [
-      '40-question personal and team scorecard across five leadership domains.',
-      'REACH™ readiness profile mapped to maturity levels.',
-      'Personalised coaching reports with strengths and focus areas',
-      'Team-level aggregation for coaches and team admins',
-      'More information on AILR is available [here](/tools/ailr/).',
-      '[Try out AILR today](/ailr)!',
-    ],
-  },
-  {
-    title: 'Platform Architecture and Modernisation',
-    intro: 'Evolving legacy systems into scalable platforms with minimal disruption.',
-    bullets: [
-      'Domain-led decomposition and API-first target architecture',
-      'Cloud, DevOps, and security baselining',
-      'Paved paths and developer experience',
-      'Resilience, SLOs, and cost controls',
-      'Platform Engineering dimensioning',
-    ],
-  },
-  {
-    title: 'Tech Leadership and Organisation Design',
-    intro: 'Right-sized tech organisation structures, roles, and practices that improve speed and quality.',
-    bullets: [
-      'Team topology and role clarity',
-      'Hiring plans and capability mapping',
-      'DORA/SPACE and outcome metrics',
-      'Leadership coaching and operating rhythms',
-      'Restructuring and Talent Density uplift',
-    ],
-  },
-  {
-    title: 'Climate-Tech Advisory',
-    intro: 'Support for founders and funds building sustainability data products and infrastructure.',
-    bullets: [
-      'Product and data strategy',
-      'Partnerships and go-to-market',
-      'Impact framing and measurement',
-      'Board advisory and diligence',
-    ],
-  },
-];
+// Service catalogue: Keystatic override or the exact shared defaults —
+// same source the chatbot's knowledge base reads (src/lib/site-content.ts).
+const rawAreas = resolveServiceAreas(page?.serviceAreas);
 
 type ServiceArea = { title: string; introHtml: string; bulletsHtml: string[] };
-
-const rawAreas = page?.serviceAreas?.length
-  ? page.serviceAreas.map((a) => ({
-      title: a.title || '',
-      intro: a.intro || '',
-      bullets: (a.bullets || '').split('\n').map((b) => b.trim()).filter(Boolean),
-    }))
-  : defaultServiceAreas;
 
 const serviceAreas: ServiceArea[] = rawAreas
   .filter((a) => a.title)
