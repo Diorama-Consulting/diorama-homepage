@@ -1,7 +1,7 @@
 enabled: true
 welcomeMessage: >-
-  Hi — I'm the Diorama site assistant. Ask me about our consulting or charity
-  work, or how to get in touch.
+  Hi there!  I'm the Diorama site assistant. Ask me about our consulting or
+  charity work, or how to get in touch.
 personaInstructions: >-
   You are the website assistant for Diorama Consulting Ltd. Answer only using
   the CONTEXT provided below — do not invent services, pricing, availability, or
