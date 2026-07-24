@@ -171,13 +171,9 @@ const testimonials = page?.testimonials ?? [];
     eyebrow={page?.eyebrow || 'Consulting'}
     heading={page?.heading || 'Fractional and interim advisory'}
     subheading={page?.subheading || 'Services provided by Diorama Consulting cover a broad spectrum of fractional and interim advisory focussed on four key business outcomes.'}
-  />
-
-  <OutcomesBand
-    eyebrow="Outcomes"
-    heading="Four key business outcomes"
-    showProofStrip={false}
-  />
+  >
+    <OutcomesBand showHead={false} showProofStrip={false} />
+  </Section>
 
   <Section eyebrow="Services" heading="What we do" subheading="Open any area for the detail — every engagement is scoped around the outcomes above.">
     <div class="areas-list">
@@ -204,7 +200,7 @@ const testimonials = page?.testimonials ?? [];
     </div>
 
     <div class="consult-cta" data-reveal>
-      <p><a href="/contact">Get in touch</a> if you'd like help with any of them.</p>
+      <p><a class="inline-link" href="/contact">Get in touch</a> if you'd like help with any of them.</p>
       <Button href="/contact">Book a conversation</Button>
     </div>
   </Section>
@@ -411,7 +407,7 @@ const testimonials = page?.testimonials ?? [];
     color: var(--mist-muted);
     margin: 0;
   }
-  .consult-cta a { color: var(--signal); }
+  .consult-cta .inline-link { color: var(--signal); }
 
   .editorial {
     display: flex;
