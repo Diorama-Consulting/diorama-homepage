@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api
+Disallow: /keystatic
+Disallow: /tools/gated
+
+Sitemap: https://dioramaconsulting.co.uk/sitemap-index.xml

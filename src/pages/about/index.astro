@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
+import ScrollCue from '../../components/ScrollCue.astro';
 import Footer from '../../components/Footer.astro';
 import QuoteBanner from '../../components/QuoteBanner.astro';
 import LinkCard from '../../components/LinkCard.astro';
@@ -152,12 +153,7 @@ const closingText =
         </ul>
       )}
     </div>
-    <a class="hero-scroll-cue" href="#about-story" aria-label="Scroll to read more">
-      <span class="cue-label">The story</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 4v16m0 0 6-6m-6 6-6-6" />
-      </svg>
-    </a>
+    <ScrollCue targetId="about-story" label="The story" theme="dark" />
   </section>
 
   <!-- ============================================================
@@ -310,9 +306,9 @@ const closingText =
 
   .hero-eyebrow {
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-accent);
     margin: 0 0 20px;
@@ -320,8 +316,8 @@ const closingText =
   }
 
   .hero-heading {
-    font-size: clamp(42px, 7vw, 92px);
-    line-height: 1.02;
+    font-size: var(--page-title-size);
+    line-height: 1.05;
     letter-spacing: -0.02em;
     color: var(--ink-text);
     margin: 0 0 26px;
@@ -369,39 +365,12 @@ const closingText =
     animation-delay: calc(0.75s + var(--chip-i) * 0.08s);
   }
 
-  .hero-scroll-cue {
-    position: absolute;
-    left: 50%;
-    bottom: 26px;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    color: var(--ink-text-muted);
-    text-decoration: none;
-    font-family: var(--font-mono);
-    animation: hero-rise 0.7s ease 1.2s both;
-    transition: color 0.2s ease;
-  }
-  .hero-scroll-cue:hover { color: var(--ink-accent-hover); }
-  .cue-label {
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .hero-scroll-cue svg { animation: cue-bob 2.2s ease-in-out 1.6s infinite; }
-
   @keyframes hero-word-in {
     to { opacity: 1; transform: translateY(0) rotate(0deg); }
   }
   @keyframes hero-rise {
     from { opacity: 0; transform: translateY(14px); }
     to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes cue-bob {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(5px); }
   }
 
   /* =================== ACT 2: the story thread =================== */
@@ -670,7 +639,6 @@ const closingText =
     .story-row {
       padding-left: calc(var(--story-gutter) + 18px);
     }
-    .hero-scroll-cue { display: none; }
   }
 
   @media (max-width: 480px) {
@@ -686,13 +654,11 @@ const closingText =
     .hero-eyebrow,
     .hero-word,
     .hero-mission,
-    .hero-chips li,
-    .hero-scroll-cue {
+    .hero-chips li {
       animation: none;
       opacity: 1;
       transform: none;
     }
-    .hero-scroll-cue svg { animation: none; }
     .story-paragraph {
       opacity: 1;
       transform: none;

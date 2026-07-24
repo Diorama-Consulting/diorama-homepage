@@ -17,7 +17,7 @@ const bodyParagraphs = resolved.paragraphs.map((p) =>
 const points = resolved.points;
 ---
 
-<section class="about-intro container">
+<section class="about-intro container" id="about-intro">
   <div class="about-screen about-screen--statement" data-reveal>
     <p class="eyebrow">Who we are</p>
     {bodyParagraphs.map((p) => <p class="statement-line" set:html={p} />)}
@@ -46,6 +46,7 @@ const points = resolved.points;
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--signal);

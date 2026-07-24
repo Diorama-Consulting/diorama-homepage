@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import InsightCard from '../../components/InsightCard.astro';
+import ScrollCue from '../../components/ScrollCue.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
@@ -99,10 +100,12 @@ function formatDate(iso: string) {
       <div class="insights-intro">
         <p class="insights-eyebrow">{insightsPage?.eyebrow || 'Insights'}</p>
         <h1>{insightsPage?.heading || 'Writing, talks, and events — in one place'}</h1>
+        <ScrollCue targetId="insights-spotlight" label="More" theme="light" />
       </div>
 
       {spotlight && (
         <a
+          id="insights-spotlight"
           class:list={['spotlight', `spotlight--${spotlight.type}`]}
           href={spotlight.href}
           target={spotlight.external ? '_blank' : undefined}
@@ -196,8 +199,10 @@ function formatDate(iso: string) {
   }
 
   .insights-intro {
+    position: relative;
     max-width: 640px;
     margin-bottom: var(--space-lg);
+    padding-bottom: 36px;
   }
 
   .insights-eyebrow {
@@ -211,8 +216,8 @@ function formatDate(iso: string) {
   }
 
   .insights-intro h1 {
-    font-size: clamp(28px, 3.6vw, 40px);
-    line-height: 1.15;
+    font-size: var(--page-title-size);
+    line-height: 1.1;
     margin: 0;
   }
 
