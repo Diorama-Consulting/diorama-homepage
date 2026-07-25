@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import InsightCard from '../../components/InsightCard.astro';
-import ScrollCue from '../../components/ScrollCue.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
@@ -100,7 +99,6 @@ function formatDate(iso: string) {
       <div class="insights-intro">
         <p class="insights-eyebrow">{insightsPage?.eyebrow || 'Insights'}</p>
         <h1>{insightsPage?.heading || 'Writing, talks, and events — in one place'}</h1>
-        <ScrollCue targetId="insights-spotlight" label="More" theme="light" />
       </div>
 
       {spotlight && (
