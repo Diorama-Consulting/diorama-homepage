@@ -607,8 +607,8 @@ export default config({
       path: 'src/content/pages/projects-index',
       schema: {
         ...seoFields('src/content/pages/projects-index'),
-        eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Building' }),
-        heading: fields.text({ label: 'Heading', defaultValue: 'Tools' }),
+        eyebrow: fields.text({ label: 'Eyebrow', defaultValue: 'Tools' }),
+        heading: fields.text({ label: 'Heading', defaultValue: 'AI Coding Projects' }),
         subheading: fields.text({
           label: 'Subheading',
           multiline: true,
