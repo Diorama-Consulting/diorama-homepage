@@ -15,7 +15,7 @@ interface Props {
 const { eyebrow, heading, subheading, id, pageTitle = false } = Astro.props;
 ---
 
-<section class="section" id={id}>
+<section class:list={['section', pageTitle && 'section--page-title']} id={id}>
   <div class="container">
     {(eyebrow || heading || subheading) && (
       <div class:list={['section-head', pageTitle && 'section-head--page-title']}>
@@ -32,6 +32,14 @@ const { eyebrow, heading, subheading, id, pageTitle = false } = Astro.props;
   .section {
     position: relative;
     padding-block: var(--space-section);
+  }
+
+  /* A Section used as a page's primary top-of-page title (Services,
+     Contact) should sit right below the header, like Insights/Tools/
+     About — not use the same generous top padding as an ordinary
+     in-page subsection further down the page. */
+  .section--page-title {
+    padding-top: 56px;
   }
 
   .section-head {
