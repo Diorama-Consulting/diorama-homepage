@@ -1001,6 +1001,21 @@ export default config({
         seoDescription: fields.text({ label: 'SEO — Meta description override', multiline: true }),
         content: fields.mdx({
           label: 'Content',
+          options: {
+            // Without this, Keystatic's default is to namespace inline
+            // image uploads into a subfolder named after this field
+            // ("content/"), separate from where index.mdx lives — which
+            // is what produced the seeking-solis build failure (image
+            // committed at content/LandingPage.jpg, MDX body reference
+            // resolving relative to index.mdx's own folder instead). Co-
+            // locating here matches the convention already used for
+            // heroImage (see heroImageFields() above), for every post
+            // going forward.
+            image: {
+              directory: '.',
+              publicPath: './',
+            },
+          },
           components: iframeEmbedComponent,
         }),
       },
@@ -1125,6 +1140,14 @@ export default config({
         seoDescription: fields.text({ label: 'SEO — Meta description override', multiline: true }),
         content: fields.mdx({
           label: 'Content',
+          options: {
+            // See the matching comment on the blog collection's content
+            // field above — same fix, same reason.
+            image: {
+              directory: '.',
+              publicPath: './',
+            },
+          },
           components: iframeEmbedComponent,
         }),
       },
@@ -1169,7 +1192,10 @@ export default config({
         ),
         externalUrl: fields.url({ label: 'Charity website' }),
         order: fields.integer({ label: 'Sort order', defaultValue: 0 }),
-        content: fields.mdx({ label: 'Full story (expandable "Read more" on the charities page)' }),
+        content: fields.mdx({
+          label: 'Full story (expandable "Read more" on the charities page)',
+          options: { image: { directory: '.', publicPath: './' } },
+        }),
       },
     }),
     // -------------------------------------------------------------------
@@ -1192,7 +1218,10 @@ export default config({
         href: fields.url({ label: 'Link (registration page, write-up, etc.)' }),
         linkText: fields.text({ label: 'Link text', defaultValue: 'Details' }),
         draft: fields.checkbox({ label: 'Draft (hide from site)', defaultValue: false }),
-        content: fields.mdx({ label: 'Additional details (optional)' }),
+        content: fields.mdx({
+          label: 'Additional details (optional)',
+          options: { image: { directory: '.', publicPath: './' } },
+        }),
       },
     }),
 
