@@ -1,5 +1,4 @@
-@import '@fontsource-variable/geom';
-@import '@fontsource/cal-sans';
+@import '@fontsource-variable/inter';
 
 /* ==========================================================================
    DESIGN TOKENS — v3: LIGHT MODE
@@ -95,8 +94,8 @@
   --shadow-lg: 0 24px 64px hsl(var(--hue-green) 20% 10% / 0.12);
 
   /* ---- Type ---- */
-  --font-display: 'Geom Variable', sans-serif;
-  --font-body: 'Cal Sans', sans-serif;
+  --font-display: 'Inter Variable', sans-serif;
+  --font-body: 'Inter Variable', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* ---- Layout / spacing scale — unchanged ---- */
