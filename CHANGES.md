@@ -210,6 +210,22 @@ small. Two changes, both in `src/styles/global.css`:
   paragraph, so it's not part of this token. Only `font-size` was
   touched on each — colour, max-width, and animation stay page-specific.
 
+## Add missing chat widget to the Insights page
+
+Found while investigating a reported "chat bubble looks different between
+tabs" issue: the bubble wasn't inconsistent, it was entirely absent on
+`/insights` — the only top-level page that hand-builds its own `<html>`
+shell instead of using the shared `<Layout>` component, which is where
+`<ChatWidget />` gets included. Patched by importing and adding
+`<ChatWidget />` directly to `src/pages/insights/index.astro`, matching
+where `Layout.astro` places it (just before `</body>`).
+
+This is a narrower fix than the root cause deserves — see `TODO.md` for
+the fuller refactor (Insights should use `<Layout>` like every other page)
+and why it wasn't done tonight: that same root cause also means Insights
+is missing PostHog analytics entirely, which the narrow patch doesn't
+address.
+
 ---
 
 ## Related, outside this repo

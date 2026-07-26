@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
+import ChatWidget from '../../components/ChatWidget.astro';
 import InsightCard from '../../components/InsightCard.astro';
 import FallingLeaves from '../../components/FallingLeaves.astro';
 import Footer from '../../components/Footer.astro';
@@ -187,6 +188,7 @@ function formatDate(iso: string) {
       </div>
     </main>
     <Footer brandBlurb={footerNav?.brandBlurb} groups={footerNav?.groups} legalLine={footerNav?.legalLine} />
+    <ChatWidget />
   </body>
 </html>
 
