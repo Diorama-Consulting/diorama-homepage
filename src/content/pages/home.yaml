@@ -37,26 +37,27 @@ heroCarouselItems:
   - kind: event
     event: the-london-tech-leaders-leadership-summit-2026
   - kind: blog
-    blogPost: team-tapestry
-  - kind: blog
-    blogPost: 75-years-of-the-turing-test
+    blogPost: seeking-solis
   - kind: blog
     blogPost: experiments-in-ai-coding
-trustedCompaniesHeading: Companies who trust us too
+  - kind: blog
+    blogPost: how-data-unlocks-ai-success
+trustedCompaniesHeading: Organisations we have experience of working with
 trustedCompanies:
   - name: Amazon
     logoUrl: >-
       https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/960px-Amazon_logo.svg.png?_=20250504041148
-  - name: Adobe
-    logo: trustedCompanies/1/logo.png
   - name: Apple
     logoUrl: https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg
+  - name: Adobe
+    logo: trustedCompanies/2/logo.png
   - name: Depop
     logo: trustedCompanies/3/logo.svg
+  - name: Gumtree
   - name: Aston Mansfield
-    logo: trustedCompanies/4/logo.png
+    logo: trustedCompanies/5/logo.png
   - name: Helpforce
-    logo: trustedCompanies/5/logo.jpg
+    logo: trustedCompanies/6/logo.jpg
 craftBandEyebrow: Built with care
 craftBandHeading: Built with the same discipline we bring to client work
 craftBandText: >-
