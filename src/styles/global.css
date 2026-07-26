@@ -113,10 +113,20 @@
   --space-stack: 28px;
 
   /* ---- Page title — the single size used for the primary heading on
-     every top-level page (Home, About, Services, Insights, Contact), so
-     the "header" reads consistently as you move around the site instead
-     of each page having its own bespoke clamp range. ---- */
-  --page-title-size: clamp(34px, 4.6vw, 52px);
+     every top-level page (Home, About, Services, Insights, Tools,
+     Contact), so the "header" reads consistently as you move around
+     the site instead of each page having its own bespoke clamp range.
+     Reduced from clamp(34px, 4.6vw, 52px) — felt too large/dominant
+     after the Inter switch (larger x-height than the previous font
+     reads bigger at the same size). ---- */
+  --page-title-size: clamp(28px, 3.8vw, 42px);
+
+  /* ---- Page subheading — the lead paragraph directly under a page
+     title/eyebrow (Home, About, Services, Tools, Contact). Previously
+     varied per page (15.5px–22px) with no shared token; unified at
+     17px, the size Home's static hero already used. Insights has no
+     equivalent lead paragraph, so it's not part of this token. ---- */
+  --page-subheading-size: 17px;
 
   color-scheme: light;   /* was dark — native form controls/scrollbars now assume light */
 }

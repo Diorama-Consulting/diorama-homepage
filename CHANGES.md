@@ -188,6 +188,28 @@ already used on the About page's own body paragraph. Also added the
 missing full stop at the end of the paragraph ("...AI and Digital
 Strategy.").
 
+## Reduce page-title size and add a shared page-subheading token
+
+Follow-up after seeing the Tools page live: "AI Coding Projects" felt too
+large/dominant over its eyebrow, and the subheading below it felt too
+small. Two changes, both in `src/styles/global.css`:
+
+- Reduced the shared `--page-title-size` token (used by every top-level
+  page's `<h1>`: Home, About, Services, Insights, Tools, Contact) from
+  `clamp(34px, 4.6vw, 52px)` to `clamp(28px, 3.8vw, 42px)`. Applied
+  site-wide, not just Tools — likely a side effect of the Inter switch
+  above, since Inter's larger x-height reads bigger at the same size than
+  the previous font did.
+- Added a new shared `--page-subheading-size: 17px` token for the lead
+  paragraph under a page title, and pointed every page's subheading rule
+  at it instead of its own bespoke value: `Section.astro` (Services/
+  Contact, was 15.5px), `Hero.astro` (Home static hero, was already
+  17px), `HeroCarousel.astro` (Home carousel hero, was 16.5px), Tools
+  (was 17px, set earlier this session), and About's `.hero-mission`
+  (was `clamp(17px, 2vw, 22px)`). Insights has no equivalent lead
+  paragraph, so it's not part of this token. Only `font-size` was
+  touched on each — colour, max-width, and animation stay page-specific.
+
 ---
 
 ## Related, outside this repo
