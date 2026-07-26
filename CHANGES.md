@@ -172,6 +172,22 @@ already-installed but previously unused dependency
 legibility. Removed the now-unused `@fontsource-variable/geom` and
 `@fontsource/cal-sans` imports.
 
+## `be5230a` — Append this session's changes to CHANGES.md
+
+Documented all commits up to this point in this session (this section of
+the file).
+
+## Fix "Who we are" paragraph wording and missing full stop
+
+Follow-up to the `ef754fd` sentence fix above. Per user request, changed
+the second half of the paragraph from *"...accelerate value creation by
+focussing on productivity, delivery and quality."* to *"...accelerate value
+creation through fractional leadership, pragmatic AI and data strategy,
+platform modernisation, and organisation design."* — matching the phrasing
+already used on the About page's own body paragraph. Also added the
+missing full stop at the end of the paragraph ("...AI and Digital
+Strategy.").
+
 ---
 
 ## Related, outside this repo
