@@ -18,7 +18,7 @@
 export const CORE_POSITIONING = [
   'Diorama Consulting Ltd is an AI Technology Advisory service led by Mal Minhas with a focus on D2C marketplaces and products.',
   'We have unique industry experience in developing, delivering and evolving AI product software across startups, scale-ups, SMEs and Big Tech. We partner with C-Suite, Boards, Founders and Investors to bridge product strategy, engineering and AI.',
-  'We can help you create defensible growth, reduce risk and accelerate value creation through. We also advise UK charities on AI and Digital Strategy:',
+  'We can help you create defensible growth, reduce risk and accelerate value creation by focussing on productivity, delivery and quality. We also advise UK charities on AI and Digital Strategy',
 ];
 
 export const SIX_POINTS = [
