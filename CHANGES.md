@@ -343,6 +343,16 @@ Follow-up after confirming the feed works in Overcast:
   `/_astro/...` asset) — dev-only output would have been silently broken
   in production without checking this.
 
+## `cff6b42` — Top-align the Services spotlight labels
+
+Follow-up after seeing the redesigned Services hero live: "Consulting"/
+"Charities" were bottom-aligned on the image plate, which put them below
+the fold on arrival at the page on typical laptop viewports — you had to
+scroll to see them. Flipped both the panel alignment
+(`justify-content: flex-end` → `flex-start`) and the scrim gradient
+direction (dark-at-bottom → dark-at-top, so the white text still has
+contrast against the image) in `src/pages/services/index.astro`.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
