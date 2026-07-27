@@ -188,10 +188,14 @@ const tileItems = tiles.map((tile) => ({
     object-fit: cover;
   }
 
+  /* Dark at the TOP fading to light at the bottom — the inverse of
+     Insights' spotlight scrim — since the labels below are top-aligned
+     (so they're visible in view on arriving at the page, above the
+     fold, rather than requiring a scroll to the bottom of the plate). */
   .services-spotlight-scrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(0deg, hsl(var(--hue-green) 30% 9% / 0.92) 0%, hsl(var(--hue-green) 30% 9% / 0.4) 55%, hsl(var(--hue-green) 30% 9% / 0.15) 100%);
+    background: linear-gradient(180deg, hsl(var(--hue-green) 30% 9% / 0.92) 0%, hsl(var(--hue-green) 30% 9% / 0.4) 55%, hsl(var(--hue-green) 30% 9% / 0.15) 100%);
   }
 
   .services-spotlight-panels {
@@ -204,7 +208,7 @@ const tileItems = tiles.map((tile) => ({
   .services-panel {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
     padding: 40px 44px;
     text-decoration: none;
