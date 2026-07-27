@@ -228,7 +228,96 @@ address.
 
 ---
 
+---
+
+# Session — 2026-07-27
+
+## `f206f5b` — Add CLAUDE.md and ARCHITECTURE.md for repo/agent onboarding
+
+New `CLAUDE.md` (commands, deployment, architecture gotchas) and
+`ARCHITECTURE.md` (C4 Context/Container/Component Mermaid diagrams) for
+future Claude Code sessions and human contributors — neither file existed
+before.
+
+## `c3cd917` — Expand CLAUDE.md with Keystatic, admin dashboard, PostHog, and layout details
+
+Follow-up requests: documented Keystatic's role as the embedded,
+GitHub-storage-backed CMS; `/admin/dashboard`'s PostHog Query API +
+contact-service dependencies and its graceful-degradation behaviour when
+those env vars are absent; the distinct PostHog client/server/query/flag
+integrations and their different hosts/credentials; and a per-file
+breakdown of the five page layout templates in `src/layouts/`.
+
+## `8059e24` — Add NotebookLM podcast feed for Insights articles; fix header overlap
+
+Two changes:
+
+- **Podcast feed.** The 7 NotebookLM-narrated Insights posts had
+  NotebookLM-generated audio (44–208MB WAVs) that couldn't go through git
+  or the Docker image at that size. Transcoded to 96kbps mono MP3 (~84%
+  smaller — NotebookLM output is already mono 24kHz speech, so this is
+  lossless-enough for the source material) and hosted directly on the
+  droplet via a new Caddy `file_server` route at `/podcast-audio/*`,
+  outside git and the Docker build entirely (see "Related, outside this
+  repo" below). Each post's `audioUrl`/`audioTitle` frontmatter fields
+  (already part of the blog schema, previously unused) now point at the
+  hosted MP3s, which surfaces the existing pinned audio player in
+  `BlogPost.astro` with no player-UI changes needed. Added
+  `src/pages/podcast.xml.js`, a real iTunes-tagged RSS feed built from the
+  `blog` collection (filtered to entries with `audioUrl` set), plus a
+  generated 1400×1400 placeholder cover
+  (`public/images/podcast-cover.png`, composited from `Logo.svg` via
+  `sharp`) so the feed validates for podcast-directory submission.
+- **Header-overlap fix.** `BlogPost.astro`'s floating "Go back"/"Subscribe
+  on Substack" buttons were hardcoded to `top: 100px`, but `Header.astro`
+  is actually ~121px tall unscrolled (24px nav padding ×2 + 72px logo) and
+  has a higher `z-index` (50 vs. the buttons' 40) — so the header rendered
+  on top of and clipped them. Bumped both the desktop and mobile offsets
+  to `136px`. Verified with a real headless-Chrome screenshot on
+  `/insights/seeking-solis/`.
+
+Also copied the `docker-status` Claude Code skill into this repo's
+`.claude/skills/` (previously only in a separate ops repo) so droplet
+status checks are available from here too.
+
+## `0067423` — Merge remote-tracking branch 'origin/main'
+
+Two Keystatic CMS edits (`05cc7be`, `71137e4`) landed on `main` mid-session
+— genuine content fixes correcting stale Substack URLs on
+`experiments-in-ai-coding` (→ `/p/experiments-in-coding-with-ai`) and
+`tech-organisation-design` (→ `/p/engineering-org-management-strategies`),
+plus Keystatic's usual save-time markdown reformatting. Both conflicted
+with this session's `audioUrl`/`audioTitle` frontmatter additions on the
+same two files; resolved by keeping Keystatic's content/link fixes in full
+and re-inserting the two new audio fields at the same position.
+
+## `cf66d26` — Revert @astrojs/check/typescript devDependency addition
+
+See the new TODO.md entry ("CI's `npx astro check` typecheck step is a
+silent no-op") for the full story: adding these to run `astro check`
+locally made CI's typecheck step actually execute for the first time ever,
+which surfaced ~168 pre-existing, unrelated type errors and blocked
+deploy. Reverted so tonight's deploy wasn't blocked by pre-existing debt.
+
 ## Related, outside this repo
+
+- **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
+  (`/etc/sudoers.d/deploy-podcast-audio`, limited to the exact `mkdir`/
+  `chown`/`chmod`/`caddy validate`/`systemctl reload caddy` commands
+  needed — no editor, no blanket `ALL`) so routine future audio uploads
+  don't need an interactive password. Created `/var/www/podcast-audio/`
+  (deploy-owned) and added a `handle_path /podcast-audio/*` block to
+  `/etc/caddy/Caddyfile` serving it via `file_server`. Uploaded the 7
+  transcoded MP3s there via `rsync`; confirmed all seven serve with
+  correct `audio/mpeg` content-type, exact byte-matching `Content-Length`,
+  and `Accept-Ranges: bytes` (needed for podcast-app scrubbing).
+- **`deploy` account password rotated** on the droplet (interactively, by
+  the repo owner) — unrelated to SSH access (key-based, unaffected), just
+  a short-password hygiene fix noticed while setting up sudo access above.
+
+---
+
+## Related, outside this repo (previous session)
 
 Not part of this repo's git history, but done in the same session and
 relevant to the live site:
