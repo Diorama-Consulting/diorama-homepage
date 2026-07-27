@@ -299,6 +299,29 @@ locally made CI's typecheck step actually execute for the first time ever,
 which surfaced ~168 pre-existing, unrelated type errors and blocked
 deploy. Reverted so tonight's deploy wasn't blocked by pre-existing debt.
 
+## `a5efea6` — Fix SITE_DOMAIN, archive live Caddyfile, redesign Services hero
+
+- **`SITE_DOMAIN` GitHub Actions secret** was set to `dioramas.uk`, a
+  legacy/future domain that doesn't currently resolve to anything — this
+  is baked into every build via `astro.config.mjs`'s `site` config, so
+  every absolute URL site-wide (`/rss.xml`, `/sitemap-index.xml`, every
+  page's canonical `<link>`, and the new `/podcast.xml`) was pointing at a
+  dead domain in production. Updated the secret to
+  `dioramaconsulting.co.uk`, the domain actually serving the site.
+- **`deploy/Caddyfile`** — copied the real, live Caddy config from the
+  droplet into the repo for reference (distinct from the pre-existing
+  `deploy/Caddyfile.example`, which is a generic template, not what's
+  actually running).
+- **Services page hero redesign** (`src/pages/services/index.astro`):
+  replaced the `FeatureToggle` click-to-expand list (Consulting/Charities
+  stacked vertically, only one's description visible at a time, image on
+  the right) with a single full-width image sized to match Insights'
+  `.spotlight` (440px height, same radius/shadow), with "01 Consulting"
+  and "02 Charities" as white panels side by side directly on the image,
+  each linking straight through. Removes the toggle interaction entirely
+  rather than just restyling it — per feedback that the expand/collapse
+  behaviour itself was the confusing part, not just the layout.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
