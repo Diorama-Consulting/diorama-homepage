@@ -1,5 +1,5 @@
 import { getCollection } from 'astro:content';
-import { reader } from '../lib/keystatic';
+import { reader, resolveImageUrl } from '../lib/keystatic';
 
 // Byte length for each episode's MP3 enclosure. RSS 2.0 requires
 // <enclosure length="..."> to be accurate for podcast apps to show correct
@@ -44,10 +44,22 @@ export async function GET(context) {
 
   const items = posts
     .map((post) => {
-      const { title, description, pubDate, audioUrl, audioTitle } = post.data;
+      const { title, description, pubDate, audioUrl, audioTitle, heroImage, heroImageUrl } = post.data;
       const pageUrl = `${siteUrl}/insights/${post.id}/`;
       const summary = description ?? title;
       const length = AUDIO_BYTES[post.id] ?? 0;
+
+      // Prefer this post's own hero image over the generic show cover, so
+      // each episode shows its own artwork in podcast apps. resolveImageUrl()
+      // returns a site-relative path for a local upload (Astro's image()
+      // transform) — podcast apps need a fully-qualified URL, so prepend
+      // siteUrl unless it's already absolute (the heroImageUrl/external case).
+      const resolvedHero = resolveImageUrl(heroImage, heroImageUrl);
+      const episodeImage = resolvedHero
+        ? resolvedHero.startsWith('http')
+          ? resolvedHero
+          : `${siteUrl}${resolvedHero}`
+        : coverImage;
 
       return `    <item>
       <title>${escapeXml(audioTitle || title)}</title>
@@ -59,7 +71,7 @@ export async function GET(context) {
       <itunes:summary>${escapeXml(summary)}</itunes:summary>
       <itunes:author>${escapeXml(founderName)}</itunes:author>
       <itunes:explicit>false</itunes:explicit>
-      <itunes:image href="${escapeXml(coverImage)}"/>
+      <itunes:image href="${escapeXml(episodeImage)}"/>
       <enclosure url="${escapeXml(audioUrl)}" length="${length}" type="audio/mpeg"/>
     </item>`;
     })
@@ -70,7 +82,7 @@ export async function GET(context) {
      xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
      xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${escapeXml(siteName)} — Insights (Audio)</title>
+    <title>${escapeXml(siteName)} — Insights</title>
     <link>${escapeXml(siteUrl)}/insights/</link>
     <atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml"/>
     <language>en-gb</language>
@@ -86,7 +98,7 @@ export async function GET(context) {
     <itunes:type>episodic</itunes:type>
     <image>
       <url>${escapeXml(coverImage)}</url>
-      <title>${escapeXml(siteName)} — Insights (Audio)</title>
+      <title>${escapeXml(siteName)} — Insights</title>
       <link>${escapeXml(siteUrl)}/insights/</link>
     </image>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
