@@ -4,7 +4,6 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Section from '../../components/Section.astro';
 import ScrollCue from '../../components/ScrollCue.astro';
-import FeatureToggle from '../../components/FeatureToggle.astro';
 import HowWeWork from '../../components/HowWeWork.astro';
 import CapabilityReveal from '../../components/CapabilityReveal.astro';
 import OutcomesBand from '../../components/OutcomesBand.astro';
@@ -93,7 +92,28 @@ const tileItems = tiles.map((tile) => ({
     subheading={page?.subheading || 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'}
   >
     <FallingLeaves count={16} seed={13} maxOpacity={0.1} />
-    <FeatureToggle groupId="services" items={tileItems} />
+
+    <div class="services-spotlight">
+      <img src={defaultHeroPhotoUrl} alt="" class="services-spotlight-image" />
+      <div class="services-spotlight-scrim"></div>
+      <div class="services-spotlight-panels">
+        {tileItems.map((tile, i) => (
+          <a class="services-panel" href={tile.href}>
+            <span class="services-panel-index">{String(i + 1).padStart(2, '0')}</span>
+            <span class="services-panel-title">{tile.title}</span>
+            {tile.linkText && (
+              <span class="services-panel-link">
+                {tile.linkText}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </span>
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+
     <ScrollCue targetId="services-outcomes" label="More" theme="light" />
   </Section>
 
@@ -145,6 +165,111 @@ const tileItems = tiles.map((tile) => ({
 </Layout>
 
 <style>
+  /* ---- Services spotlight: one full-width image (sized to match
+     Insights' .spotlight — same 440px height, same radius/shadow) with
+     the two service tiles as white overlaid panels side by side, rather
+     than the old click-to-expand FeatureToggle (list on the left,
+     4:3 image on the right) — that pattern read as confusing/hidden
+     since only one tile's content was ever visible at a time. */
+  .services-spotlight {
+    position: relative;
+    height: 440px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    margin-top: var(--space-lg);
+  }
+
+  .services-spotlight-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .services-spotlight-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, hsl(var(--hue-green) 30% 9% / 0.92) 0%, hsl(var(--hue-green) 30% 9% / 0.4) 55%, hsl(var(--hue-green) 30% 9% / 0.15) 100%);
+  }
+
+  .services-spotlight-panels {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .services-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 40px 44px;
+    text-decoration: none;
+    transition: background 0.25s ease;
+  }
+
+  .services-panel:first-child {
+    border-right: 1px solid hsl(0 0% 100% / 0.15);
+  }
+
+  .services-panel:hover {
+    background: hsl(0 0% 100% / 0.06);
+  }
+
+  .services-panel-index {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--ink-accent);
+  }
+
+  .services-panel-title {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.8vw, 34px);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink-text);
+  }
+
+  .services-panel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-text);
+    opacity: 0.85;
+    transition: opacity 0.25s ease, gap 0.25s ease;
+  }
+
+  .services-panel:hover .services-panel-link {
+    opacity: 1;
+    gap: 10px;
+  }
+
+  @media (max-width: 720px) {
+    .services-spotlight {
+      height: auto;
+      min-height: 360px;
+    }
+    .services-spotlight-panels {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .services-panel:first-child {
+      border-right: none;
+      border-bottom: 1px solid hsl(0 0% 100% / 0.15);
+    }
+    .services-panel {
+      padding: 24px 24px;
+    }
+  }
+
   .capabilities-block {
     margin-top: var(--space-xl);
   }
