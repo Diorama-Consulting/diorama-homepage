@@ -322,6 +322,27 @@ deploy. Reverted so tonight's deploy wasn't blocked by pre-existing debt.
   rather than just restyling it — per feedback that the expand/collapse
   behaviour itself was the confusing part, not just the layout.
 
+## `11826cf` — Podcast feed polish: footer link, cleaner titles, per-episode artwork
+
+Follow-up after confirming the feed works in Overcast:
+
+- Added a "Podcast" link (`/podcast.xml`) to the footer's Explore group,
+  next to Insights — previously the feed had no discoverable link
+  anywhere on the site (`src/content/pages/footer-nav.yaml`, with
+  `src/components/Footer.astro`'s fallback defaults kept in sync per this
+  file's usual convention).
+- Dropped the redundant `(Audio)` suffix from the podcast's channel title
+  and `(NotebookLM)` from every episode title (`audioTitle` on all 7 blog
+  posts) — both were internal labelling, not useful to a listener.
+- `itunes:image` per episode now resolves to that post's own hero image
+  (via `resolveImageUrl()`, same helper every other page uses) instead of
+  the shared podcast-cover placeholder, falling back to it only if a post
+  has no hero image. Verified against a real production build, not just
+  dev mode, since local images resolve completely differently between the
+  two (Vite's dev-only `/@fs/...` passthrough vs. a real fingerprinted
+  `/_astro/...` asset) — dev-only output would have been silently broken
+  in production without checking this.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
