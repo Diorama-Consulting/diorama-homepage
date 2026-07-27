@@ -315,10 +315,20 @@ const articleJsonLd = {
                 color: var(--mint);
             }
 
-            /* --- Floating action bar: tracks scroll via position: fixed --- */
+            /* --- Floating action bar: tracks scroll via position: fixed ---
+               top is set to clear the header's TALL/unscrolled height
+               (nav padding-block 24px * 2 + 72px logo + 1px border = 121px),
+               plus a small gap. Header.astro's site-header has z-index: 50,
+               higher than this bar's z-index: 40, so any overlap here means
+               the header opaquely covers these buttons rather than the two
+               fighting for the top pixels — hence clearing it matters, not
+               just visually but for the buttons staying clickable. The
+               header condenses on scroll (down to ~63px) but this bar's
+               top is intentionally NOT synced to that — a larger gap once
+               scrolled is harmless, unlike an overlap when unscrolled. */
             .floating-actions {
                 position: fixed;
-                top: 100px;
+                top: 136px;
                 left: 0;
                 right: 0;
                 z-index: 40;
@@ -371,7 +381,10 @@ const articleJsonLd = {
                     height: 45vh;
                 }
                 .floating-actions {
-                    top: 84px;
+                    /* Header.astro doesn't shrink its tall/unscrolled height at
+                       this breakpoint (only nav-links hide) — same 136px as
+                       desktop, not the old 84px which sat under the header. */
+                    top: 136px;
                     padding-inline: 16px;
                 }
                 .floating-btn {

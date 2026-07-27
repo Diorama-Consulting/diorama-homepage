@@ -27,3 +27,16 @@ pnpm-debug.log*
 # keys just in case
 *-key.json
 service-account*.json
+
+# NotebookLM podcast source audio — served directly from the droplet via
+# Caddy, not committed to git or baked into the Docker image (see
+# AudioFiles/README.md for the blog-post -> file mapping)
+AudioFiles/
+
+# Droplet SSH key (see .claude/skills/docker-status/SKILL.md) — never commit.
+# NOTE: this repo already has unrelated, already-committed empty placeholder
+# files literally named `diorama`/`diorama.pub` from prior history; this key
+# is intentionally named `droplet_key` instead, to avoid any risk of real
+# key material ending up in those already-tracked paths.
+droplet_key
+droplet_key.pub
