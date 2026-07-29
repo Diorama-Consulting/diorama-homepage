@@ -20,7 +20,11 @@ Let’s take a closer look!
 
 Kimi K3 has so far followed a trajectory that has become familiar whereby a Chinese model is released to great acclaim forcing US hyperscalers to respond. It quickly reached the top of [Arena’s Frontend Code Arena leaderboard](https://x.com/arena/status/2077824029126504525), overtaking Anthropic’s Fable 5 in the process and demonstrated strong results across selected coding tasks.
 
+![Frontend Code Arena leaderboard showing Kimi K3 ranked #1 ahead of Claude Fable 5 and GPT-5.6 Sol](./images/frontendArenaScore.jpg)
+
 More important than the individual result is that it fits into a pattern of releases from Chinese AI labs over the last 18 months illustrated below:
+
+![Timeline of open-weight model releases: DeepSeek R1 (Jan 2025), Kimi K2 (Jul 2025), Kimi K3 (Jul 2026)](./images/threePhases.jpg)
 
 Each cycle has the same shape: launch, alarm, closer testing, quiet settling. What rises each time is the floor. A leaderboard spot gets contested within weeks. What actually counts is who is willing to run the model in production, which is why Microsoft testing K3 tells you more than the Arena result does.
 
@@ -44,11 +48,17 @@ Chinese open-weight models are certainly marketed as cost-efficient alternatives
 
 Headline pricing is therefore less useful as a comparator than **effective cost**, namely the resources required to complete real work at acceptable speed and quality. For enterprise buyers, the practical question is whether these Chinese open-weight models deliver enough capability, reliably enough, to justify adoption across common workloads to meaningfully reduce costs. Increasingly, the answer appears to be yes. They are good enough across a widening range of coding and knowledge-work use cases, which is exactly why adoption and evaluation are spreading even as questions on cost and efficiency remain open. [OpenRouter data](https://www.cnbc.com/2026/07/07/chinese-ai-models-costs-us-openai-anthropic.html) on comparing model tokens through H1 2026 shows a clear trend through the year:
 
+![Chart showing the share of tokens from U.S. companies on OpenRouter that went to Chinese models rising from under 5% in early 2025 to over 40% by mid-2026](./images/chineseModelUsage.jpg)
+
 [One estimate goes further putting the share of startups already using Chinese models as high as 80%](https://werd.io/american-ai-is-locked-down-and-proprietary-its-losing/), a figure striking enough on its own to explain why frontier labs are currently lobbying so hard for protection. The Goldman Sachs research referenced earlier suggests that across general, agent, code, and data tasks on OpenRouter, Chinese models captured only 5–16% of dollar spend but 56–89% of token volume in the week of July 1 in the US, evidence that aggressive pricing, not raw capability alone, is what's shifting volume toward these models.
+
+![Bar chart showing Chinese AI models' share of dollar spend vs. share of tokens processed across General (10%/72%), Agent (13%/85%), Code (16%/89%), and Data (5%/56%) tasks](./images/chineseModelShare.jpg)
 
 ## **Routing as a COGS reduction initiative**
 
 Another trend is that as agentic workloads scale, token spend is starting to look like a cost line that businesses need to actively manage, the way they have for years with customer acquisition cost and cloud spend. Businesses are converging on **routing** to the cheapest model that clears the quality bar, and defaulting to open-weight where it’s good enough. The numbers already show it taking shape. Per-token inference pricing for flagship LLMs has [fallen by roughly an order of magnitude](https://epoch.ai/data-insights/llm-inference-price-trends) since 2023 while request sizes have increased driven by reasoning tasks that increasingly dominate the total:
+
+![Chart titled "Intelligence is getting cheaper" showing inference price per million tokens falling from 2023 to 2024, with the fastest-declining tier dropping at 900x/year](./images/intelligenceIsGettingCheaper.jpg)
 
 This is a pattern [Kearney has begun formalising](https://www.kearney.com/service/digital-analytics/article/keep-ai-costs-in-check-without-putting-the-brakes-on-innovation) into a five-lever "AI FinOps" cost-management framework. DoorDash is a concrete case in point. It built a router that sends its hardest tasks to frontier models like Fable 5 and [diverts everything else to cheaper open-weight Chinese models](https://aiweekly.co/alerts/coinbase-and-doordash-shift-more-workloads-to-chinese-ai-models), according to Deutsche Bank research.
 
@@ -89,7 +99,11 @@ The implications will vary depending on what constituency they represent:
 
 Moonshot [released Kimi K3 open weights on 27th July](https://www.tomshardware.com/tech-industry/artificial-intelligence/moonshot-ai-releases-weights-for-kimi-k3-firing-a-shot-across-the-bow-of-openai-and-anthropic-open-weight-model-performs-almost-as-well-as-frontier-models-while-being-2-3x-easier-to-run). The model has already been integrated and [made available by DigitalOcean](https://ideas.digitalocean.com/changelog/now-available-kimi-k3-from-moonshot-ai) (a developer-focused cloud platform). Their token charge for serverless inference for Kim K3 and its 2.6 predecessor are as follows:
 
+![DigitalOcean pricing table: Kimi K3 at $3.00/M input and $15.00/M output tokens, Kimi K2.6 at $0.76/M input and $3.20/M output tokens](./images/KimiPrices.jpg)
+
 Roughly 30% the list price of using Fable today:
+
+![Anthropic pricing table showing Claude Fable 5 at $10/MTok base input tokens and $50/MTok output tokens](./images/ClaudePrices.jpg)
 
 It will be fascinating to see whether it holds up under independent testing, which of restrict, subsidize, or do-nothing the administration actually commits to, and whether OpenAI’s and Anthropic’s planned IPOs stay on track.
 
