@@ -353,6 +353,23 @@ scroll to see them. Flipped both the panel alignment
 direction (dark-at-bottom → dark-at-top, so the white text still has
 contrast against the image) in `src/pages/services/index.astro`.
 
+## `6039e3f` — Add body images to "The AI World Cup may have no single winner"
+
+The post (added via Keystatic) had no embedded images — the source
+Substack article has 7 charts/tables interspersed through the body.
+Copied the 7 source images (`~/Desktop/AI WorldCup Images/`) into
+`src/content/blog/the-ai-world-cup-may-have-no-single-winner/images/`,
+matching the folder-per-post co-located-image convention every other post
+uses. Fetched the original Substack post to identify exact placement (the
+paragraph immediately before/after each image) and matched each image to
+its anchor sentence in this post's own text — verified visually (each
+image's actual chart title/content against its filename) before placing,
+since filenames alone (`chineseModelShare` vs. `chineseModelUsage`) were
+ambiguous. Note the paragraph order in this post differs from the source
+Substack article in places, so images were placed by matching each one's
+own anchor sentence wherever it falls here, not by copying the source's
+sequential image order.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
