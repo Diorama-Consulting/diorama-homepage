@@ -389,6 +389,18 @@ AUDIO_BYTES map → verify → commit/push) into a reusable Claude Code skill
 at `.claude/skills/podcast-episode-publish/SKILL.md`, so future episodes
 don't require re-deriving each step.
 
+## `695e7fd` — Add hero image to "The AI World Cup may have no single winner"
+
+Added the AI-generated hero image (`heroImage.png`, from the NanoBanana
+prompt drafted earlier this session — a converging circular arena of
+competing geometric figures over a circuit-board pattern, no text/logos/
+flags, matching the post's "no single winner" thesis) to the post's
+`heroImage` frontmatter field. Verified on the post's own hero banner, the
+Insights grid card, and the "More to explore" rail thumbnail. Since this
+post already has `audioUrl` set, it also becomes the episode's
+`itunes:image` in `/podcast.xml` (falls through automatically via
+`resolveImageUrl()` — no code change needed).
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
