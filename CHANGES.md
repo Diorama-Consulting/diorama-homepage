@@ -412,6 +412,16 @@ summarising each post's actual content, per user review and approval —
 these feed the meta description tag, social previews, and (for the 4
 posts with audio) the podcast feed's episode summary.
 
+## `31f8c77` — Replace Seeking Solis hero image
+
+Swapped the generic stock photo (`heroImage.jpg`) for an AI-generated
+image (`heroImage.png`, Gemini/NanoBanana, per the prompt drafted this
+session — an abstracted Ra-like sun deity sending a 93-million-mile beam
+of light to a rooftop solar panel/battery/inverter, gold-to-green
+palette) directly tied to the post's own content (the Bill McKibben
+"sunlight travels 93 million miles" quote, and "Solis" being both Latin
+for sun and the inverter brand name). Old stock photo removed.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
