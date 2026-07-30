@@ -381,6 +381,14 @@ plus a new entry in `podcast.xml.js`'s `AUDIO_BYTES` map. Verified locally:
 pinned audio player renders, and the episode appears correctly in
 `/podcast.xml` with the right enclosure length.
 
+## `01ef78e` — Add podcast-episode-publish skill
+
+Turned the recipe just used for the AI World Cup episode (m4a → 96kbps
+mono MP3 → rsync to droplet → wire into post frontmatter + podcast.xml's
+AUDIO_BYTES map → verify → commit/push) into a reusable Claude Code skill
+at `.claude/skills/podcast-episode-publish/SKILL.md`, so future episodes
+don't require re-deriving each step.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
