@@ -370,6 +370,17 @@ Substack article in places, so images were placed by matching each one's
 own anchor sentence wherever it falls here, not by copying the source's
 sequential image order.
 
+## `d040d64` — Add podcast audio to "The AI World Cup may have no single winner"
+
+Transcoded `China_s_Kimi_K3_challenges_US_AI_dominance.m4a` (AAC, stereo,
+44.1kHz, 22.7min) to 96kbps mono MP3 (same recipe as the original 7
+episodes), uploaded to `/var/www/podcast-audio/` on the droplet (no sudo
+needed — the directory's already deploy-owned from the earlier one-time
+setup), and wired it into the post via `audioUrl`/`audioTitle` frontmatter
+plus a new entry in `podcast.xml.js`'s `AUDIO_BYTES` map. Verified locally:
+pinned audio player renders, and the episode appears correctly in
+`/podcast.xml` with the right enclosure length.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule

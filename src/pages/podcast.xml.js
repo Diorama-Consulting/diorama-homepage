@@ -16,6 +16,7 @@ const AUDIO_BYTES = {
   'how-data-unlocks-ai-success': 14171373,
   '75-years-of-the-turing-test': 8514189,
   'seeking-solis': 16269453,
+  'the-ai-world-cup-may-have-no-single-winner': 16346730,
 };
 
 function escapeXml(value) {
