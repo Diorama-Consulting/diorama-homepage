@@ -401,6 +401,17 @@ post already has `audioUrl` set, it also becomes the episode's
 `itunes:image` in `/podcast.xml` (falls through automatically via
 `resolveImageUrl()` — no code change needed).
 
+## `c16f4ff` — Rewrite descriptions for 5 blog posts
+
+The existing `description` frontmatter on Team Tapestry, Experiments in AI
+Coding, AI and Business Transformation, and Tech Organisation Design were
+stylistic subtitles ("Fatal Exception: Developer Does Not Exist") rather
+than descriptive summaries, and The AI World Cup post had no description
+at all. Replaced/added single-sentence (~15-18 word) descriptions
+summarising each post's actual content, per user review and approval —
+these feed the meta description tag, social previews, and (for the 4
+posts with audio) the podcast feed's episode summary.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
