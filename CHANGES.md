@@ -444,6 +444,16 @@ this time — headless Chrome's `--window-size` height feeds directly into
 the hero's `55vh` CSS, so a tall capture just inflates the hero rather
 than showing more of the page.
 
+## `8116ae9` — Add podcast audio to "From Opus to Open Weights"
+
+Followed the `podcast-episode-publish` skill (invoked manually — the
+Skill tool didn't recognize it since it was created mid-session and the
+skill listing hadn't refreshed): transcoded
+`Why_developers_are_switching_to_open_weights.m4a` (AAC, stereo, 44.1kHz,
+24min) to 96kbps mono MP3, uploaded to the droplet's podcast-audio
+directory, wired via audioUrl/audioTitle frontmatter plus the
+podcast.xml AUDIO_BYTES map, verified locally.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
