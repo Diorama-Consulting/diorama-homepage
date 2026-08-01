@@ -156,8 +156,18 @@ The table reveals 13 sessions, 712 turns, 37.4M tokens and $11.41 total cost. De
 
 - Output tokens are just ~0.5% of total volume (187,174 of 37,448,776) even more input-skewed than the ~90% rule of thumb, reinforcing that input-token pricing is what controls cost.
 - Flash handled exactly twice the turns of Pro (474 vs. 238) yet cost less than a third as much. This clearly illustrates the practical case for routing routine coding turns to a cheaper model and reserving Pro for harder problems.
-- Zero cache-read/cache-write tokens recorded. This is a clear opportunity to further reduce cost. Prompt caching on the input side (the dominant cost driver) could cut spend further if/when supported.
 - Average cost per session works out at roughly $0.88, or about $0.016 per turn, a useful concrete baseline for anyone trying to budget AI coding work.
+- Zero cache-read/cache-write tokens recorded. This is a clear opportunity to further reduce cost. Prompt caching on the input side (the dominant cost driver) could cut spend further if/when supported. I'll dive into how DigitalOcean supports it in more detail next.
+
+### **Prompt Caching support**
+
+The zero cache-read/cache-write line above is worth pulling apart, because it says something about the *shape* of DigitalOcean and OpenRouter as products, not just about my particular config.
+
+DigitalOcean only added [prompt caching for open-weight models](https://docs.digitalocean.com/products/inference/how-to/use-prompt-caching/) to Serverless Inference in the last few weeks, landing as public preview around the time I was gathering the numbers above. Where it's supported, caching on open-source models is now automatic. No cache_control or prompt_cache_retention is required, it just matches against your own account's recent prefixes. For their Anthropic and OpenAI-hosted models it's still explicit and gated. DigitalOcean's own guidance is to [treat their prompt caching support as best-effort](https://www.digitalocean.com/community/tutorials/prompt-caching-cost-break-even) rather than something to budget against.
+
+That's a structurally different proposition from OpenRouter. OpenRouter isn't one backend, it's a router in front of dozens, so its caching has to solve a harder problem. Their fix is sticky routing so that once you get a cache hit, [OpenRouter keeps routing your follow-ups back to that same provider endpoint](https://openrouter.ai/blog/tutorials/prompt-caching-sticky-routing/) so the write pays for itself. They've also shipped a separate full [response cache](https://openrouter.ai/blog/announcements/response-caching/) that returns identical requests in milliseconds at zero token cost, scoped to your API key, across their chat, responses, and embeddings endpoints alike.
+
+In simple terms, DigitalOcean gives you one model, one bill, and now a basic cache against yourself. OpenRouter gives you optionality across providers with meaningfully different terms of service and data-handling policies, and it has built caching infrastructure to match. DigitalOcean's [intelligent inference router](https://try.digitalocean.com/serverless-inference/) is the way to go if you want something closer to that level of sophistication.
 
 ### **Enter Kimi K3!**
 
@@ -188,9 +198,9 @@ I updated my key to access Kimi K3 and adjusted my models.json to add support wi
 }
 ```
 
-I've now gone further and integrated the same endpoint into Solar Dashboard as one of the options for the backend of the AI Assistant. Here's an example of it in action providing insight on peak solar generation months:
+I've now gone further and integrated the same endpoint into Solar Dashboard as one of the options for the backend of the AI Assistant. Below is an example of it in action providing insight on peak solar generation months leveraging Kimi K3 via API. Serverless Inference does support token-by-token streaming at the API level which I enabled in the app code base. It does feel slower to use than the Anthropic AI endpoint which is also supported in the app. DigitalOcean's own benchmarking puts shared serverless throughput at around 22 tokens/second with ~1.5s to first token, against roughly 50 tokens/second and 0.6s on a dedicated GPU you're not sharing ([DigitalOcean](https://www.digitalocean.com/community/tutorials/serverless-vs-dedicated-vs-self-hosted-llm-inference-cost)). The latter is more expensive unless you are using it reasonably heavily.
 
-![Solar Dashboard AI Assistant answering "What are the top 5 highest generating months of all time and what is the trend?" with a ranked table and bar chart, topped by July 2026 at 679.0 kWh](./images/solar-dashboard-assistant.png)
+![Solar Dashboard AI Assistant chat interface (Claude Sonnet 4.6, ~323 tokens) answering "What are the top 5 highest generating months of all time and what is the trend?" with a ranked table and bar chart, topped by July 2026 at 679.0 kWh](./images/solar-dashboard-assistant.png)
 
 ### **Going further with OpenClaw and Hermes**
 
