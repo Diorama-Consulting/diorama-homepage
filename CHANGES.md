@@ -422,6 +422,28 @@ palette) directly tied to the post's own content (the Bill McKibben
 "sunlight travels 93 million miles" quote, and "Solis" being both Latin
 for sun and the inverter brand name). Old stock photo removed.
 
+## `83024fb` — Add new post "From Opus to Open Weights"
+
+Imported from a Google Doc the user shared. Fetched the doc's text via
+the Drive `read_file_content` tool, then exported it as .docx to extract
+the 7 embedded images (Drive's text export doesn't include images) —
+decoded the base64 docx, unzipped it, and read `word/document.xml`'s
+`r:embed` reference order against `document.xml.rels` to get the images'
+true reading-order (relationship IDs aren't assigned in document order).
+Verified each image's actual content against its filename before placing
+it (same care as the AI World Cup post) — matched all 7 to their anchor
+sentences in the article text. Cleaned up Google Docs' text-export
+artifacts in the two JSON/bash code blocks (escaped underscores/brackets)
+by reconstructing them from the visible values rather than transcribing
+literally. New post at `src/content/blog/from-opus-to-open-weights/`,
+dated today, with a user-supplied hero image
+(`DigitalOceanVsClaude.png`). Verified structurally (all 4 code blocks
+syntax-highlighted, the one table has correct headers, all 7 images
+resolve in the right order) since a full-page screenshot wasn't usable
+this time — headless Chrome's `--window-size` height feeds directly into
+the hero's `55vh` CSS, so a tall capture just inflates the hero rather
+than showing more of the page.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
