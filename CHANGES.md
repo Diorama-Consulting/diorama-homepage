@@ -454,6 +454,25 @@ skill listing hadn't refreshed): transcoded
 directory, wired via audioUrl/audioTitle frontmatter plus the
 podcast.xml AUDIO_BYTES map, verified locally.
 
+## `96fc4cc` — Update "From Opus to Open Weights" with new doc content
+
+Re-fetched the Google Doc and diffed it against the already-published
+post to find the green-highlighted additions (the Drive text-export
+doesn't preserve highlight colour, so a straight diff was the reliable
+way to isolate exactly what changed): a new closing sentence on the
+"zero cache-read/cache-write" bullet, an entirely new "**Prompt Caching
+support**" section (DigitalOcean's automatic-but-best-effort caching vs.
+OpenRouter's sticky-routing + full response cache), and three new
+sentences on streaming/latency in the Kimi K3 section. Also re-exported
+the doc as .docx and checksummed all 7 embedded images against what's
+already in the repo — only the Solar Dashboard AI Assistant screenshot
+had actually changed (now shows the full chat UI — model name, token
+count, the question asked — not just the cropped result card), despite
+being asked about it as two separate things ("the AI Assistant image"
+and "the snapshot"); the pi.dev console snapshot is byte-identical to
+what's already committed. Also cleaned up a messy Google-Ads tracking
+URL on the "intelligent inference router" link down to its base URL.
+
 ## Related, outside this repo
 
 - **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
