@@ -21,7 +21,7 @@ As 2026 broke, along with many others, I switched from my IDEs to using Agentic 
 
 For a while things went well, and I found myself gravitating towards Claude Code as my default coding environment paired with Anthropic's Opus models. By Q2 though, frustrations began to creep in through token pricing variation, arbitrary throttling and policy changes with little warning. Others in the developer community were also starting to vent their frustration with Anthropic around the same time and advocating for a move to open weight models. Developer [Julian Harris](https://www.linkedin.com/posts/julianharris_to-hell-with-anthropic-and-their-random-policy-ugcPost-7454642397797380096-SSWu) hit a personal chord with his LinkedIn post on the topic (see also [his notes on the switch](https://gist.github.com/boxabirds/13a54abc3314afca59b0bb87e9216b44)):
 
-!\[Julian Harris's LinkedIn post: "To hell with Anthropic and their random policy changes. AI local is the future," describing a local DeepSeek v4 + pi.dev setup]\(./images/julian-harris-linkedin.jpg)
+![Julian Harris's LinkedIn post: "To hell with Anthropic and their random policy changes. AI local is the future," describing a local DeepSeek v4 + pi.dev setup](./images/julian-harris-linkedin.jpg)
 
 I wanted to reduce my dependency on Anthropic and get better visibility over costs without having to spend thousands on expensive hardware. That imperative is especially important in the charity and not-for-profit sector which I support with AI advisory work. Budget predictability is critical and governance obligations require avoidance of vendor lock-in. Many in the developer community were reporting that open-source coding harnesses combined with open-weight models offered a genuinely viable alternative.
 
@@ -35,7 +35,7 @@ This led me to try out [pi.dev](https://pi.dev) the open source ADE mentioned by
 
 I went with Option 3 and started by creating a DigitalOcean Model Access Key scoped to DeepSeek v4 Pro. The advertised cost at time of writing is shown below. Note the pricing for Pro relative to Flash which is an order of magnitude cheaper:
 
-!\[DigitalOcean Serverless Inference pricing: DeepSeek V4 Flash at $0.11/M input and $0.22/M output tokens, DeepSeek V4 Pro at $1.39/M input and $2.78/M output tokens]\(./images/deepseek-pricing.png)
+![DigitalOcean Serverless Inference pricing: DeepSeek V4 Flash at $0.11/M input and $0.22/M output tokens, DeepSeek V4 Pro at $1.39/M input and $2.78/M output tokens](./images/deepseek-pricing.png)
 
 This curl POST to the Pro inference endpoint worked first time with the results shown inline:
 
@@ -128,7 +128,7 @@ At this point I was able to launch pi.dev and hit the Serverless Inference endpo
 
 The pi.dev console provides information on token counts and running cost live under the prompt box. The numbers can be a bit difficult to parse at first. Here is a snapshot with a breakdown of what each value in it corresponds to:
 
-!\[Terminal snapshot of the pi.dev prompt box showing 483k input tokens, 9.5k output tokens, $0.070 session cost, and 2.4% of the 1M context window used]\(./images/pi-console-snapshot.jpg)
+![Terminal snapshot of the pi.dev prompt box showing 483k input tokens, 9.5k output tokens, $0.070 session cost, and 2.4% of the 1M context window used](./images/pi-console-snapshot.jpg)
 
 | Element   | Value                      | Meaning                                                                                                                                                                                |
 | --------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -150,7 +150,7 @@ AI coding is heavily input-token bound as this great recent video explainer enti
 
 Full visibility on token costs can be difficult when you are working on multiple sessions across different directories with different LLMs. This lack of clarity around costs can be a real adoption barrier. I found a token usage tool called [pi-token-usage](https://pi.dev/packages/@alexanderfortin/pi-token-usage) that was able to generate a breakdown of my costs across all sessions by invoking /token-report in the pi shell. Here is a snapshot of what it showed after a week of working with two DeepSeek models:
 
-!\[pi-token-usage /token-report output: 13 sessions across deepseek-4-flash and deepseek-v4-pro, 712 turns, 37,448,776 total tokens, $11.4065 total cost]\(./images/token-usage-report.png)
+![pi-token-usage /token-report output: 13 sessions across deepseek-4-flash and deepseek-v4-pro, 712 turns, 37,448,776 total tokens, $11.4065 total cost](./images/token-usage-report.png)
 
 The table reveals 13 sessions, 712 turns, 37.4M tokens and $11.41 total cost. DeepSeek v4 Pro is roughly four times more expensive than the Flash variant. Both used approximately the same number of input tokens though Pro used half as many turns as Flash. Pro accounts for the majority of spend in spite of this. Key highlights:
 
@@ -173,11 +173,11 @@ In simple terms, DigitalOcean gives you one model, one bill, and now a basic cac
 
 Just before publishing this post, DigitalOcean [announced support for Kimi K3](https://ideas.digitalocean.com/changelog/now-available-kimi-k3-from-moonshot-ai) via Serverless Inference. In pricing terms it is roughly twice as expensive as DeepSeek v4 Pro and about twenty times more expensive than DeepSeek v4 Flash. If we pro rata my relatively high usage over three days as a starting point, this equates to roughly $40/month for access to a model that [leaped to the top of the coding charts](https://dioramaconsulting.co.uk/insights/the-ai-world-cup-may-have-no-single-winner/) at launch overtaking Anthropic's Fable:
 
-!\[DigitalOcean pricing table: Kimi K3 at $3.00/M input and $15.00/M output tokens, Kimi K2.6 at $0.76/M input and $3.20/M output tokens]\(./images/kimi-k3-pricing.png)
+![DigitalOcean pricing table: Kimi K3 at $3.00/M input and $15.00/M output tokens, Kimi K2.6 at $0.76/M input and $3.20/M output tokens](./images/kimi-k3-pricing.png)
 
 Fable itself is currently three times as expensive as Kimi K3 accesses though it should be said as Thompson explains in his [Stratechery post](https://stratechery.com/2026/whos-afraid-of-chinese-models/), K3 requires more tokens to reach the same result:
 
-!\[Anthropic pricing table showing Claude Fable 5 at $10/MTok base input tokens and $50/MTok output tokens]\(./images/claude-fable-pricing.png)
+![Anthropic pricing table showing Claude Fable 5 at $10/MTok base input tokens and $50/MTok output tokens](./images/claude-fable-pricing.png)
 
 I updated my key to access Kimi K3 and adjusted my models.json to add support with the following entry:
 
@@ -200,7 +200,7 @@ I updated my key to access Kimi K3 and adjusted my models.json to add support wi
 
 I've now gone further and integrated the same endpoint into Solar Dashboard as one of the options for the backend of the AI Assistant. Below is an example of it in action providing insight on peak solar generation months leveraging Kimi K3 via API. Serverless Inference does support token-by-token streaming at the API level which I enabled in the app code base. It does feel slower to use than the Anthropic AI endpoint which is also supported in the app. DigitalOcean's [own benchmarking](https://www.digitalocean.com/community/tutorials/serverless-vs-dedicated-vs-self-hosted-llm-inference-cost) puts shared serverless throughput at around 22 tokens/second with \~1.5s to first token, against roughly 50 tokens/second and 0.6s on a dedicated GPU you're not sharing. The latter is more expensive unless you are using it reasonably heavily.
 
-!\[Solar Dashboard AI Assistant chat interface (Claude Sonnet 4.6, \~323 tokens) answering "What are the top 5 highest generating months of all time and what is the trend?" with a ranked table and bar chart, topped by July 2026 at 679.0 kWh]\(./images/solar-dashboard-assistant.png)
+![Solar Dashboard AI Assistant chat interface (Claude Sonnet 4.6, \~323 tokens) answering "What are the top 5 highest generating months of all time and what is the trend?" with a ranked table and bar chart, topped by July 2026 at 679.0 kWh](./images/solar-dashboard-assistant.png)
 
 ### **Going further with OpenClaw and Hermes**
 
