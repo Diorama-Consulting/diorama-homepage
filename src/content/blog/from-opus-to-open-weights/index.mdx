@@ -1,11 +1,11 @@
 ---
 title: From Opus to Open Weights
 description: >-
-  Why one developer moved his AI coding workflow off Claude Code to
-  pi.dev and DigitalOcean's pay-as-you-go Serverless Inference.
+  Why one developer moved his AI coding workflow off Claude Code to pi.dev and
+  DigitalOcean's pay-as-you-go Serverless Inference.
 pubDate: 2026-08-01
 heroImage: heroImage.png
-audioUrl: 'https://dioramaconsulting.co.uk/podcast-audio/from-opus-to-open-weights.mp3'
+audioUrl: https://dioramaconsulting.co.uk/podcast-audio/from-opus-to-open-weights.mp3
 audioTitle: 'Listen: From Opus to Open Weights'
 draft: false
 ---
@@ -21,7 +21,7 @@ As 2026 broke, along with many others, I switched from my IDEs to using Agentic 
 
 For a while things went well, and I found myself gravitating towards Claude Code as my default coding environment paired with Anthropic's Opus models. By Q2 though, frustrations began to creep in through token pricing variation, arbitrary throttling and policy changes with little warning. Others in the developer community were also starting to vent their frustration with Anthropic around the same time and advocating for a move to open weight models. Developer [Julian Harris](https://www.linkedin.com/posts/julianharris_to-hell-with-anthropic-and-their-random-policy-ugcPost-7454642397797380096-SSWu) hit a personal chord with his LinkedIn post on the topic (see also [his notes on the switch](https://gist.github.com/boxabirds/13a54abc3314afca59b0bb87e9216b44)):
 
-![Julian Harris's LinkedIn post: "To hell with Anthropic and their random policy changes. AI local is the future," describing a local DeepSeek v4 + pi.dev setup](./images/julian-harris-linkedin.jpg)
+!\[Julian Harris's LinkedIn post: "To hell with Anthropic and their random policy changes. AI local is the future," describing a local DeepSeek v4 + pi.dev setup]\(./images/julian-harris-linkedin.jpg)
 
 I wanted to reduce my dependency on Anthropic and get better visibility over costs without having to spend thousands on expensive hardware. That imperative is especially important in the charity and not-for-profit sector which I support with AI advisory work. Budget predictability is critical and governance obligations require avoidance of vendor lock-in. Many in the developer community were reporting that open-source coding harnesses combined with open-weight models offered a genuinely viable alternative.
 
@@ -35,7 +35,7 @@ This led me to try out [pi.dev](https://pi.dev) the open source ADE mentioned by
 
 I went with Option 3 and started by creating a DigitalOcean Model Access Key scoped to DeepSeek v4 Pro. The advertised cost at time of writing is shown below. Note the pricing for Pro relative to Flash which is an order of magnitude cheaper:
 
-![DigitalOcean Serverless Inference pricing: DeepSeek V4 Flash at $0.11/M input and $0.22/M output tokens, DeepSeek V4 Pro at $1.39/M input and $2.78/M output tokens](./images/deepseek-pricing.png)
+!\[DigitalOcean Serverless Inference pricing: DeepSeek V4 Flash at $0.11/M input and $0.22/M output tokens, DeepSeek V4 Pro at $1.39/M input and $2.78/M output tokens]\(./images/deepseek-pricing.png)
 
 This curl POST to the Pro inference endpoint worked first time with the results shown inline:
 
@@ -85,7 +85,7 @@ curl -X POST 'https://inference.do-ai.run/v1/chat/completions' \
 
 ### **Configuring pi.dev**
 
-I moved onto configuring the pi.dev ADE to point to the DigitalOcean endpoint. This required creating a models.json file in my MacBook's ~/.pi/agent directory. The guidance supplied by Claude didn't work. After some trial and error and reading through [the DigitalOcean documentation](https://docs.digitalocean.com/products/inference/how-to/use-serverless-inference/), I discovered that I had to set the api field to openai-completions from the default. Here is the full configuration for models.json that worked for me in mapping pi.dev to an OpenAI-compatible Serverless Inference endpoint supporting both DeepSeek Pro and Flash:
+I moved onto configuring the pi.dev ADE to point to the DigitalOcean endpoint. This required creating a models.json file in my MacBook's \~/.pi/agent directory. The guidance supplied by Claude didn't work. After some trial and error and reading through [the DigitalOcean documentation](https://docs.digitalocean.com/products/inference/how-to/use-serverless-inference/), I discovered that I had to set the api field to openai-completions from the default. Here is the full configuration for models.json that worked for me in mapping pi.dev to an OpenAI-compatible Serverless Inference endpoint supporting both DeepSeek Pro and Flash:
 
 ```bash
 mkdir -p ~/.pi/agent
@@ -128,15 +128,15 @@ At this point I was able to launch pi.dev and hit the Serverless Inference endpo
 
 The pi.dev console provides information on token counts and running cost live under the prompt box. The numbers can be a bit difficult to parse at first. Here is a snapshot with a breakdown of what each value in it corresponds to:
 
-![Terminal snapshot of the pi.dev prompt box showing 483k input tokens, 9.5k output tokens, $0.070 session cost, and 2.4% of the 1M context window used](./images/pi-console-snapshot.jpg)
+!\[Terminal snapshot of the pi.dev prompt box showing 483k input tokens, 9.5k output tokens, $0.070 session cost, and 2.4% of the 1M context window used]\(./images/pi-console-snapshot.jpg)
 
-| Element | Value | Meaning |
-|---|---|---|
-| ↑483k | Input tokens this session | Passed into the LLM. |
-| ↓9.5k | Output tokens this session | Generated by the LLM. The relatively high 50:1 ratio of input to output tokens is typical for an AI coding session |
-| $0.070 | Session cost | Deep Seek V4 Flash was initially priced at $0.14/M input tokens and $0.28/M output tokens by Digital Ocean. This is a combined cost arrived at as 0.483 x 0.14 + 0.0095 x 0.28 = 0.070 |
-| 2.4%/1.0M | Context usage | Only 2.4% of the 1M context window used which indicates plenty of headroom available |
-| (auto) | Compaction mode | Automatic context compaction enabled |
+| Element   | Value                      | Meaning                                                                                                                                                                                |
+| --------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ↑483k     | Input tokens this session  | Passed into the LLM.                                                                                                                                                                   |
+| ↓9.5k     | Output tokens this session | Generated by the LLM. The relatively high 50:1 ratio of input to output tokens is typical for an AI coding session                                                                     |
+| $0.070    | Session cost               | Deep Seek V4 Flash was initially priced at $0.14/M input tokens and $0.28/M output tokens by Digital Ocean. This is a combined cost arrived at as 0.483 x 0.14 + 0.0095 x 0.28 = 0.070 |
+| 2.4%/1.0M | Context usage              | Only 2.4% of the 1M context window used which indicates plenty of headroom available                                                                                                   |
+| (auto)    | Compaction mode            | Automatic context compaction enabled                                                                                                                                                   |
 
 ### **Switching to the Flash model**
 
@@ -150,20 +150,20 @@ AI coding is heavily input-token bound as this great recent video explainer enti
 
 Full visibility on token costs can be difficult when you are working on multiple sessions across different directories with different LLMs. This lack of clarity around costs can be a real adoption barrier. I found a token usage tool called [pi-token-usage](https://pi.dev/packages/@alexanderfortin/pi-token-usage) that was able to generate a breakdown of my costs across all sessions by invoking /token-report in the pi shell. Here is a snapshot of what it showed after a week of working with two DeepSeek models:
 
-![pi-token-usage /token-report output: 13 sessions across deepseek-4-flash and deepseek-v4-pro, 712 turns, 37,448,776 total tokens, $11.4065 total cost](./images/token-usage-report.png)
+!\[pi-token-usage /token-report output: 13 sessions across deepseek-4-flash and deepseek-v4-pro, 712 turns, 37,448,776 total tokens, $11.4065 total cost]\(./images/token-usage-report.png)
 
 The table reveals 13 sessions, 712 turns, 37.4M tokens and $11.41 total cost. DeepSeek v4 Pro is roughly four times more expensive than the Flash variant. Both used approximately the same number of input tokens though Pro used half as many turns as Flash. Pro accounts for the majority of spend in spite of this. Key highlights:
 
-- Output tokens are just ~0.5% of total volume (187,174 of 37,448,776) even more input-skewed than the ~90% rule of thumb, reinforcing that input-token pricing is what controls cost.
-- Flash handled exactly twice the turns of Pro (474 vs. 238) yet cost less than a third as much. This clearly illustrates the practical case for routing routine coding turns to a cheaper model and reserving Pro for harder problems.
-- Average cost per session works out at roughly $0.88, or about $0.016 per turn, a useful concrete baseline for anyone trying to budget AI coding work.
-- Zero cache-read/cache-write tokens recorded. This is a clear opportunity to further reduce cost. Prompt caching on the input side (the dominant cost driver) could cut spend further if/when supported. I'll dive into how DigitalOcean supports it in more detail next.
+* Output tokens are just \~0.5% of total volume (187,174 of 37,448,776) even more input-skewed than the \~90% rule of thumb, reinforcing that input-token pricing is what controls cost.
+* Flash handled exactly twice the turns of Pro (474 vs. 238) yet cost less than a third as much. This clearly illustrates the practical case for routing routine coding turns to a cheaper model and reserving Pro for harder problems.
+* Average cost per session works out at roughly $0.88, or about $0.016 per turn, a useful concrete baseline for anyone trying to budget AI coding work.
+* Zero cache-read/cache-write tokens recorded. This is a clear opportunity to further reduce cost. Prompt caching on the input side (the dominant cost driver) could cut spend further if/when supported. I'll dive into how DigitalOcean supports it in more detail next.
 
 ### **Prompt Caching support**
 
 The zero cache-read/cache-write line above is worth pulling apart, because it says something about the *shape* of DigitalOcean and OpenRouter as products, not just about my particular config.
 
-DigitalOcean only added [prompt caching for open-weight models](https://docs.digitalocean.com/products/inference/how-to/use-prompt-caching/) to Serverless Inference in the last few weeks, landing as public preview around the time I was gathering the numbers above. Where it's supported, caching on open-source models is now automatic. No cache_control or prompt_cache_retention is required, it just matches against your own account's recent prefixes. For their Anthropic and OpenAI-hosted models it's still explicit and gated. DigitalOcean's own guidance is to [treat their prompt caching support as best-effort](https://www.digitalocean.com/community/tutorials/prompt-caching-cost-break-even) rather than something to budget against.
+DigitalOcean only added [prompt caching for open-weight models](https://docs.digitalocean.com/products/inference/how-to/use-prompt-caching/) to Serverless Inference in the last few weeks, landing as public preview around the time I was gathering the numbers above. Where it's supported, caching on open-source models is now automatic. No cache\_control or prompt\_cache\_retention is required, it just matches against your own account's recent prefixes. For their Anthropic and OpenAI-hosted models it's still explicit and gated. DigitalOcean's own guidance is to [treat their prompt caching support as best-effort](https://www.digitalocean.com/community/tutorials/prompt-caching-cost-break-even) rather than something to budget against.
 
 That's a structurally different proposition from OpenRouter. OpenRouter isn't one backend, it's a router in front of dozens, so its caching has to solve a harder problem. Their fix is sticky routing so that once you get a cache hit, [OpenRouter keeps routing your follow-ups back to that same provider endpoint](https://openrouter.ai/blog/tutorials/prompt-caching-sticky-routing/) so the write pays for itself. They've also shipped a separate full [response cache](https://openrouter.ai/blog/announcements/response-caching/) that returns identical requests in milliseconds at zero token cost, scoped to your API key, across their chat, responses, and embeddings endpoints alike.
 
@@ -173,11 +173,11 @@ In simple terms, DigitalOcean gives you one model, one bill, and now a basic cac
 
 Just before publishing this post, DigitalOcean [announced support for Kimi K3](https://ideas.digitalocean.com/changelog/now-available-kimi-k3-from-moonshot-ai) via Serverless Inference. In pricing terms it is roughly twice as expensive as DeepSeek v4 Pro and about twenty times more expensive than DeepSeek v4 Flash. If we pro rata my relatively high usage over three days as a starting point, this equates to roughly $40/month for access to a model that [leaped to the top of the coding charts](https://dioramaconsulting.co.uk/insights/the-ai-world-cup-may-have-no-single-winner/) at launch overtaking Anthropic's Fable:
 
-![DigitalOcean pricing table: Kimi K3 at $3.00/M input and $15.00/M output tokens, Kimi K2.6 at $0.76/M input and $3.20/M output tokens](./images/kimi-k3-pricing.png)
+!\[DigitalOcean pricing table: Kimi K3 at $3.00/M input and $15.00/M output tokens, Kimi K2.6 at $0.76/M input and $3.20/M output tokens]\(./images/kimi-k3-pricing.png)
 
 Fable itself is currently three times as expensive as Kimi K3 accesses though it should be said as Thompson explains in his [Stratechery post](https://stratechery.com/2026/whos-afraid-of-chinese-models/), K3 requires more tokens to reach the same result:
 
-![Anthropic pricing table showing Claude Fable 5 at $10/MTok base input tokens and $50/MTok output tokens](./images/claude-fable-pricing.png)
+!\[Anthropic pricing table showing Claude Fable 5 at $10/MTok base input tokens and $50/MTok output tokens]\(./images/claude-fable-pricing.png)
 
 I updated my key to access Kimi K3 and adjusted my models.json to add support with the following entry:
 
@@ -198,9 +198,9 @@ I updated my key to access Kimi K3 and adjusted my models.json to add support wi
 }
 ```
 
-I've now gone further and integrated the same endpoint into Solar Dashboard as one of the options for the backend of the AI Assistant. Below is an example of it in action providing insight on peak solar generation months leveraging Kimi K3 via API. Serverless Inference does support token-by-token streaming at the API level which I enabled in the app code base. It does feel slower to use than the Anthropic AI endpoint which is also supported in the app. DigitalOcean's own benchmarking puts shared serverless throughput at around 22 tokens/second with ~1.5s to first token, against roughly 50 tokens/second and 0.6s on a dedicated GPU you're not sharing ([DigitalOcean](https://www.digitalocean.com/community/tutorials/serverless-vs-dedicated-vs-self-hosted-llm-inference-cost)). The latter is more expensive unless you are using it reasonably heavily.
+I've now gone further and integrated the same endpoint into Solar Dashboard as one of the options for the backend of the AI Assistant. Below is an example of it in action providing insight on peak solar generation months leveraging Kimi K3 via API. Serverless Inference does support token-by-token streaming at the API level which I enabled in the app code base. It does feel slower to use than the Anthropic AI endpoint which is also supported in the app. DigitalOcean's [own benchmarking](https://www.digitalocean.com/community/tutorials/serverless-vs-dedicated-vs-self-hosted-llm-inference-cost) puts shared serverless throughput at around 22 tokens/second with \~1.5s to first token, against roughly 50 tokens/second and 0.6s on a dedicated GPU you're not sharing. The latter is more expensive unless you are using it reasonably heavily.
 
-![Solar Dashboard AI Assistant chat interface (Claude Sonnet 4.6, ~323 tokens) answering "What are the top 5 highest generating months of all time and what is the trend?" with a ranked table and bar chart, topped by July 2026 at 679.0 kWh](./images/solar-dashboard-assistant.png)
+!\[Solar Dashboard AI Assistant chat interface (Claude Sonnet 4.6, \~323 tokens) answering "What are the top 5 highest generating months of all time and what is the trend?" with a ranked table and bar chart, topped by July 2026 at 679.0 kWh]\(./images/solar-dashboard-assistant.png)
 
 ### **Going further with OpenClaw and Hermes**
 
