@@ -151,6 +151,40 @@ const articleJsonLd = {
                 color: var(--mist);
             }
 
+            /* Body content comes through <Content /> (MDX), a separately
+               compiled component — Astro's scope-hash attribute doesn't
+               reach into it, same reason services/index.astro's
+               .markdown-body rules need :global() for its set:html content.
+               The sitewide `img, svg { max-width: 100%; height: auto }`
+               reset (global.css) only ever shrinks images, never grows
+               them — fine for the wide screenshots most posts embed, but
+               a small source image (e.g. a cropped terminal screenshot)
+               stays at its tiny intrinsic size instead of filling the
+               prose column. Force full-width specifically for prose
+               body images so every embedded image reads consistently. */
+            .prose :global(img) {
+                width: 100%;
+            }
+
+            .prose :global(table) {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1.5em 0;
+            }
+
+            .prose :global(th),
+            .prose :global(td) {
+                border: 1px solid var(--hairline);
+                padding: 8px 12px;
+                text-align: left;
+                vertical-align: top;
+            }
+
+            .prose :global(th) {
+                background: var(--forest);
+                font-weight: 700;
+            }
+
             /* --- Audio narration dock ---
                Wide screens: a compact card pinned to the LEFT gutter that
                stays put while you scroll (position: fixed). Narrower
