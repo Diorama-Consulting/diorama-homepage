@@ -187,6 +187,7 @@ const { items, groupId } = Astro.props;
     overflow: hidden;
     background: var(--pine);
     box-shadow: var(--shadow-lg);
+    min-width: 0;
   }
 
   .feature-visual-image {
@@ -215,7 +216,7 @@ const { items, groupId } = Astro.props;
 
   @media (max-width: 860px) {
     .feature-toggle {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);  /* was: 1fr */
       gap: var(--space-md);
     }
     .feature-toggle-visual {
@@ -225,7 +226,9 @@ const { items, groupId } = Astro.props;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .feature-option-description,
+    .feature-option-description,{
+      overflow-wrap: break-word;
+    }
     .feature-option-link,
     .feature-visual-image {
       transition: none;
