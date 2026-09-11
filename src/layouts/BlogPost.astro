@@ -151,6 +151,43 @@ const articleJsonLd = {
                 color: var(--mist);
             }
 
+<<<<<<< HEAD
+=======
+            /* Body content comes through <Content /> (MDX), a separately
+               compiled component — Astro's scope-hash attribute doesn't
+               reach into it, same reason services/index.astro's
+               .markdown-body rules need :global() for its set:html content.
+               The sitewide `img, svg { max-width: 100%; height: auto }`
+               reset (global.css) only ever shrinks images, never grows
+               them — fine for the wide screenshots most posts embed, but
+               a small source image (e.g. a cropped terminal screenshot)
+               stays at its tiny intrinsic size instead of filling the
+               prose column. Force full-width specifically for prose
+               body images so every embedded image reads consistently. */
+            .prose :global(img) {
+                width: 100%;
+            }
+
+            .prose :global(table) {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1.5em 0;
+            }
+
+            .prose :global(th),
+            .prose :global(td) {
+                border: 1px solid var(--hairline);
+                padding: 8px 12px;
+                text-align: left;
+                vertical-align: top;
+            }
+
+            .prose :global(th) {
+                background: var(--forest);
+                font-weight: 700;
+            }
+
+>>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce
             /* --- Audio narration dock ---
                Wide screens: a compact card pinned to the LEFT gutter that
                stays put while you scroll (position: fixed). Narrower
@@ -315,10 +352,20 @@ const articleJsonLd = {
                 color: var(--mint);
             }
 
-            /* --- Floating action bar: tracks scroll via position: fixed --- */
+            /* --- Floating action bar: tracks scroll via position: fixed ---
+               top is set to clear the header's TALL/unscrolled height
+               (nav padding-block 24px * 2 + 72px logo + 1px border = 121px),
+               plus a small gap. Header.astro's site-header has z-index: 50,
+               higher than this bar's z-index: 40, so any overlap here means
+               the header opaquely covers these buttons rather than the two
+               fighting for the top pixels — hence clearing it matters, not
+               just visually but for the buttons staying clickable. The
+               header condenses on scroll (down to ~63px) but this bar's
+               top is intentionally NOT synced to that — a larger gap once
+               scrolled is harmless, unlike an overlap when unscrolled. */
             .floating-actions {
                 position: fixed;
-                top: 100px;
+                top: 136px;
                 left: 0;
                 right: 0;
                 z-index: 40;
@@ -371,7 +418,10 @@ const articleJsonLd = {
                     height: 45vh;
                 }
                 .floating-actions {
-                    top: 84px;
+                    /* Header.astro doesn't shrink its tall/unscrolled height at
+                       this breakpoint (only nav-links hide) — same 136px as
+                       desktop, not the old 84px which sat under the header. */
+                    top: 136px;
                     padding-inline: 16px;
                 }
                 .floating-btn {

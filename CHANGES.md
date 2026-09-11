@@ -228,8 +228,276 @@ address.
 
 ---
 
+<<<<<<< HEAD
 ## Related, outside this repo
 
+=======
+---
+
+# Session — 2026-07-27
+
+## `f206f5b` — Add CLAUDE.md and ARCHITECTURE.md for repo/agent onboarding
+
+New `CLAUDE.md` (commands, deployment, architecture gotchas) and
+`ARCHITECTURE.md` (C4 Context/Container/Component Mermaid diagrams) for
+future Claude Code sessions and human contributors — neither file existed
+before.
+
+## `c3cd917` — Expand CLAUDE.md with Keystatic, admin dashboard, PostHog, and layout details
+
+Follow-up requests: documented Keystatic's role as the embedded,
+GitHub-storage-backed CMS; `/admin/dashboard`'s PostHog Query API +
+contact-service dependencies and its graceful-degradation behaviour when
+those env vars are absent; the distinct PostHog client/server/query/flag
+integrations and their different hosts/credentials; and a per-file
+breakdown of the five page layout templates in `src/layouts/`.
+
+## `8059e24` — Add NotebookLM podcast feed for Insights articles; fix header overlap
+
+Two changes:
+
+- **Podcast feed.** The 7 NotebookLM-narrated Insights posts had
+  NotebookLM-generated audio (44–208MB WAVs) that couldn't go through git
+  or the Docker image at that size. Transcoded to 96kbps mono MP3 (~84%
+  smaller — NotebookLM output is already mono 24kHz speech, so this is
+  lossless-enough for the source material) and hosted directly on the
+  droplet via a new Caddy `file_server` route at `/podcast-audio/*`,
+  outside git and the Docker build entirely (see "Related, outside this
+  repo" below). Each post's `audioUrl`/`audioTitle` frontmatter fields
+  (already part of the blog schema, previously unused) now point at the
+  hosted MP3s, which surfaces the existing pinned audio player in
+  `BlogPost.astro` with no player-UI changes needed. Added
+  `src/pages/podcast.xml.js`, a real iTunes-tagged RSS feed built from the
+  `blog` collection (filtered to entries with `audioUrl` set), plus a
+  generated 1400×1400 placeholder cover
+  (`public/images/podcast-cover.png`, composited from `Logo.svg` via
+  `sharp`) so the feed validates for podcast-directory submission.
+- **Header-overlap fix.** `BlogPost.astro`'s floating "Go back"/"Subscribe
+  on Substack" buttons were hardcoded to `top: 100px`, but `Header.astro`
+  is actually ~121px tall unscrolled (24px nav padding ×2 + 72px logo) and
+  has a higher `z-index` (50 vs. the buttons' 40) — so the header rendered
+  on top of and clipped them. Bumped both the desktop and mobile offsets
+  to `136px`. Verified with a real headless-Chrome screenshot on
+  `/insights/seeking-solis/`.
+
+Also copied the `docker-status` Claude Code skill into this repo's
+`.claude/skills/` (previously only in a separate ops repo) so droplet
+status checks are available from here too.
+
+## `0067423` — Merge remote-tracking branch 'origin/main'
+
+Two Keystatic CMS edits (`05cc7be`, `71137e4`) landed on `main` mid-session
+— genuine content fixes correcting stale Substack URLs on
+`experiments-in-ai-coding` (→ `/p/experiments-in-coding-with-ai`) and
+`tech-organisation-design` (→ `/p/engineering-org-management-strategies`),
+plus Keystatic's usual save-time markdown reformatting. Both conflicted
+with this session's `audioUrl`/`audioTitle` frontmatter additions on the
+same two files; resolved by keeping Keystatic's content/link fixes in full
+and re-inserting the two new audio fields at the same position.
+
+## `cf66d26` — Revert @astrojs/check/typescript devDependency addition
+
+See the new TODO.md entry ("CI's `npx astro check` typecheck step is a
+silent no-op") for the full story: adding these to run `astro check`
+locally made CI's typecheck step actually execute for the first time ever,
+which surfaced ~168 pre-existing, unrelated type errors and blocked
+deploy. Reverted so tonight's deploy wasn't blocked by pre-existing debt.
+
+## `a5efea6` — Fix SITE_DOMAIN, archive live Caddyfile, redesign Services hero
+
+- **`SITE_DOMAIN` GitHub Actions secret** was set to `dioramas.uk`, a
+  legacy/future domain that doesn't currently resolve to anything — this
+  is baked into every build via `astro.config.mjs`'s `site` config, so
+  every absolute URL site-wide (`/rss.xml`, `/sitemap-index.xml`, every
+  page's canonical `<link>`, and the new `/podcast.xml`) was pointing at a
+  dead domain in production. Updated the secret to
+  `dioramaconsulting.co.uk`, the domain actually serving the site.
+- **`deploy/Caddyfile`** — copied the real, live Caddy config from the
+  droplet into the repo for reference (distinct from the pre-existing
+  `deploy/Caddyfile.example`, which is a generic template, not what's
+  actually running).
+- **Services page hero redesign** (`src/pages/services/index.astro`):
+  replaced the `FeatureToggle` click-to-expand list (Consulting/Charities
+  stacked vertically, only one's description visible at a time, image on
+  the right) with a single full-width image sized to match Insights'
+  `.spotlight` (440px height, same radius/shadow), with "01 Consulting"
+  and "02 Charities" as white panels side by side directly on the image,
+  each linking straight through. Removes the toggle interaction entirely
+  rather than just restyling it — per feedback that the expand/collapse
+  behaviour itself was the confusing part, not just the layout.
+
+## `11826cf` — Podcast feed polish: footer link, cleaner titles, per-episode artwork
+
+Follow-up after confirming the feed works in Overcast:
+
+- Added a "Podcast" link (`/podcast.xml`) to the footer's Explore group,
+  next to Insights — previously the feed had no discoverable link
+  anywhere on the site (`src/content/pages/footer-nav.yaml`, with
+  `src/components/Footer.astro`'s fallback defaults kept in sync per this
+  file's usual convention).
+- Dropped the redundant `(Audio)` suffix from the podcast's channel title
+  and `(NotebookLM)` from every episode title (`audioTitle` on all 7 blog
+  posts) — both were internal labelling, not useful to a listener.
+- `itunes:image` per episode now resolves to that post's own hero image
+  (via `resolveImageUrl()`, same helper every other page uses) instead of
+  the shared podcast-cover placeholder, falling back to it only if a post
+  has no hero image. Verified against a real production build, not just
+  dev mode, since local images resolve completely differently between the
+  two (Vite's dev-only `/@fs/...` passthrough vs. a real fingerprinted
+  `/_astro/...` asset) — dev-only output would have been silently broken
+  in production without checking this.
+
+## `cff6b42` — Top-align the Services spotlight labels
+
+Follow-up after seeing the redesigned Services hero live: "Consulting"/
+"Charities" were bottom-aligned on the image plate, which put them below
+the fold on arrival at the page on typical laptop viewports — you had to
+scroll to see them. Flipped both the panel alignment
+(`justify-content: flex-end` → `flex-start`) and the scrim gradient
+direction (dark-at-bottom → dark-at-top, so the white text still has
+contrast against the image) in `src/pages/services/index.astro`.
+
+## `6039e3f` — Add body images to "The AI World Cup may have no single winner"
+
+The post (added via Keystatic) had no embedded images — the source
+Substack article has 7 charts/tables interspersed through the body.
+Copied the 7 source images (`~/Desktop/AI WorldCup Images/`) into
+`src/content/blog/the-ai-world-cup-may-have-no-single-winner/images/`,
+matching the folder-per-post co-located-image convention every other post
+uses. Fetched the original Substack post to identify exact placement (the
+paragraph immediately before/after each image) and matched each image to
+its anchor sentence in this post's own text — verified visually (each
+image's actual chart title/content against its filename) before placing,
+since filenames alone (`chineseModelShare` vs. `chineseModelUsage`) were
+ambiguous. Note the paragraph order in this post differs from the source
+Substack article in places, so images were placed by matching each one's
+own anchor sentence wherever it falls here, not by copying the source's
+sequential image order.
+
+## `d040d64` — Add podcast audio to "The AI World Cup may have no single winner"
+
+Transcoded `China_s_Kimi_K3_challenges_US_AI_dominance.m4a` (AAC, stereo,
+44.1kHz, 22.7min) to 96kbps mono MP3 (same recipe as the original 7
+episodes), uploaded to `/var/www/podcast-audio/` on the droplet (no sudo
+needed — the directory's already deploy-owned from the earlier one-time
+setup), and wired it into the post via `audioUrl`/`audioTitle` frontmatter
+plus a new entry in `podcast.xml.js`'s `AUDIO_BYTES` map. Verified locally:
+pinned audio player renders, and the episode appears correctly in
+`/podcast.xml` with the right enclosure length.
+
+## `01ef78e` — Add podcast-episode-publish skill
+
+Turned the recipe just used for the AI World Cup episode (m4a → 96kbps
+mono MP3 → rsync to droplet → wire into post frontmatter + podcast.xml's
+AUDIO_BYTES map → verify → commit/push) into a reusable Claude Code skill
+at `.claude/skills/podcast-episode-publish/SKILL.md`, so future episodes
+don't require re-deriving each step.
+
+## `695e7fd` — Add hero image to "The AI World Cup may have no single winner"
+
+Added the AI-generated hero image (`heroImage.png`, from the NanoBanana
+prompt drafted earlier this session — a converging circular arena of
+competing geometric figures over a circuit-board pattern, no text/logos/
+flags, matching the post's "no single winner" thesis) to the post's
+`heroImage` frontmatter field. Verified on the post's own hero banner, the
+Insights grid card, and the "More to explore" rail thumbnail. Since this
+post already has `audioUrl` set, it also becomes the episode's
+`itunes:image` in `/podcast.xml` (falls through automatically via
+`resolveImageUrl()` — no code change needed).
+
+## `c16f4ff` — Rewrite descriptions for 5 blog posts
+
+The existing `description` frontmatter on Team Tapestry, Experiments in AI
+Coding, AI and Business Transformation, and Tech Organisation Design were
+stylistic subtitles ("Fatal Exception: Developer Does Not Exist") rather
+than descriptive summaries, and The AI World Cup post had no description
+at all. Replaced/added single-sentence (~15-18 word) descriptions
+summarising each post's actual content, per user review and approval —
+these feed the meta description tag, social previews, and (for the 4
+posts with audio) the podcast feed's episode summary.
+
+## `31f8c77` — Replace Seeking Solis hero image
+
+Swapped the generic stock photo (`heroImage.jpg`) for an AI-generated
+image (`heroImage.png`, Gemini/NanoBanana, per the prompt drafted this
+session — an abstracted Ra-like sun deity sending a 93-million-mile beam
+of light to a rooftop solar panel/battery/inverter, gold-to-green
+palette) directly tied to the post's own content (the Bill McKibben
+"sunlight travels 93 million miles" quote, and "Solis" being both Latin
+for sun and the inverter brand name). Old stock photo removed.
+
+## `83024fb` — Add new post "From Opus to Open Weights"
+
+Imported from a Google Doc the user shared. Fetched the doc's text via
+the Drive `read_file_content` tool, then exported it as .docx to extract
+the 7 embedded images (Drive's text export doesn't include images) —
+decoded the base64 docx, unzipped it, and read `word/document.xml`'s
+`r:embed` reference order against `document.xml.rels` to get the images'
+true reading-order (relationship IDs aren't assigned in document order).
+Verified each image's actual content against its filename before placing
+it (same care as the AI World Cup post) — matched all 7 to their anchor
+sentences in the article text. Cleaned up Google Docs' text-export
+artifacts in the two JSON/bash code blocks (escaped underscores/brackets)
+by reconstructing them from the visible values rather than transcribing
+literally. New post at `src/content/blog/from-opus-to-open-weights/`,
+dated today, with a user-supplied hero image
+(`DigitalOceanVsClaude.png`). Verified structurally (all 4 code blocks
+syntax-highlighted, the one table has correct headers, all 7 images
+resolve in the right order) since a full-page screenshot wasn't usable
+this time — headless Chrome's `--window-size` height feeds directly into
+the hero's `55vh` CSS, so a tall capture just inflates the hero rather
+than showing more of the page.
+
+## `8116ae9` — Add podcast audio to "From Opus to Open Weights"
+
+Followed the `podcast-episode-publish` skill (invoked manually — the
+Skill tool didn't recognize it since it was created mid-session and the
+skill listing hadn't refreshed): transcoded
+`Why_developers_are_switching_to_open_weights.m4a` (AAC, stereo, 44.1kHz,
+24min) to 96kbps mono MP3, uploaded to the droplet's podcast-audio
+directory, wired via audioUrl/audioTitle frontmatter plus the
+podcast.xml AUDIO_BYTES map, verified locally.
+
+## `96fc4cc` — Update "From Opus to Open Weights" with new doc content
+
+Re-fetched the Google Doc and diffed it against the already-published
+post to find the green-highlighted additions (the Drive text-export
+doesn't preserve highlight colour, so a straight diff was the reliable
+way to isolate exactly what changed): a new closing sentence on the
+"zero cache-read/cache-write" bullet, an entirely new "**Prompt Caching
+support**" section (DigitalOcean's automatic-but-best-effort caching vs.
+OpenRouter's sticky-routing + full response cache), and three new
+sentences on streaming/latency in the Kimi K3 section. Also re-exported
+the doc as .docx and checksummed all 7 embedded images against what's
+already in the repo — only the Solar Dashboard AI Assistant screenshot
+had actually changed (now shows the full chat UI — model name, token
+count, the question asked — not just the cropped result card), despite
+being asked about it as two separate things ("the AI Assistant image"
+and "the snapshot"); the pi.dev console snapshot is byte-identical to
+what's already committed. Also cleaned up a messy Google-Ads tracking
+URL on the "intelligent inference router" link down to its base URL.
+
+## Related, outside this repo
+
+- **Droplet podcast audio setup.** Added a scoped `NOPASSWD` sudoers rule
+  (`/etc/sudoers.d/deploy-podcast-audio`, limited to the exact `mkdir`/
+  `chown`/`chmod`/`caddy validate`/`systemctl reload caddy` commands
+  needed — no editor, no blanket `ALL`) so routine future audio uploads
+  don't need an interactive password. Created `/var/www/podcast-audio/`
+  (deploy-owned) and added a `handle_path /podcast-audio/*` block to
+  `/etc/caddy/Caddyfile` serving it via `file_server`. Uploaded the 7
+  transcoded MP3s there via `rsync`; confirmed all seven serve with
+  correct `audio/mpeg` content-type, exact byte-matching `Content-Length`,
+  and `Accept-Ranges: bytes` (needed for podcast-app scrubbing).
+- **`deploy` account password rotated** on the droplet (interactively, by
+  the repo owner) — unrelated to SSH access (key-based, unaffected), just
+  a short-password hygiene fix noticed while setting up sudo access above.
+
+---
+
+## Related, outside this repo (previous session)
+
+>>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce
 Not part of this repo's git history, but done in the same session and
 relevant to the live site:
 

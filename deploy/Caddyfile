@@ -1,0 +1,132 @@
+# /etc/caddy/Caddyfile
+#
+# Canonical domain: dioramas.uk (from day one on the new droplet).
+# dioramaconsulting.co.uk keeps pointing at the OLD droplet for now — the two
+# boxes run in parallel for a month, then cutover is: (1) point the old
+# domain's DNS here, (2) uncomment the redirect block at the bottom, (3)
+# `caddy validate` + reload. Nothing else changes.
+#
+# Structure is the old droplet's Caddyfile with the root proxy pointing at
+# the Astro container (8080) instead of WordPress, the markdown-mangled www
+# line fixed, and the hand-pinned TLS cipher block dropped (Caddy's defaults
+# are stronger — the old pin silently excluded TLS 1.3's own suites).
+
+{
+	log {
+		output stderr
+		format console
+		level INFO
+	}
+	email mal@malm.co.uk
+	default_sni dioramaconsulting.co.uk
+}
+
+# WWW redirect
+www.dioramaconsulting.co.uk {
+	redir https://dioramaconsulting.co.uk{uri} permanent
+}
+
+dioramaconsulting.co.uk {
+	tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem	
+
+	handle_path /friendly-digits-explorer* {
+		reverse_proxy localhost:8081
+	}
+
+	handle_path /invoice-forge* {
+		reverse_proxy localhost:8082
+	}
+
+	handle_path /invoice-forge-api* {
+		reverse_proxy localhost:8083
+	}
+
+	handle_path /quantum-curious* {
+		reverse_proxy localhost:8086
+	}
+
+	handle_path /quantum-curious-api* {
+		reverse_proxy localhost:8087
+	}
+
+	handle_path /ai-newsagent* {
+		reverse_proxy localhost:8088
+	}
+
+	handle_path /ai-newsagent-api* {
+		reverse_proxy localhost:8089
+	}
+
+	handle_path /team-tapestry* {
+		reverse_proxy localhost:8090
+	}
+
+	handle_path /team-tracker* {
+		reverse_proxy localhost:8093
+	}
+
+	handle /ai-scout* {
+		reverse_proxy localhost:8096 {
+			flush_interval -1
+			header_up Connection {>Connection}
+			header_up Cache-Control "no-cache"
+		}
+	}
+
+	handle /the-mighty-fall* {
+		reverse_proxy localhost:8098
+	}
+
+	# AILR Backend API — strip /ailr prefix, keep /api for FastAPI routes
+	handle /ailr/api* {
+		uri strip_prefix /ailr
+		reverse_proxy localhost:8101
+	}
+
+	@ailr_backend path /ailr/docs* /ailr/redoc* /ailr/openapi.json
+	handle @ailr_backend {
+		reverse_proxy localhost:8101
+	}
+
+	handle /ailr* {
+		reverse_proxy localhost:8102
+	}
+
+	# Add this block anywhere among the other `handle_path` blocks inside the
+	# dioramaconsulting.co.uk {} site — i.e. BEFORE the catch-all
+	# `reverse_proxy 127.0.0.1:8080` line at the bottom:
+	#
+	handle_path /podcast-audio/* {
+		root * /var/www/podcast-audio
+		file_server
+	}
+
+	# ---- Root: the Astro site (was: WordPress) -------------------------
+	# X-Forwarded-Host / -Proto are sent by default and are what
+	# src/middleware.ts uses to fix Keystatic's OAuth redirect_uri.
+	reverse_proxy 127.0.0.1:8080 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	log {
+		output file /var/log/caddy/diorama-access.log
+	}
+}
+
+# ---------------------------------------------------------------------------
+# CUTOVER BLOCK — uncomment in a month, AFTER pointing dioramaconsulting.co.uk
+# (and www) DNS A records at this droplet. Caddy will obtain certs for the
+# old domain automatically on first request; the permanent (301) redirects
+# preserve SEO equity and keep every old inbound link working, including
+# deep links into the app paths (/invoice-forge etc.), since {uri} carries
+# the full path and query string across.
+# ---------------------------------------------------------------------------
