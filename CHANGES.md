@@ -228,10 +228,6 @@ address.
 
 ---
 
-<<<<<<< HEAD
-## Related, outside this repo
-
-=======
 ---
 
 # Session — 2026-07-27
@@ -497,7 +493,6 @@ URL on the "intelligent inference router" link down to its base URL.
 
 ## Related, outside this repo (previous session)
 
->>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce
 Not part of this repo's git history, but done in the same session and
 relevant to the live site:
 

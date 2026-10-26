@@ -1,7 +1,5 @@
 # TODO
 
-<<<<<<< HEAD
-=======
 ## CI's "npx astro check" typecheck step is a silent no-op
 
 **What**: `.github/workflows/ci-cd.yml`'s Typecheck job runs `npx astro
@@ -53,7 +51,6 @@ this gap is, for now, back to being silently masked exactly as before.
    `astro check`'s own CLI behavior when its deps are missing, not a
    workflow config issue, so there may be little to change beyond #2).
 
->>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce
 ## Insights page is missing PostHog analytics entirely
 
 **What**: `src/pages/insights/index.astro` is the only top-level page on the

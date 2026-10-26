@@ -26,9 +26,6 @@ pnpm-debug.log*
 
 # keys just in case
 *-key.json
-<<<<<<< HEAD
-service-account*.json
-=======
 service-account*.json
 
 # NotebookLM podcast source audio — served directly from the droplet via
@@ -43,4 +40,3 @@ AudioFiles/
 # key material ending up in those already-tracked paths.
 droplet_key
 droplet_key.pub
->>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce

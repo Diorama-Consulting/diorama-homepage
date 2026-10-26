@@ -1,14 +1,9 @@
 eyebrow: Services
-<<<<<<< HEAD
-heading: Two practices, one disciplined approach
-subheading: 'Diorama Consulting brings the same rigour to commercial engagements and charity advisory: clear scope, pragmatic technology choices, and outcomes tied to P&L or mission impact.'
-=======
 heading: Two domains one approach
 subheading: >-
   Diorama Consulting brings the same rigour to commercial engagements and
   charity advisory: clear scope, pragmatic technology choices, and outcomes tied
   to P&L or mission impact.
->>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce
 tiles:
   - eyebrow: For Boards, Founders & Investors
     title: Consulting

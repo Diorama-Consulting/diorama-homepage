@@ -16,11 +16,8 @@ groups:
         href: /tools
       - label: Insights
         href: /insights
-<<<<<<< HEAD
-=======
       - label: Podcast
         href: /podcast.xml
->>>>>>> 61ae3e3069fdc0a5836e9979d329a03cfa4629ce
       - label: Events
         href: /events
       - label: Teaching
