@@ -21,8 +21,8 @@ const upcoming = allEvents
     date: e.data.date.toISOString(),
     location: e.data.location,
     description: e.data.description,
-    href: e.data.href,
-    linkText: e.data.linkText,
+    href: `/events/${e.id}/`,
+    linkText: 'Event details',
     heroImage: resolveImageUrl(e.data.heroImage, e.data.heroImageUrl),
   }));
 
@@ -34,8 +34,8 @@ const past = allEvents
     date: e.data.date.toISOString(),
     location: e.data.location,
     description: e.data.description,
-    href: e.data.href,
-    linkText: e.data.linkText,
+    href: `/events/${e.id}/`,
+    linkText: 'Event details',
     heroImage: resolveImageUrl(e.data.heroImage, e.data.heroImageUrl),
   }));
 

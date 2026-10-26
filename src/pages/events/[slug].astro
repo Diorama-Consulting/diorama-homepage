@@ -1,0 +1,101 @@
+---
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+import Iframe from '../../components/Iframe.astro';
+
+// One page per event at /events/<slug>/. Every event card on the site
+// (homepage carousel, /events, /insights) links here rather than straight
+// to the event's external `href`, so a card never jumps somewhere
+// unexpected (e.g. a write-up, or a registration page for a past event).
+// The external link is shown on this page instead, as its own button.
+//
+// Reuses the BlogPost layout for the hero/prose shell. With no audio or
+// Substack `link` passed, those parts of the layout don't render.
+export async function getStaticPaths() {
+  const events = await getCollection('events', ({ data }) => !data.draft);
+  return events.map((event) => ({
+    params: { slug: event.id },
+    props: event,
+  }));
+}
+
+type Props = CollectionEntry<'events'>;
+const event = Astro.props;
+const { Content } = await render(event);
+const { title, description, date, location, heroImage, heroImageUrl, href, linkText } = event.data;
+const isPast = date.getTime() < Date.now() - 1000 * 60 * 60 * 24;
+---
+
+<BlogPost
+  title={title}
+  description={description}
+  pubDate={date}
+  heroImage={heroImage}
+  heroImageUrl={heroImageUrl}
+  slug={event.id}
+  draft={false}
+>
+  <p class="event-meta">
+    <span class="event-badge">{isPast ? 'Past event' : 'Upcoming event'}</span>
+    {location && <span>{location}</span>}
+  </p>
+
+  <Content components={{ Iframe }} />
+
+  <p class="event-actions">
+    {href && (
+      <a class="event-link" href={href} {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+        {linkText || 'Event details'} <span aria-hidden="true">→</span>
+      </a>
+    )}
+    <a class="event-link event-link--quiet" href="/events/">All events</a>
+  </p>
+</BlogPost>
+
+<style>
+  .event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--mist-muted);
+    font-size: 15px;
+  }
+  .event-badge {
+    background: var(--forest);
+    color: var(--signal);
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2.5rem;
+  }
+  .event-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--signal);
+    color: var(--forest);
+    border-radius: 999px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .event-link:hover {
+    background: var(--mint);
+  }
+  .event-link--quiet {
+    background: transparent;
+    color: inherit;
+    border: 1px solid var(--hairline-hover);
+  }
+  .event-link--quiet:hover {
+    background: transparent;
+    border-color: var(--signal);
+  }
+</style>

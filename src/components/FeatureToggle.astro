@@ -143,6 +143,7 @@ const { items, groupId } = Astro.props;
   .feature-option-description {
     font-size: 14px;
     line-height: 1.6;
+    overflow-wrap: break-word;
     color: var(--mist-muted);
     max-height: 0;
     opacity: 0;
@@ -226,9 +227,7 @@ const { items, groupId } = Astro.props;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .feature-option-description,{
-      overflow-wrap: break-word;
-    }
+    .feature-option-description,
     .feature-option-link,
     .feature-visual-image {
       transition: none;

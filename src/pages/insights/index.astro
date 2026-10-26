@@ -48,8 +48,8 @@ const items = [
     date: event.data.date.toISOString(),
     past: event.data.date.getTime() < nowMs,
     image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl),
-    href: event.data.href || '/events/',
-    external: Boolean(event.data.href?.startsWith('http')),
+    href: `/events/${event.id}/`,
+    external: false,
     location: event.data.location,
   })),
 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

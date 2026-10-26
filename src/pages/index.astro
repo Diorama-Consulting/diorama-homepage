@@ -87,8 +87,8 @@ if (page?.heroCarouselEnabled && heroCarouselRefs.length > 0) {
           description: event.data.description,
           image: resolveImageUrl(event.data.heroImage, event.data.heroImageUrl) || defaultHeroPhotoUrl,
           imageAlt: event.data.title,
-          href: event.data.href || '/events/',
-          linkText: event.data.linkText || 'Event details',
+          href: `/events/${event.id}/`,
+          linkText: 'Event details',
         };
       }
       if (!ref.blogPost) return null;

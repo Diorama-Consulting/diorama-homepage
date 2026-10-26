@@ -1215,11 +1215,11 @@ export default config({
         location: fields.text({ label: 'Location (optional)' }),
         description: fields.text({ label: 'Description', multiline: true }),
         ...heroImageFields('heroImage', 'Image (used on the homepage events card, and as the hero-carousel slide background if selected)'),
-        href: fields.url({ label: 'Link (registration page, write-up, etc.)' }),
+        href: fields.url({ label: 'Link button on the event page (registration page, write-up, etc.)' }),
         linkText: fields.text({ label: 'Link text', defaultValue: 'Details' }),
         draft: fields.checkbox({ label: 'Draft (hide from site)', defaultValue: false }),
         content: fields.mdx({
-          label: 'Additional details (optional)',
+          label: 'Event page text (optional)',
           options: { image: { directory: '.', publicPath: './' } },
         }),
       },
